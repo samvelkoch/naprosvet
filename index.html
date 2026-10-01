@@ -7,6 +7,7 @@
 <meta property="og:type" content="website"><meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="НА_ПРОСВЕТ">
 <meta property="og:description" content="Литературный проект. Невидимое наследие писателей: Бродский, Чехов, Гари.">
+<script src="theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
@@ -18,10 +19,14 @@
   --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
   --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
   --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
   --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
 }}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif)}
 .inner{max-width:1100px;margin-inline:auto;padding-inline:clamp(16px,4vw,36px)}
