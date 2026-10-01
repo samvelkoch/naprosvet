@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>На просвет</title>
+<meta name="description" content="Интерактивные отчёты о текстах Бродского, Чехова и Ромена Гари">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+:root{
+  --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
+  --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f;
+  --desk:#221a14; --desk-2:#3a2a1f; --htext:#f7f0e2; --htext-2:#d6c9b4; --hlabel:#b9ab96; --hmark:#f0765a;
+  --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif)}
+.inner{max-width:1100px;margin-inline:auto;padding-inline:clamp(16px,4vw,36px)}
+header{background:var(--desk);color:var(--htext);padding-block:64px 52px;
+  background-image:radial-gradient(120% 90% at 78% 0%,var(--desk-2) 0%,var(--desk) 62%)}
+.eyebrow{font:12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--hlabel)}
+h1{margin:.3em 0 .25em;line-height:.98;font-weight:400}
+h1 .t{display:block;font:600 clamp(46px,11vw,120px)/1 var(--f-mono);letter-spacing:-.045em;text-transform:uppercase;
+  text-shadow:2.5px 1.5px 0 rgba(240,118,90,.55)}
+.lede{max-width:56ch;font-size:19px;color:var(--htext-2);margin:18px 0 0}
+main{padding-block:44px 24px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--ring);
+  padding:22px 22px 18px;color:inherit;text-decoration:none;box-shadow:0 14px 26px -18px rgba(21,24,36,.32);
+  transition:transform .15s ease,box-shadow .15s ease}
+.card::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;
+  background:linear-gradient(225deg,var(--page) 50%,var(--fold) 50%)}
+.card:hover{transform:translateY(-3px);box-shadow:0 18px 30px -16px rgba(21,24,36,.45)}
+.card:focus-visible{outline:2px solid var(--mark);outline-offset:3px}
+.card .y{font:11.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mark)}
+.card h2{margin:6px 0 2px;font:600 30px/1.05 var(--f-mono);letter-spacing:-.03em;text-transform:uppercase}
+.card h2 span{display:block;font:italic 400 26px/1.15 var(--f-serif);letter-spacing:0;text-transform:none;color:var(--accent)}
+.card p{margin:12px 0 18px;font-size:15.5px;color:var(--ink-2)}
+.card .go{margin-top:auto;font:500 13px var(--f-mono);color:var(--ink)}
+.card:hover .go{color:var(--accent)}
+footer{padding-block:28px 56px;font:12.5px/1.6 var(--f-mono);color:var(--muted)}
+footer a{color:var(--ink)}
+footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex-wrap:wrap;gap:6px 24px}
+</style></head>
+<body>
+<header><div class="inner">
+  <div class="eyebrow">Частотный и стилевой анализ текстов</div>
+  <h1><span class="t">На просвет</span></h1>
+  <p class="lede">Три интерактивных отчёта: что видно в текстах, если посчитать слова, строки, рифмы, письма и голоса.</p>
+</div></header>
+<main><div class="inner"><div class="cards">
+  <a class="card" href="brodsky/">
+    <div class="y">Стихи и проза · 1957–1996</div>
+    <h2>Бродский<span>на просвет</span></h2>
+    <p>Стих, слова, стиль, мир Бродского, Венеция и проза: размеры, рифмы, словарь, карта слов.</p>
+    <div class="go">Открыть отчёт →</div>
+  </a>
+  <a class="card" href="chekhov/">
+    <div class="y">30 томов · 1875–1904</div>
+    <h2>Чехов<span>на просвет</span></h2>
+    <p>Проза, пьесы, письма и врач: кардиограмма всех томов, адресаты и подписи, словарь, мир Чехова.</p>
+    <div class="go">Открыть отчёт →</div>
+  </a>
+  <a class="card" href="gary/">
+    <div class="y">Романы, рассказы, интервью · 1937–1980</div>
+    <h2>Ромен Гари<span>на просвет</span></h2>
+    <p>Проза, слова, голоса Гари, Ажара и Синибальди, мир Гари, оригиналы и переводы.</p>
+    <div class="go">Открыть отчёт →</div>
+  </a>
+</div></div></main>
+<footer><div class="inner"><div class="row">
+  <span>Код и методика:
+    <a href="https://github.com/samvelkoch/brodsky">brodsky</a> ·
+    <a href="https://github.com/samvelkoch/chekhov">chekhov</a> ·
+    <a href="https://github.com/samvelkoch/gary">gary</a></span>
+</div></div></footer>
+</body></html>
