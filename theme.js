@@ -10,8 +10,10 @@
 
   var css = document.createElement('style');
   css.textContent =
-    '.theme-btn{font:500 15px/1 "IBM Plex Mono",ui-monospace,Menlo,monospace;width:34px;height:34px;flex:none;align-self:center;cursor:pointer;' +
-    'color:#d6c9b4;background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:2px;padding:0;display:inline-flex;align-items:center;justify-content:center}' +
+    '.theme-btn{font:500 12.5px/1 "IBM Plex Mono",ui-monospace,Menlo,monospace;height:34px;min-width:34px;flex:none;align-self:center;cursor:pointer;gap:8px;' +
+    'color:#f7f0e2;background:rgba(255,255,255,.06);border:1px solid rgba(247,240,226,.55);border-radius:2px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center}' +
+    '.theme-btn .ic{font-size:19px;line-height:1}' +
+    '@media (max-width:760px){.theme-btn .lb{display:none}.theme-btn{padding:0}}' +
     '.theme-btn:hover{background:#f0765a;border-color:#f0765a;color:#1b1010}' +
     '.theme-btn:focus-visible{outline:2px solid #f0765a;outline-offset:2px}' +
     '.bar .theme-btn{margin-left:auto}' +
@@ -20,8 +22,9 @@
 
   function paint(btn) {
     var dark = current() === 'dark';
-    btn.textContent = dark ? '☀' : '☾';
-    btn.title = btn.ariaLabel = dark ? 'Светлая тема' : 'Тёмная тема';
+    var label = dark ? 'Светлая тема' : 'Тёмная тема';
+    btn.innerHTML = '<span class="ic" aria-hidden="true">' + (dark ? '☀' : '☾') + '</span><span class="lb">' + label + '</span>';
+    btn.title = label; btn.setAttribute('aria-label', label);
   }
   function mount() {
     var btn = document.createElement('button');
