@@ -29317,7 +29317,7 @@ function sugg(q,n=8){ const k=norm(q); if(!k) return []; const out=[]; for(const
 const HL_EX=['слон','мать','клоун','собака','удав','смех','Морель','надежда','еврей','Франция'];
 function hlChips(list){ const h=$('#hl-chips'); h.innerHTML=''; list.forEach(k=>{ if(!LEX[k]) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=k; b.addEventListener('click',()=>{ $('#hl-input').value=k; setHL(k); }); h.appendChild(b); }); }
 hlChips(HL_EX);
-$('#hl-input').addEventListener('input',e=>{ const q=e.target.value; const exact=LEXN[norm(q)]; if(exact){ setHL(exact); } else if(!q.trim()){ setHL(null); hlChips(HL_EX); } else { hlChips(sugg(q)); } });
+$('#hl-input').addEventListener('input',e=>{ const q=e.target.value; const exact=LEXN[norm(q)]; if(exact){ setHL(exact); } else if(!q.trim()){ setHL(null); hlChips(HL_EX); } else { const s=sugg(q); setHL(null); hlChips(s); $('#hl-count').textContent=s.length?'нет в словаре — выберите слово из подсказок':'нет в словаре'; } });
 
 /* ================= I. обзор ================= */
 const MY = Object.fromEntries(D.myths.map(m=>[m.id,m]));
@@ -29452,7 +29452,7 @@ drawTop();
 const X_EX=['слон','мать','клоун','надежда','удав','смех','Морель','Роза','достоинство','еврей','собака','Африка'];
 function xSug(list){ const h=$('#x-sug'); h.innerHTML=''; list.forEach(k=>{ const kk=LEXN[norm(k)]; if(!kk) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=kk; b.addEventListener('click',()=>openWord(kk,false)); h.appendChild(b); }); }
 xSug(X_EX);
-$('#x-input').addEventListener('input',e=>{ const q=e.target.value; const k=LEXN[norm(q)]; if(k) renderWord(k); else xSug(q.trim()?sugg(q,10):X_EX); });
+$('#x-input').addEventListener('input',e=>{ const q=e.target.value; const k=LEXN[norm(q)]; if(k) renderWord(k); else if(!q.trim()) xSug(X_EX); else { const s=sugg(q,10); xSug(s); $('#x-out').innerHTML=`<p class="note" style="margin:0">«${esc(q.trim())}» нет в словаре: в нём слова, которые встречаются в русских переводах не меньше 10 раз.${s.length?' Выберите подсказку выше.':''}</p>`; const b=$('#c-xbooks'); RB.delete(b); b.innerHTML=''; $('#x-t2').textContent='Где встречается'; } });
 function openWord(k, scroll){ $('#x-input').value=k; renderWord(k); if(scroll) document.getElementById('poisk').scrollIntoView({behavior:'auto'}); }
 function renderWord(k, hl){ const L=LEX[k]; if(!L) return; const [tot,per,sg,bk,ex]=L; const PT=D.per_tokens; const ST=D.sign_tokens;
   const rates=per.map((n,j)=>10000*n/PT[j]); const sr=['Гари','Ажар','Шатан Богат'].map((s,j)=>[s,10000*sg[j]/ST[s]]);

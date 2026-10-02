@@ -1022,7 +1022,7 @@ function sugg(q,n=8){ const k=norm(q); if(!k) return []; const out=[]; for(const
 const HL_EX=['скука','самовар','фельдшер','чахотка','шампанское','генерал','сад','ружье','дуэль','архиерей'].filter(k=>LEX[k]&&LEX[k][4].length);
 function hlChips(list){ const h=$('#hl-chips'); h.innerHTML=''; list.forEach(k=>{ if(!LEX[k]) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=k; b.addEventListener('click',()=>{ $('#hl-input').value=k; setHL(k); }); h.appendChild(b); }); }
 hlChips(HL_EX);
-$('#hl-input').addEventListener('input',e=>{ const q=e.target.value; const exact=LEXN[norm(q)]; if(exact) setHL(exact); else if(!q.trim()){ setHL(null); hlChips(HL_EX); } else hlChips(sugg(q)); });
+$('#hl-input').addEventListener('input',e=>{ const q=e.target.value; const exact=LEXN[norm(q)]; if(exact) setHL(exact); else if(!q.trim()){ setHL(null); hlChips(HL_EX); } else { const s=sugg(q); setHL(null); hlChips(s); $('#hl-count').textContent=s.length?'нет в словаре — выберите слово из подсказок':'нет в словаре'; } });
 
 const K = ADR[0], G2 = SW.groups;
 $('#lede').innerHTML = `Тридцать томов академического собрания: ${pn(O.stories,'рассказ','рассказа','рассказов')} и повестей, ${pn(O.plays,'пьеса','пьесы','пьес')}, `+
@@ -1294,7 +1294,7 @@ const WS_EX=['скука','деньги','чай','море','любовь','в�
 function wsChips(list){ const h=$('#ws-chips'); h.innerHTML=''; list.forEach(k=>{ if(!LEX[k]) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=k; b.addEventListener('click',()=>{ $('#ws-input').value=k; wsShow(k); }); h.appendChild(b); }); }
 legendTo($('#lg-ws'), [['рассказы','var(--s1)'],['письма','var(--s2)']]);
 wsChips(WS_EX); wsShow(LEX['скука']?'скука':Object.keys(LEX)[0]);
-$('#ws-input').addEventListener('input',e=>{ const q=e.target.value; const ex=LEXN[norm(q)]; if(ex) wsShow(ex); else if(!q.trim()) wsChips(WS_EX); else wsChips(sugg(q)); });
+$('#ws-input').addEventListener('input',e=>{ const q=e.target.value; const ex=LEXN[norm(q)]; if(ex) wsShow(ex); else if(!q.trim()) wsChips(WS_EX); else { const s=sugg(q); wsChips(s); $('#ws-title').textContent=`«${q.trim()}» — нет в словаре`; ['#c-ws','#c-ws2'].forEach(id=>{ const b=$(id); RB.delete(b); b.innerHTML=''; }); $('#ws-note').textContent=s.length?'Выберите слово из подсказок выше.':'Слово ищется в начальной форме: «скука», а не «скуки».'; } });
 let epk='stories';
 function drawEp(){ $('#ep-grid').innerHTML = W.epochs[epk].map(([lab,rows])=>`<div class="era"><div class="h"><b>${lab}</b><span>${esc((PERIODS.find(p=>p[0]===lab)||[])[3]||'')}</span></div><ul class="wl">${rows.slice(0,14).map(r=>`<li>${hasWord(r[0])?`<button type="button" data-k="${esc(r[0])}" data-tip="открыть в словоискателе">${esc(r[0])}</button>`:`<span>${esc(r[0])}</span>`}<span style="font-family:var(--f-mono);font-size:11.5px;color:var(--muted);text-align:right">${r[2]} · ${pn(r[3],epk==='stories'?'рассказ':'письмо',epk==='stories'?'рассказа':'письма',epk==='stories'?'рассказов':'писем')}</span></li>`).join('')}</ul></div>`).join(''); }
 function bindEp(){ $('#ep-grid').querySelectorAll('button[data-k]').forEach(b=>b.addEventListener('click',()=>openWord(b.dataset.k))); }

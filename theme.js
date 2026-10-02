@@ -17,7 +17,8 @@
     '.theme-btn:hover{background:#f0765a;border-color:#f0765a;color:#1b1010}' +
     '.theme-btn:focus-visible{outline:2px solid #f0765a;outline-offset:2px}' +
     '.bar .theme-btn{margin-left:auto}' +
-    '.theme-float{position:absolute;top:18px;right:clamp(16px,4vw,36px);z-index:5}';
+    '.theme-float{position:absolute;top:18px;right:clamp(16px,4vw,36px);z-index:5}' +
+    '@media (hover:none) and (pointer:coarse){input[type=search],input[type=text],select,textarea{font-size:16px!important}}';
   document.head.appendChild(css);
 
   function paint(btn) {
