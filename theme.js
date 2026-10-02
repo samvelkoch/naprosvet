@@ -22,6 +22,12 @@
     '.bug-btn .ic{font-size:17px;font-weight:600;line-height:1;color:#f0765a}.bug-btn:hover{background:#f0765a;border-color:#f0765a;color:#1b1010}.bug-btn:hover .ic{color:#1b1010}' +
     '.bug-btn:focus-visible{outline:2px solid #f0765a;outline-offset:2px}@media (max-width:760px){.bug-btn .lb{display:none}.bug-btn{padding:0}}' +
     '.bar .bug-btn{margin-left:auto}.bar .bug-btn~.theme-btn,.bar .bug-btn~.home-btn{margin-left:0}' +
+    '.bug-btn{cursor:pointer}.bug-link{all:unset;cursor:pointer;color:inherit;text-decoration:underline;text-underline-offset:3px}.bug-link:focus-visible{outline:2px solid #f0765a;outline-offset:2px}' +
+    '.bug-menu{position:fixed;z-index:60;width:min(300px,calc(100vw - 16px));background:#221a14;color:#f7f0e2;border:1px solid rgba(247,240,226,.35);border-radius:3px;padding:6px;box-shadow:0 18px 40px -12px rgba(0,0,0,.55);font:13px/1.35 "IBM Plex Mono",ui-monospace,Menlo,monospace}' +
+    '.bug-menu a{display:block;padding:10px 12px;border-radius:2px;color:#f7f0e2;text-decoration:none}.bug-menu a+a{margin-top:2px}' +
+    '.bug-menu a b{display:block;font-weight:600}.bug-menu a span{display:block;color:#b9ab96;font-size:11.5px;margin-top:3px}' +
+    '.bug-menu a:hover,.bug-menu a:focus-visible{background:#f0765a;color:#1b1010;outline:none}.bug-menu a:hover span,.bug-menu a:focus-visible span{color:#3a1d14}' +
+    '.bug-menu .bm-note{color:#f0765a;font-size:11.5px;padding:0 12px}.bug-menu .bm-note:empty{display:none}.bug-menu .bm-note:not(:empty){padding:6px 12px 4px}' +
     '.theme-float{position:absolute;top:18px;right:clamp(16px,4vw,36px);z-index:5}' +
     '@media (hover:none) and (pointer:coarse){input[type=search],input[type=text],select,textarea{font-size:16px!important}}';
   document.head.appendChild(css);
@@ -32,9 +38,10 @@
     btn.innerHTML = '<span class="ic" aria-hidden="true">' + (dark ? '☀' : '☾') + '</span><span class="lb">' + label + '</span>';
     btn.title = label; btn.setAttribute('aria-label', label);
   }
-  /* «Нашли ошибку?»: открывает форму issue на GitHub, сама подставляет страницу, раздел,
-     выделенный текст и устройство */
+  /* «Нашли ошибку?»: меню из двух путей — форма issue на GitHub (поля заполняются сами)
+     и Telegram (описание места кладётся в буфер обмена, чтобы вставить в сообщение) */
   var ISSUES = 'https://github.com/samvelkoch/naprosvet/issues/new';
+  var TG = 'https://t.me/samvelkoch';
   var SITE = 'https://samvelkoch.github.io/naprosvet/';
   var NAMES = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Ромен Гари' };
   function pageKey() { var m = location.pathname.match(/\/(brodsky|chekhov|gary)\//); return m ? m[1] : ''; }
@@ -43,26 +50,53 @@
     for (var i = 0; i < list.length; i++) { if (list[i].getBoundingClientRect().top <= line) hit = list[i]; else break; }
     return hit;
   }
-  function reportHref() {
+  function context() {
     var key = pageKey(), sec = currentSection(), name = '';
     var h2 = sec && sec.querySelector('h2');
     if (h2) { var t = h2.cloneNode(true), tags = t.querySelectorAll('.tag'); for (var i = 0; i < tags.length; i++) tags[i].remove(); name = t.textContent.replace(/\s+/g, ' ').trim(); }
     var sel = ''; try { sel = String(window.getSelection() || '').replace(/\s+/g, ' ').trim().slice(0, 600); } catch (e) {}
-    var dev = navigator.userAgent + ' · экран ' + window.innerWidth + '×' + window.innerHeight + ' · тема ' + current();
-    var q = 'template=bug.yml' +
-      '&title=' + encodeURIComponent('[Ошибка] ' + (NAMES[key] || 'Главная') + (name ? ' · ' + name : '') + ': ') +
-      '&page=' + encodeURIComponent(SITE + (key ? key + '/' : '') + (sec ? '#' + sec.id : '')) +
-      '&device=' + encodeURIComponent(dev.slice(0, 250)) + (sel ? '&quote=' + encodeURIComponent(sel) : '');
-    return ISSUES + '?' + q;
+    return { where: (NAMES[key] || 'Главная') + (name ? ' · ' + name : ''), url: SITE + (key ? key + '/' : '') + (sec ? '#' + sec.id : ''), sel: sel,
+      dev: (navigator.userAgent + ' · экран ' + window.innerWidth + '×' + window.innerHeight + ' · тема ' + current()).slice(0, 250) };
   }
+  function ghHref(c) {
+    return ISSUES + '?template=bug.yml&title=' + encodeURIComponent('[Ошибка] ' + c.where + ': ') + '&page=' + encodeURIComponent(c.url) +
+      '&device=' + encodeURIComponent(c.dev) + (c.sel ? '&quote=' + encodeURIComponent(c.sel) : '');
+  }
+  function tgText(c) {
+    return 'Ошибка на «На просвет»\nГде: ' + c.where + '\n' + c.url + (c.sel ? '\nФрагмент: «' + c.sel + '»' : '') + '\nУстройство: ' + c.dev + '\nЧто случилось: ';
+  }
+  var menu = null, ctx = null;
+  function closeMenu() { if (menu) { menu.remove(); menu = null; } }
+  function openMenu(trigger) {
+    closeMenu(); var c = ctx || context(); ctx = null;
+    menu = document.createElement('div'); menu.className = 'bug-menu'; menu.setAttribute('role', 'menu');
+    menu.innerHTML = '<a role="menuitem" target="_blank" rel="noopener" class="bm-gh"><b>Форма на GitHub</b><span>поля заполнятся сами</span></a>' +
+      '<a role="menuitem" target="_blank" rel="noopener" class="bm-tg"><b>Telegram @samvelkoch</b><span>описание места скопируется — вставьте его в чат</span></a>' +
+      '<div class="bm-note" aria-live="polite"></div>';
+    var gh = menu.querySelector('.bm-gh'), tg = menu.querySelector('.bm-tg'), note = menu.querySelector('.bm-note');
+    gh.href = ghHref(c); tg.href = TG;
+    gh.addEventListener('click', function () { setTimeout(closeMenu, 0); });
+    tg.addEventListener('click', function () {
+      var txt = tgText(c);
+      try { navigator.clipboard.writeText(txt).then(function () { note.textContent = 'Скопировано. Вставьте в сообщение.'; }, function () { note.textContent = ''; }); } catch (e) {}
+      setTimeout(closeMenu, 1600);
+    });
+    document.body.appendChild(menu);
+    var r = trigger.getBoundingClientRect(), w = menu.offsetWidth;
+    var left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8));
+    var top = r.bottom + 8; if (top + menu.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - menu.offsetHeight - 8);
+    menu.style.left = left + 'px'; menu.style.top = top + 'px';
+    gh.focus({ preventScroll: true });
+  }
+  document.addEventListener('pointerdown', function (e) { if (menu && !menu.contains(e.target) && !e.target.closest('.bug-btn,.bug-link')) closeMenu(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('scroll', closeMenu, { passive: true });
   function bugLink(cls, inner) {
-    var a = document.createElement('a'), fresh = false;
-    a.className = cls; a.target = '_blank'; a.rel = 'noopener'; a.href = ISSUES + '/choose'; a.innerHTML = inner;
-    a.title = 'Сообщить об ошибке'; a.setAttribute('aria-label', 'Сообщить об ошибке');
+    var a = document.createElement('button'); a.type = 'button'; a.className = cls; a.innerHTML = inner;
+    a.title = 'Сообщить об ошибке'; a.setAttribute('aria-label', 'Сообщить об ошибке'); a.setAttribute('aria-haspopup', 'menu');
     // выделение текста ещё живо на pointerdown, к клику браузер его снимает
-    a.addEventListener('pointerdown', function () { a.href = reportHref(); fresh = true; });
-    a.addEventListener('focus', function () { if (!fresh) a.href = reportHref(); });
-    a.addEventListener('click', function () { if (!fresh) a.href = reportHref(); fresh = false; });
+    a.addEventListener('pointerdown', function () { ctx = context(); });
+    a.addEventListener('click', function () { if (menu) { closeMenu(); return; } openMenu(a); });
     return a;
   }
   function mount() {
