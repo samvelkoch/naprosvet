@@ -1,0 +1,31 @@
+name: "Неточность в данных"
+description: "Неверная цифра, дата, атрибуция, подпись или вывод в исследовании"
+title: "[Данные] "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: "Здесь — замечания по содержанию: цифры, даты, атрибуция текстов, подписи на графиках, формулировки выводов."
+  - type: input
+    id: page
+    attributes:
+      label: "Где"
+      description: "Ссылка на страницу и раздел"
+    validations:
+      required: true
+  - type: textarea
+    id: quote
+    attributes:
+      label: "Фрагмент"
+      description: "Что именно на странице кажется неверным"
+  - type: textarea
+    id: what
+    attributes:
+      label: "Что не так и как должно быть"
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: "Источник"
+      description: "Издание, том, страница или ссылка, если есть"

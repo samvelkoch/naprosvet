@@ -1,0 +1,38 @@
+name: "Ошибка на сайте"
+description: "Что-то работает не так, ломается или выглядит неправильно"
+title: "[Ошибка] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Спасибо, что пишете! Если вы пришли по кнопке «Нашли ошибку?», страница, раздел и устройство уже заполнены."
+  - type: input
+    id: page
+    attributes:
+      label: "Где"
+      description: "Ссылка на страницу и раздел"
+      placeholder: "https://samvelkoch.github.io/naprosvet/brodsky/#rifma"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "Что случилось"
+      description: "Что вы делали и что пошло не так. Скриншот или видео можно просто перетащить в это поле."
+      placeholder: "Ввёл слово «чаек» в словарь рифм, а ниже остался результат для «век»"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Чего вы ожидали"
+  - type: textarea
+    id: quote
+    attributes:
+      label: "Выделенный фрагмент"
+      description: "Если перед нажатием кнопки вы выделили текст на странице, он здесь"
+  - type: input
+    id: device
+    attributes:
+      label: "Устройство и браузер"
+      placeholder: "iPhone 15, Safari"
