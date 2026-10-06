@@ -542,7 +542,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 <section id="poisk">
   <div class="kick"><b>III.2</b><span>Слова</span></div>
   <h2>Словоискатель <span class="tag">интерактив</span></h2>
-  <p>Введите слово в начальной форме: «стекло», а не «стекла». В индексе <span id="lex-n"></span> слов, встретившихся в стихах хотя бы дважды или в прозе хотя бы пять раз.</p>
+  <p>Введите слово в начальной форме: «стекло», а не «стекла». В индексе <span id="lex-n"></span> в стихах хотя бы дважды или в прозе хотя бы пять раз.</p>
   <div class="ctrl">
     <input type="search" id="x-input" placeholder="слово" autocomplete="off" spellcheck="false" aria-label="Слово для поиска">
     <div class="chips" id="x-sug"></div>
@@ -4772,6 +4772,17 @@ const $ = s => document.querySelector(s);
 const fmt = n => Number(n).toLocaleString('ru-RU');
 const fmt1 = n => Number(n).toLocaleString('ru-RU',{maximumFractionDigits:1});
 const fmt2 = n => Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+/* Склонение по числу. plural(n,['письмо','письма','писем']): 1, 21… (кроме 11) — первая форма; 2–4, 22–24… (кроме 12–14) — вторая; остальные и 11–14 — третья.
+   Две формы ['ед.','мн.'] — для косвенных падежей («из 21 стихотворения», «в 22 стихотворениях», «длиннее 42 слов»).
+   Четвёртая форма (необязательно) — для дробных чисел, по умолчанию вторая («2,7 слова»). dec — сколько знаков после запятой видно на странице.
+   Старая запись plural(n,'письмо','письма','писем') тоже работает (число округляется). */
+const plural=(n,a,b,c)=>{ let f=a,dec=b; if(!Array.isArray(a)){ f=[a,b,c]; dec=0; } let x=Math.abs(+n); if(dec!=null){ const k=10**dec; x=Math.round(x*k)/k; }
+  if(!Number.isInteger(x)) return f.length===2?f[0]:(f[3]||f[1]);
+  const d=x%10, h=x%100; if(d===1&&h!==11) return f[0];
+  return f.length===2?f[1]:(d>=2&&d<=4&&(h<12||h>14)?f[1]:f[2]); };
+const pn=(n,a,b,c)=>`${(Array.isArray(a)&&b===1?fmt1:fmt)(n)} ${plural(n,a,b,c)}`;
+const pnr=(n,f)=>`${n} ${plural(n,f)}`;
+const RUF={word:['слово','слова','слов'],line:['строка','строки','строк'],poem:['стихотворение','стихотворения','стихотворений'],text:['текст','текста','текстов'],raz:['раз','раза','раз'],mention:['упоминание','упоминания','упоминаний'],use:['употребление','употребления','употреблений'],syl:['слог','слога','слогов'],letter:['буква','буквы','букв'],stanza:['строфа','строфы','строф'],sent:['предложение','предложения','предложений'],uword:['разное слово','разных слова','разных слов']};
 const NS = 'http://www.w3.org/2000/svg';
 let TK={}; const css = v => (v in TK) ? TK[v] : (TK[v]=getComputedStyle(document.documentElement).getPropertyValue(v).trim());
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -4927,14 +4938,14 @@ function pageAt(e){ const cv=$('#pages-cv'); const r=cv.getBoundingClientRect();
   const c=Math.floor((mx-L.labelW)/(L.tw+L.gx)), row=Math.floor(my/(L.th+L.gy)); if(c<0||c>=L.cols||row<0) return -1;
   const lx=mx-L.labelW-c*(L.tw+L.gx), ly=my-row*(L.th+L.gy); if(lx>L.tw||ly>L.th) return -1; const i=row*L.cols+c; return i<PS.length?i:-1; }
 $('#pages-cv').addEventListener('pointermove',e=>{ const i=pageAt(e); if(i<0){ tip.hidden=true; return; } const p=PS[i];
-  showTipHTML(`«${esc(tidy(p.t))}»<br>${p.y||'без даты'} · ${fmt(p.n)} строк · медиана ${fmt1(p.med)} слог.`,e.clientX,e.clientY); });
+  showTipHTML(`«${esc(tidy(p.t))}»<br>${p.y||'без даты'} · ${pn(p.n,RUF.line)} · медиана ${fmt1(p.med)} слог.`,e.clientX,e.clientY); });
 $('#pages-cv').addEventListener('pointerleave',()=>tip.hidden=true);
 $('#pages-cv').addEventListener('click',e=>{ const i=pageAt(e); if(i>=0){ selectPoem(i,true); } });
 
 function suggest(q,n=8){ const k=norm(q); if(!k) return []; const out=[]; for(const key of KEYS){ if(key.startsWith(k)){ out.push(key); if(out.length>=n) break; } }
   if(!out.length && k.length>3){ const st=k.slice(0,k.length-2); for(const key of KEYS){ if(key.startsWith(st)){ out.push(key); if(out.length>=n) break; } } } return out; }
 function setHL(key){ state.hl=key&&LEX[key]?key:null; drawPages(); drawAtlas();
-  const c=$('#hl-count'); if(state.hl){ const e=LEX[state.hl]; c.textContent=`«${disp(state.hl)}»: ${fmt(e[3].length)} стихотворений из ${fmt(PS.length)}, ${fmt(e[1].reduce((a,b)=>a+b,0))} употреблений`; } else c.textContent=''; }
+  const c=$('#hl-count'); if(state.hl){ const e=LEX[state.hl]; c.textContent=`«${disp(state.hl)}»: ${pn(e[3].length,RUF.poem)} из ${fmt(PS.length)}, ${pn(e[1].reduce((a,b)=>a+b,0),RUF.use)}`; } else c.textContent=''; }
 const HL_EX=['стекло','время','вода','пустота','империя','ангел','зеркало','рыба','мрамор','холод'];
 function hlChips(list){ const h=$('#hl-chips'); h.innerHTML=''; list.forEach(k=>{ if(!LEX[k]) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=disp(k);
   b.addEventListener('click',()=>{ $('#hl-input').value=disp(k); setHL(k); }); h.appendChild(b); }); }
@@ -4943,21 +4954,21 @@ $('#hl-input').addEventListener('input',e=>{ const k=norm(e.target.value); if(LE
 
 /* ================= лид и цифры ================= */
 const O=D.overview, SP=D.line_syllables_by_period;
-$('#lede').innerHTML=`${fmt(O.poems)} стихотворений и ${fmt(O.prose)} прозаических текстов, ${fmt(O.poem_words+O.prose_words)} слов, разобраны как данные: по слогам, словам, частям речи, строфам и знакам препинания. Главное видно уже на первом экране: <strong>с годами строка Бродского становится длиннее, а в стихах становится больше предметов и меньше действий</strong> — существительных на каждый глагол приходится ${fmt1(D.pos[5].noun_verb)} в 1990-е против ${fmt1(D.pos[1].noun_verb)} в 1961–1966.`;
-[[fmt(O.poems),'стихотворений на русском'],[fmt(O.poem_words),'слов в стихах'],[fmt(O.prose_words),'слов в прозе'],[fmt(O.unique_lemmas),'разных слов'],[`${SP[0].med} → ${SP[SP.length-1].med}`,'слогов в типичной строке, 1957 → 1996']]
+$('#lede').innerHTML=`${pn(O.poems,RUF.poem)} и ${pn(O.prose,['прозаический текст','прозаических текста','прозаических текстов'])}, ${pn(O.poem_words+O.prose_words,RUF.word)}, разобраны как данные: по слогам, словам, частям речи, строфам и знакам препинания. Главное видно уже на первом экране: <strong>с годами строка Бродского становится длиннее, а в стихах становится больше предметов и меньше действий</strong> — существительных на каждый глагол приходится ${fmt1(D.pos[5].noun_verb)} в 1990-е против ${fmt1(D.pos[1].noun_verb)} в 1961–1966.`;
+[[fmt(O.poems),plural(O.poems,['стихотворение на русском','стихотворения на русском','стихотворений на русском'])],[fmt(O.poem_words),plural(O.poem_words,['слово в стихах','слова в стихах','слов в стихах'])],[fmt(O.prose_words),plural(O.prose_words,['слово в прозе','слова в прозе','слов в прозе'])],[fmt(O.unique_lemmas),plural(O.unique_lemmas,['разное слово','разных слова','разных слов'])],[`${SP[0].med} → ${SP[SP.length-1].med}`,'слогов в типичной строке, 1957 → 1996']]
   .forEach(([n,l])=>$('#figures').insertAdjacentHTML('beforeend',`<div class="fig"><div class="n">${n}</div><div class="l">${l}</div></div>`));
 
 /* ================= хронология ================= */
 const Y=Object.entries(D.years.counts).map(([y,n])=>({l:y,v:n,tip:`${y}: ${n} стихотв.`}));
 const peak=Y.reduce((a,b)=>b.v>a.v?b:a);
-$('#t-years').innerHTML=`Год определён по дате в последних строках стихотворения; датировано ${fmt(D.years.dated)} из ${fmt(D.years.total)} (${fmt1(D.years.share_dated)}%). Пик — ${peak.l} год, ${peak.v} стихотворения: суд, ссылка в Норенскую, возвращение.`;
+$('#t-years').innerHTML=`Год определён по дате в последних строках стихотворения; датировано ${fmt(D.years.dated)} из ${fmt(D.years.total)} (${fmt1(D.years.share_dated)}%). Пик — ${peak.l} год, ${pnr(peak.v,RUF.poem)}: суд, ссылка в Норенскую, возвращение.`;
 vbars($('#c-years'),Y,{h:240,every:4,notes:[{at:'1964',t:'1964 · ссылка'},{at:'1972',t:'1972 · эмиграция',dy:12},{at:'1987',t:'1987 · Нобелевская премия'}]});
 table($('#c-years'),['Год','Стихотворений'],Y.map(r=>[r.l,r.v]));
 hbars($('#c-corpus'),[
-  {l:'Стихи, рус.',v:O.poem_words,c:'var(--s1)',tip:`${fmt(O.poems)} стихотворений, ${fmt(O.poem_words)} слов`},
-  {l:'Проза, рус.',v:O.prose_words,c:'var(--s2)',tip:`${fmt(O.prose)} текстов: эссе, письма, пьесы, предисловия`},
-  {l:'Стихи, англ.',v:O.en_words,c:'var(--neutral-bar)',tip:`${O.en_poems} стихотворений, написанных по-английски`}],{labelW:108,fmtv:fmt});
-$('#c-corpus').insertAdjacentHTML('afterend',`<p class="muted" style="font-size:14px;margin:10px 0 0">Не анализируются: ${O.excluded.translation} переводов чужих стихов, ${O.excluded.about} интервью и текстов о Бродском, ${O.excluded.other} чужих стихотворения, приложенных к эссе.</p>`);
+  {l:'Стихи, рус.',v:O.poem_words,c:'var(--s1)',tip:`${pn(O.poems,RUF.poem)}, ${pn(O.poem_words,RUF.word)}`},
+  {l:'Проза, рус.',v:O.prose_words,c:'var(--s2)',tip:`${pn(O.prose,RUF.text)}: эссе, письма, пьесы, предисловия`},
+  {l:'Стихи, англ.',v:O.en_words,c:'var(--neutral-bar)',tip:`${O.en_poems} ${plural(O.en_poems,['стихотворение, написанное по-английски','стихотворения, написанных по-английски','стихотворений, написанных по-английски'])}`}],{labelW:108,fmtv:fmt});
+$('#c-corpus').insertAdjacentHTML('afterend',`<p class="muted" style="font-size:14px;margin:10px 0 0">Не анализируются: ${O.excluded.translation} ${plural(O.excluded.translation,['перевод чужих стихов','перевода чужих стихов','переводов чужих стихов'])}, ${O.excluded.about} ${plural(O.excluded.about,['интервью и текст о Бродском','интервью и текста о Бродском','интервью и текстов о Бродском'])}, ${O.excluded.other} ${plural(O.excluded.other,['чужое стихотворение, приложенное к эссе','чужих стихотворения, приложенных к эссе','чужих стихотворений, приложенных к эссе'])}.</p>`);
 chart(()=>{ const box=$('#c-heaps'); const h=230; const [s,w]=svg(box,h); const L=52,R=14,T=14,B=28; const H=EX.heaps;
   const xm=H[H.length-1][0], ym=niceMax(H[H.length-1][1]); const sx=x=>L+(w-L-R)*x/xm, sy=y=>h-B-(h-B-T)*y/ym;
   const ax=el('g',{class:'ax'},s);
@@ -4967,12 +4978,12 @@ chart(()=>{ const box=$('#c-heaps'); const h=230; const [s,w]=svg(box,h); const 
   let lastY=null; H.forEach(p=>{ if(p[2] && (p[2]===1964||p[2]===1972||p[2]===1987) && p[2]!==lastY){ lastY=p[2]; el('circle',{cx:sx(p[0]),cy:sy(p[1]),r:3.5,fill:css('--s1')},s); txt(s,sx(p[0])+6,sy(p[1])+14,p[2],{style:'fill:var(--ink-2);font-size:11px'}); } });
   const last=H[H.length-1]; el('circle',{cx:sx(last[0]),cy:sy(last[1]),r:4.5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':2},s);
   txt(s,sx(last[0])-8,sy(last[1])-10,fmt(last[1]),{'text-anchor':'end',style:'fill:var(--ink)'});
-  H.forEach(p=>el('circle',{class:'hit',cx:sx(p[0]),cy:sy(p[1]),r:7,'data-tip':`прочитано ${fmt(p[0])} слов${p[2]?' (до '+p[2]+' г.)':''}<br>${fmt(p[1])} разных слов`},s));
+  H.forEach(p=>el('circle',{class:'hit',cx:sx(p[0]),cy:sy(p[1]),r:7,'data-tip':`прочитано ${pn(p[0],RUF.word)}${p[2]?' (до '+p[2]+' г.)':''}<br>${pn(p[1],RUF.uword)}`},s));
 });
 
 /* ================= строка ================= */
 const SY=D.line_syllables_by_year;
-$('#f-line').textContent=`Типичная строка (медиана: половина строк короче, половина длиннее) выросла с ${SP[0].med} слогов в 1957–1960 годах до ${SP[SP.length-1].med} в 1990-е. Средняя — с ${fmt1(SP[0].mean)} до ${fmt1(SP[SP.length-1].mean)}.`;
+$('#f-line').textContent=`Типичная строка (медиана: половина строк короче, половина длиннее) выросла с ${pnr(SP[0].med,['слога','слогов'])} в 1957–1960 годах до ${SP[SP.length-1].med} в 1990-е. Средняя — с ${fmt1(SP[0].mean)} до ${fmt1(SP[SP.length-1].mean)}.`;
 chart(()=>{ const box=$('#c-syl'); const h=250; const [s,w]=svg(box,h); const L=34,R=12,T=20,B=26;
   const x0=SY[0].y, x1=SY[SY.length-1].y; const sx=y=>L+(w-L-R)*(y-x0)/(x1-x0); const hi=18; const sy=v=>h-B-(h-B-T)*v/hi;
   const ax=el('g',{class:'ax'},s);
@@ -4984,7 +4995,7 @@ chart(()=>{ const box=$('#c-syl'); const h=250; const [s,w]=svg(box,h); const L=
   el('polyline',{points:SY.map(r=>`${sx(r.y)},${sy(r.med)}`).join(' '),fill:'none',stroke:css('--s1'),'stroke-width':2},s);
   const last=SY[SY.length-1]; el('circle',{cx:sx(last.y),cy:sy(last.med),r:4.5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':2},s);
   const cw=(w-L-R)/(x1-x0);
-  SY.forEach(r=>el('rect',{class:'hit',x:sx(r.y)-cw/2,y:T,width:cw,height:h-B-T,'data-tip':`${r.y}: медиана ${r.med} слог., 25–75%: ${r.q1}–${r.q3}<br>${fmt(r.n)} строк`},s));
+  SY.forEach(r=>el('rect',{class:'hit',x:sx(r.y)-cw/2,y:T,width:cw,height:h-B-T,'data-tip':`${r.y}: медиана ${r.med} слог., 25–75%: ${r.q1}–${r.q3}<br>${pn(r.n,RUF.line)}`},s));
 });
 table($('#c-syl'),['Год','Медиана','25%','75%','Строк'],SY.map(r=>[String(r.y),r.med,r.q1,r.q3,r.n]));
 chart(()=>{ const box=$('#c-ridge'); const Hh=EX.syl_hist_by_period; const rowH=44, T=10, B=26, L=62, R=10; const h=T+rowH*NPER+B+14; const [s,w]=svg(box,h);
@@ -5000,7 +5011,7 @@ chart(()=>{ const box=$('#c-ridge'); const Hh=EX.syl_hist_by_period; const rowH=
     r.forEach((v,k)=>el('rect',{class:'hit',x:sx(k)-(w-L-R)/58,y:base-rowH,width:(w-L-R)/29,height:rowH,'data-tip':`${PER[i]} · ${k+1}${k===29?'+':''} слог.: ${fmt1(100*v)}% строк<br>медиана периода ${med}`},s)); });
   txt(s,w-R,h-24,'пунктир — медиана',{'text-anchor':'end',style:'font-size:10.5px;fill:var(--muted)'});
 });
-dots($('#c-lpp'),D.lines_per_poem_by_period.map(r=>({l:pshort(r.p),v:r.med,q1:r.q1,q3:r.q3,tip:`${r.p}: медиана ${r.med} строк, 25–75%: ${r.q1}–${r.q3}<br>самое длинное — ${r.max} строк; стихотворений: ${r.n}`})),{h:250,range:true,min:0,max:160,fmtv:v=>fmt(Math.round(v))});
+dots($('#c-lpp'),D.lines_per_poem_by_period.map(r=>({l:pshort(r.p),v:r.med,q1:r.q1,q3:r.q3,tip:`${r.p}: медиана ${pnr(r.med,RUF.line)}, 25–75%: ${r.q1}–${r.q3}<br>самое длинное — ${pnr(r.max,RUF.line)}; стихотворений: ${r.n}`})),{h:250,range:true,min:0,max:160,fmtv:v=>fmt(Math.round(v))});
 
 /* ================= строфа и перенос ================= */
 const FF=EX.final_func.by_period, OE=D.open_line_ends;
@@ -5009,9 +5020,9 @@ chart(()=>{ const st=EX.stanzas; const cols=st[0].b.map(b=>b[0]);
   heatTable($('#c-stanza'),st.map(r=>pshort(r.p)),cols.map(c=>c+' стр.'),st.map(r=>r.b.map(b=>b[1])),{labelW:80,cellH:30,fmtv:v=>fmt1(v),
     tipf:(i,j)=>`${st[i].p}: ${fmt1(st[i].b[j][1])}% строф по ${cols[j]} стр.<br>строф в периоде: ${fmt(st[i].n)}`});
 });
-dots($('#c-ff'),FF.map(r=>({l:pshort(r.p),v:r.share,tip:`${r.p}: ${fmt2(r.share)}% строк<br>${fmt(r.n)} строк`})),{h:200,min:0,max:6,unit:'%',steps:3,fmtv:v=>fmt1(v)});
-EX.final_func.words.forEach(([w,n])=>$('#ff-words').insertAdjacentHTML('beforeend',`<span class="chip static" data-tip="«${esc(w)}» на конце строки: ${n} раз">${esc(w)} · ${n}</span>`));
-dots($('#c-open'),OE.map(r=>({l:pshort(r.p),v:r.open,tip:`${r.p}: ${fmt1(r.open)}% строк без знака в конце<br>${fmt(r.n)} строк`})),{h:240,min:10,max:50,unit:'%',fmtv:v=>fmt1(v)});
+dots($('#c-ff'),FF.map(r=>({l:pshort(r.p),v:r.share,tip:`${r.p}: ${fmt2(r.share)}% строк<br>${pn(r.n,RUF.line)}`})),{h:200,min:0,max:6,unit:'%',steps:3,fmtv:v=>fmt1(v)});
+EX.final_func.words.forEach(([w,n])=>$('#ff-words').insertAdjacentHTML('beforeend',`<span class="chip static" data-tip="«${esc(w)}» на конце строки: ${pnr(n,RUF.raz)}">${esc(w)} · ${n}</span>`));
+dots($('#c-open'),OE.map(r=>({l:pshort(r.p),v:r.open,tip:`${r.p}: ${fmt1(r.open)}% строк без знака в конце<br>${pn(r.n,RUF.line)}`})),{h:240,min:10,max:50,unit:'%',fmtv:v=>fmt1(v)});
 
 /* ================= атлас ================= */
 const MET={
@@ -5076,7 +5087,7 @@ function drawStruct(host, p){
   const box=document.createElement('div'); box.className='struct'; host.appendChild(box);
   let y=4, ln=0, st=1; const rows=[];
   syl.forEach(v=>{ if(!v){ y+=sg; st++; return; } ln++; rows.push([y,v,ln,st]); y+=bh+gap; });
-  const H=y+4; const s=el('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H,role:'img','aria-label':`Строение: ${p.n} строк, ${p.st} строф`},null); box.appendChild(s);
+  const H=y+4; const s=el('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H,role:'img','aria-label':`Строение: ${pnr(p.n,RUF.line)}, ${pnr(p.st,RUF.stanza)}`},null); box.appendChild(s);
   for(let v=5; v<=mx; v+=5) el('line',{x1:sx(v),x2:sx(v),y1:0,y2:H,stroke:css('--grid')},s);
   const u=css('--s1');
   rows.forEach(([yy,v,n,k])=>{ el('rect',{x:L,y:yy,width:Math.max(1,sx(v)-L),height:bh,rx:1.5,fill:u},s);
@@ -5096,8 +5107,8 @@ function selectPoem(i, scroll){
   card.innerHTML=`<div class="eyebrow">Карточка стихотворения</div><div class="ttl">${esc(tidy(p.t))}</div>
     <div class="meta">${p.y||'без даты'} · ${per}</div>${link}
     <div class="tiles">
-      <div><b>${fmt(p.n)}</b><span>строк</span></div><div><b>${fmt(p.w)}</b><span>слов</span></div><div><b>${fmt(p.st)}</b><span>строф, обычно по ${p.stm}</span></div>
-      <div><b>${fmt1(p.med)}</b><span>слогов в медианной строке</span></div><div><b>${nv}</b><span>сущ. на глагол</span></div><div><b>${fmt1(p.rh)}%</b><span>строк с рифмой рядом</span></div>
+      <div><b>${fmt(p.n)}</b><span>${plural(p.n,RUF.line)}</span></div><div><b>${fmt(p.w)}</b><span>${plural(p.w,RUF.word)}</span></div><div><b>${fmt(p.st)}</b><span>${plural(p.st,['строфа, обычно по','строфы, обычно по','строф, обычно по'])} ${p.stm}</span></div>
+      <div><b>${fmt1(p.med)}</b><span>${plural(p.med,['слог в медианной строке','слога в медианной строке','слогов в медианной строке'],1)}</span></div><div><b>${nv}</b><span>сущ. на глагол</span></div><div><b>${fmt1(p.rh)}%</b><span>строк с рифмой рядом</span></div>
       <div><b>${fmt1(p.open)}%</b><span>строк без знака в конце</span></div><div><b>${fmt1(p.fe)}%</b><span>на предлоге, союзе</span></div><div><b style="font-size:17px">${(m=>m?(m[1]?m[1]+'-стопный '+m[0]:m[0]):'—')(VS.meter_by_poem[String(i)])}</b><span>размер</span></div>
     </div>
     <h4>Строение: строка за строкой, шкала — слоги</h4><div id="card-struct"></div>
@@ -5113,17 +5124,17 @@ function selectPoem(i, scroll){
 
 /* ================= частые слова ================= */
 const MT=D.mattr;
-$('#t-dict').innerHTML=`В стихах ${fmt(D.hapax_poetry.types)} разных слов (все формы одного слова — «окно», «окна», «окном» — считаются вместе); ${fmt(D.hapax_poetry.hapax)} из них (${fmt1(100*D.hapax_poetry.hapax/D.hapax_poetry.types)}%) встречаются ровно один раз. Ниже — по 20 самых частых слов без предлогов, союзов и местоимений, на 10 000 слов текста, стихи рядом с прозой. Проза говорит о поэте и языке, стихи — о жизни, времени, глазе и свете. Слово можно нажать.`;
+$('#t-dict').innerHTML=`В стихах ${pn(D.hapax_poetry.types,RUF.uword)} (все формы одного слова — «окно», «окна», «окном» — считаются вместе); ${fmt(D.hapax_poetry.hapax)} из них (${fmt1(100*D.hapax_poetry.hapax/D.hapax_poetry.types)}%) встречаются ровно один раз. Ниже — по 20 самых частых слов без предлогов, союзов и местоимений, на 10 000 слов текста, стихи рядом с прозой. Проза говорит о поэте и языке, стихи — о жизни, времени, глазе и свете. Слово можно нажать.`;
 let posKey='top_nouns';
 function drawTop(){ const host=$('#c-top'); host.innerHTML='';
   const jobs=['poetry','prose'].map(g=>{ const p=document.createElement('div'); p.className='panel'; p.style.margin='0';
     p.innerHTML=`<div class="cap"><span class="t">${g==='poetry'?'Стихи':'Проза'}</span><span class="u">на 10 000 слов</span></div><div class="chart"></div>`; host.appendChild(p); return [p.querySelector('.chart'),g]; });
-  jobs.forEach(([box,g])=>hbars(box,D[posKey][g].slice(0,20).map(r=>({l:r.w,v:r.per10k,k:norm(r.w),tip:`${esc(r.w)}: ${fmt(r.n)} раз, ${fmt1(r.per10k)} на 10 000 слов<br>нажмите, чтобы открыть в словоискателе`})),
+  jobs.forEach(([box,g])=>hbars(box,D[posKey][g].slice(0,20).map(r=>({l:r.w,v:r.per10k,k:norm(r.w),tip:`${esc(r.w)}: ${pn(r.n,RUF.raz)}, ${fmt1(r.per10k)} на 10 000 слов<br>нажмите, чтобы открыть в словоискателе`})),
     {color:g==='poetry'?'var(--s1)':'var(--s2)',labelW:120,rowH:22,onClick:r=>openWord(r.k,true)}));
 }
 seg($('#seg-pos'),[['top_nouns','существительные'],['top_verbs','глаголы'],['top_adj','прилагательные']],posKey,v=>{ posKey=v; drawTop(); });
 drawTop();
-dots($('#c-mattr'),MT.map(r=>({l:pshort(r.p),v:r.mattr,tip:`${r.p}: в среднем ${Math.round(r.mattr*500)} разных слов на каждые 500 подряд<br>${fmt(r.tokens)} слов`})),{h:230,min:0.55,max:0.75,ref:D.mattr_prose,refLabel:`проза ${D.mattr_prose.toFixed(3)}`,fmtv:v=>v.toFixed(2)});
+dots($('#c-mattr'),MT.map(r=>({l:pshort(r.p),v:r.mattr,tip:`${r.p}: в среднем ${pnr(Math.round(r.mattr*500),RUF.uword)} на каждые 500 подряд<br>${pn(r.tokens,RUF.word)}`})),{h:230,min:0.55,max:0.75,ref:D.mattr_prose,refLabel:`проза ${D.mattr_prose.toFixed(3)}`,fmtv:v=>v.toFixed(2)});
 table($('#c-mattr'),['Период','Доля разных слов','Слов'],MT.map(r=>[r.p,r.mattr.toFixed(3),r.tokens]));
 chart(()=>{ const box=$('#c-zipf'); const h=230; const [s,w]=svg(box,h); const L=48,R=12,T=12,B=28; const Z=D.zipf;
   const lx=Math.log10, xmax=lx(Z[Z.length-1].r), ymax=lx(Z[0].f)+0.1;
@@ -5136,7 +5147,7 @@ chart(()=>{ const box=$('#c-zipf'); const h=230; const [s,w]=svg(box,h); const L
 });
 
 /* ================= словоискатель ================= */
-$('#lex-n').textContent=fmt(KEYS.length);
+$('#lex-n').textContent=fmt(KEYS.length)+' '+plural(KEYS.length,['слово, встретившееся','слова, встретившихся','слов, встретившихся']);
 const X_EX=['время','стекло','пустота','вещь','ангел','империя','рыба','зеркало','Рим','звезда','ястреб','мрамор'];
 function xSug(list){ const h=$('#x-sug'); h.innerHTML=''; list.forEach(k=>{ const kk=norm(k); if(!LEX[kk]) return; const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=disp(kk);
   b.addEventListener('click',()=>openWord(kk,false)); h.appendChild(b); }); }
@@ -5150,16 +5161,16 @@ function renderWord(k){
   const yrs=pids.map(i=>PS[i].y).filter(Boolean); const y0=yrs.length?Math.min(...yrs):null, y1=yrs.length?Math.max(...yrs):null;
   const exs=EX.examples[k]||[];
   out.innerHTML=`<div class="panel" style="margin:0"><div class="eyebrow">слово</div><div class="big">${esc(dw)}</div>
-      <p style="margin:0 0 10px">${fmt(tot)} употреблений в ${fmt(pids.length)} стихотворениях из ${fmt(PS.length)}${y0?`, с ${y0} по ${y1} год`:''}; в прозе — ${fmt(pr)}.
-      На 10 000 слов: стихи ${fmt1(poRate)}, проза ${fmt1(prRate)}${poRate>0&&prRate>0?` — в ${poRate>prRate?'стихах':'прозе'} в ${fmt1(Math.max(poRate,prRate)/Math.min(poRate,prRate))} раза чаще`:''}.</p>
+      <p style="margin:0 0 10px">${pn(tot,RUF.use)} в ${fmt(pids.length)} ${plural(pids.length,['стихотворении','стихотворениях'])} из ${fmt(PS.length)}${y0?`, с ${y0} по ${y1} год`:''}; в прозе — ${fmt(pr)}.
+      На 10 000 слов: стихи ${fmt1(poRate)}, проза ${fmt1(prRate)}${poRate>0&&prRate>0?` — в ${poRate>prRate?'стихах':'прозе'} в ${fmt1(Math.max(poRate,prRate)/Math.min(poRate,prRate))} ${plural(Math.max(poRate,prRate)/Math.min(poRate,prRate),RUF.raz,1)} чаще`:''}.</p>
       <div class="chart" id="x-chart"></div>
       <div class="btnrow"><button type="button" class="btn" id="x-hl">Подсветить на страницах</button></div>
       ${exs.length?`<h3 style="margin-top:16px">Примеры употребления</h3>`+exs.map(x=>`<blockquote>${esc(x.l)}<cite>«${esc(tidy(PS[x.pid].t))}», ${PS[x.pid].y||'без даты'}</cite></blockquote>`).join(''):''}
     </div>
-    <div class="panel" style="margin:0"><div class="cap"><span class="t">Где встречается</span><span class="u">${fmt(pids.length)} стихотворений, по времени</span></div>
+    <div class="panel" style="margin:0"><div class="cap"><span class="t">Где встречается</span><span class="u">${pn(pids.length,RUF.poem)}, по времени</span></div>
       <div class="plist" id="x-plist"></div></div>`;
-  const rows=PER.map((p,i)=>({l:PSH[i],v:rates[i],lab:c[i]?String(c[i]):'',tip:`${p}: ${c[i]} раз, ${fmt1(rates[i])} на 10 000 слов`}));
-  rows.push({l:'проза',v:prRate,c:'var(--s2)',lab:pr?String(pr):'',tip:`проза: ${pr} раз, ${fmt1(prRate)} на 10 000 слов`});
+  const rows=PER.map((p,i)=>({l:PSH[i],v:rates[i],lab:c[i]?String(c[i]):'',tip:`${p}: ${pnr(c[i],RUF.raz)}, ${fmt1(rates[i])} на 10 000 слов`}));
+  rows.push({l:'проза',v:prRate,c:'var(--s2)',lab:pr?String(pr):'',tip:`проза: ${pnr(pr,RUF.raz)}, ${fmt1(prRate)} на 10 000 слов`});
   vbars($('#x-chart'),rows,{h:190,fmtv:v=>fmt1(v)});
   const pl=$('#x-plist'); const show=n=>{ pl.innerHTML=''; pids.slice(0,n).forEach(i=>{ const b=document.createElement('button'); b.type='button';
       b.innerHTML=`${esc(tidy(PS[i].t))}<span class="y">${PS[i].y||'б/д'}</span>`; b.addEventListener('click',()=>selectPoem(i,true)); pl.appendChild(b); });
@@ -5172,8 +5183,8 @@ xSug(X_EX);
 
 /* ================= слова эпох и сравнение ================= */
 D.distinctive.forEach(d=>{ const m=Math.max(...d.words.map(w=>w.z));
-  $('#c-eras').insertAdjacentHTML('beforeend',`<div class="era"><div class="h"><b>${d.p}</b><span>${fmt(d.tokens)} слов</span></div><ul class="wl">${
-    d.words.map(w=>{ const k=norm(w.w); return `<li data-tip="${esc(w.w)}: ${w.n} раз в периоде; сила отличия ${fmt1(w.z)}"><button type="button" data-k="${esc(k)}">${esc(w.w)}</button><span class="bar" style="width:${Math.round(100*w.z/m)}%"></span></li>`; }).join('')}</ul></div>`); });
+  $('#c-eras').insertAdjacentHTML('beforeend',`<div class="era"><div class="h"><b>${d.p}</b><span>${pn(d.tokens,RUF.word)}</span></div><ul class="wl">${
+    d.words.map(w=>{ const k=norm(w.w); return `<li data-tip="${esc(w.w)}: ${pnr(w.n,RUF.raz)} в периоде; сила отличия ${fmt1(w.z)}"><button type="button" data-k="${esc(k)}">${esc(w.w)}</button><span class="bar" style="width:${Math.round(100*w.z/m)}%"></span></li>`; }).join('')}</ul></div>`); });
 $('#c-eras').querySelectorAll('button[data-k]').forEach(b=>b.addEventListener('click',()=>openWord(b.dataset.k,true)));
 const ca=$('#cmp-a'), cb=$('#cmp-b'); PER.forEach((p,i)=>{ ca.insertAdjacentHTML('beforeend',`<option value="${i}">${p}</option>`); cb.insertAdjacentHTML('beforeend',`<option value="${i}">${p}</option>`); });
 ca.value='1'; cb.value='3';
@@ -5184,7 +5195,7 @@ function compare(){
     const d=Math.log((yA+aw)/(nA+a0-yA-aw))-Math.log((yB+aw)/(nB+a0-yB-aw)); res.push([k,d/Math.sqrt(1/(yA+aw)+1/(yB+aw)),yA,yB]); }
   res.sort((x,y)=>y[1]-x[1]);
   const A=res.slice(0,15), B=res.slice(-15).reverse();
-  const mk=(L,col,side)=>L.map(([k,z,yA,yB])=>({l:disp(k),v:Math.abs(z),k,c:col,tip:`${esc(disp(k))}: ${PER[a]} — ${yA}, ${PER[b]} — ${yB} раз; z = ${fmt1(z)}`}));
+  const mk=(L,col,side)=>L.map(([k,z,yA,yB])=>({l:disp(k),v:Math.abs(z),k,c:col,tip:`${esc(disp(k))}: ${PER[a]} — ${yA}, ${PER[b]} — ${pnr(yB,RUF.raz)}; z = ${fmt1(z)}`}));
   hbars($('#c-cmp-a'),a===b?[]:mk(A,'var(--s1)'),{labelW:120,rowH:22,onClick:r=>openWord(r.k,true)});
   hbars($('#c-cmp-b'),a===b?[]:mk(B,'var(--b)'),{labelW:120,rowH:22,onClick:r=>openWord(r.k,true)});
 }
@@ -5193,7 +5204,7 @@ ca.addEventListener('change',compare); cb.addEventListener('change',compare); co
 /* ================= эпитеты и рифмы ================= */
 let epSel='all';
 function drawEp(){ const L=epSel==='all'?EX.epithets.all.slice(0,20):EX.epithets.by_period[+epSel];
-  hbars($('#c-ep'),L.map(([t,n])=>({l:t,v:n,tip:`«${esc(t)}»: ${n} раз${epSel==='all'?'':' в '+PER[+epSel]}`})),{labelW:170,rowH:22,fmtv:fmt}); }
+  hbars($('#c-ep'),L.map(([t,n])=>({l:t,v:n,tip:`«${esc(t)}»: ${pnr(n,RUF.raz)}${epSel==='all'?'':' в '+PER[+epSel]}`})),{labelW:170,rowH:22,fmtv:fmt}); }
 seg($('#seg-ep'),[['all','все'],...PER.map((p,i)=>[String(i),PSH[i]])],epSel,v=>{ epSel=v; drawEp(); });
 drawEp();
 
@@ -5215,14 +5226,14 @@ function drawDrill(){
   const rows=EX.field_drill[f]; const cols=PSH.concat(['проза']);
   const M=rows.map(([w,pc,prc])=>pc.map((v,j)=>1e4*v/EX.per_lemmas[j]).concat([1e4*prc/EX.prose_lemmas]));
   heatTable($('#c-drill'),rows.map(r=>r[0]),cols,M,{labelW:130,cellH:24,colTint:j=>j===NPER?'--s2':null,
-    tipf:(i,j)=>`${rows[i][0]} · ${cols[j]}: ${j<NPER?rows[i][1][j]:rows[i][2]} раз, ${fmt1(M[i][j])} на 10 000 слов`});
+    tipf:(i,j)=>`${rows[i][0]} · ${cols[j]}: ${pnr(j<NPER?rows[i][1][j]:rows[i][2],RUF.raz)}, ${fmt1(M[i][j])} на 10 000 слов`});
 }
 seg($('#seg-heat'),[['rate','частота'],['dev','отклонение']],heatMode,v=>{ heatMode=v; drawHeat(); });
 drawHeat(); drawDrill();
 
 /* ================= грамматика ================= */
 const PSo=D.pos, pk=PSo.reduce((a,b)=>b.noun_verb>a.noun_verb?b:a);
-$('#f-pos').textContent=`В ${pk.p} годы на один глагол приходится ${fmt1(pk.noun_verb)} существительного — больше, чем в любом другом периоде и чем в прозе (${fmt1(D.pos_prose.noun_verb)}). Проще говоря, в этих стихах больше предметов и меньше действий: мир описан тем, что в нём стоит, а не тем, что в нём происходит.`;
+$('#f-pos').textContent=`В ${pk.p} годы на один глагол приходится ${fmt1(pk.noun_verb)} ${plural(pk.noun_verb,['существительное','существительных','существительных','существительного'],1)} — больше, чем в любом другом периоде и чем в прозе (${fmt1(D.pos_prose.noun_verb)}). Проще говоря, в этих стихах больше предметов и меньше действий: мир описан тем, что в нём стоит, а не тем, что в нём происходит.`;
 dots($('#c-nv'),PSo.map(r=>({l:pshort(r.p),v:r.noun_verb,tip:`${r.p}: ${fmt1(r.noun_verb)} сущ. на глагол<br>сущ. ${fmt1(r.noun)}% · глаг. ${fmt1(r.verb)}% · прил. ${fmt1(r.adj)}%`})),{h:220,min:1.8,max:3.4,ref:D.pos_prose.noun_verb,refLabel:`проза ${fmt1(D.pos_prose.noun_verb)}`,fmtv:v=>fmt1(v)});
 vbars($('#c-part'),PSo.map(r=>({l:pshort(r.p),v:r.part,lab:fmt1(r.part),tip:`${r.p}: ${fmt1(r.part)}% слов — причастия и деепричастия`})),{h:220});
 table($('#c-nv'),['Период','Сущ., %','Глаг., %','Прил., %','Прич.+дееприч., %','Сущ./глаг.'],PSo.map(r=>[r.p,r.noun,r.verb,r.adj,r.part,r.noun_verb]));
@@ -5243,7 +5254,7 @@ table($('#c-pron'),['Период','я','ты','мы','вы','он','она','о
 
 /* ================= пунктуация ================= */
 const PU=D.punct; const marks=Object.keys(PU.poetry);
-$('#t-punct').innerHTML=`Тире у Бродского — рабочий инструмент и в стихах, и в прозе: ${fmt1(PU.poetry['тире'])} и ${fmt1(PU.prose['тире'])} на 1000 слов. Скобок в прозе в ${fmt1(PU.prose['скобки']/PU.poetry['скобки'])} раза больше, восклицаний — в ${fmt1(PU.poetry['восклицание']/PU.prose['восклицание'])} раза меньше, чем в стихах.`;
+$('#t-punct').innerHTML=`Тире у Бродского — рабочий инструмент и в стихах, и в прозе: ${fmt1(PU.poetry['тире'])} и ${fmt1(PU.prose['тире'])} на 1000 слов. Скобок в прозе в ${fmt1(PU.prose['скобки']/PU.poetry['скобки'])} ${plural(PU.prose['скобки']/PU.poetry['скобки'],RUF.raz,1)} больше, восклицаний — в ${fmt1(PU.poetry['восклицание']/PU.prose['восклицание'])} ${plural(PU.poetry['восклицание']/PU.prose['восклицание'],RUF.raz,1)} меньше, чем в стихах.`;
 chart(()=>{ const box=$('#c-punct'); const rowH=34, labelW=128; const h=marks.length*rowH+24; const [s,w]=svg(box,h);
   const max=niceMax(Math.max(...marks.flatMap(m=>[PU.poetry[m],PU.prose[m]]))); const x0=labelW, x1=w-46; const sc=v=>x0+(x1-x0)*v/max;
   const ax=el('g',{class:'ax'},s); ticks(max,4).forEach(t=>{ el('line',{x1:sc(t),x2:sc(t),y1:0,y2:h-20,stroke:css('--grid')},ax); txt(ax,sc(t),h-6,fmt(t),{'text-anchor':'middle'}); });
@@ -5280,15 +5291,15 @@ chart(()=>{ const box=$('#c-palette'); const P=EX.colors_by_period; const rowH=3
     txt(s,labelW-10,y+17,pshort(r.p),{'text-anchor':'end',style:'fill:var(--ink)'});
     r.c.forEach(([name,hex,n])=>{ const ww=W*n/tot; if(ww<0.5) return; el('rect',{x:x+.5,y,width:Math.max(.5,ww-1),height:rowH-10,fill:hex,stroke:ring,'stroke-width':.6,'data-tip':`${PER[i]} · ${name}: ${n} (${fmt1(100*n/tot)}%)`},s); x+=ww; }); });
 });
-hbars($('#c-colors'),CL.map(c=>({l:c.w,v:c.n,hex:c.hex,k:norm(c.w),tip:`${c.w}: ${c.n} употреблений<br>нажмите, чтобы открыть в словоискателе`})),{color:'var(--neutral-bar)',labelW:104,swatch:true,rowH:22,fmtv:fmt,onClick:r=>{ if(LEX[r.k]) openWord(r.k,true); }});
+hbars($('#c-colors'),CL.map(c=>({l:c.w,v:c.n,hex:c.hex,k:norm(c.w),tip:`${c.w}: ${pnr(c.n,RUF.use)}<br>нажмите, чтобы открыть в словоискателе`})),{color:'var(--neutral-bar)',labelW:104,swatch:true,rowH:22,fmtv:fmt,onClick:r=>{ if(LEX[r.k]) openWord(r.k,true); }});
 
 /* ================= венеция ================= */
 const V=D.venice;
-$('#t-ven').innerHTML=`Сборник «Иосиф Бродский. Венеция» собран так: словарь венецианских слов и топонимов нашёл ${V.selection.candidates} кандидата, каждый прочитан в контексте, итог сверен с перечнем С. Паничьери (eSamizdat). Её восемь русских стихотворений о Венеции 1973–1995 годов найдены все; вместе с «Набережной неисцелимых» это полный список венецианских текстов, известный по её работе.`;
-$('#f-ven').textContent=`Венеция у Бродского — это тело, город и вода. Строка венецианских стихов в среднем ${fmt1(V.line_mean_venice)} слога против ${fmt1(V.line_mean_same_years)} у остальных стихов 1973–1995 годов; медиана у тех и других — ${fmt(V.line_med_venice)}.`;
+$('#t-ven').innerHTML=`Сборник «Иосиф Бродский. Венеция» собран так: словарь венецианских слов и топонимов нашёл ${V.selection.candidates} ${plural(V.selection.candidates,['кандидата','кандидатов'])}, каждый прочитан в контексте, итог сверен с перечнем С. Паничьери (eSamizdat). Её восемь русских стихотворений о Венеции 1973–1995 годов найдены все; вместе с «Набережной неисцелимых» это полный список венецианских текстов, известный по её работе.`;
+$('#f-ven').textContent=`Венеция у Бродского — это тело, город и вода. Строка венецианских стихов в среднем ${fmt1(V.line_mean_venice)} ${plural(V.line_mean_venice,['слог','слога','слогов'],1)} против ${fmt1(V.line_mean_same_years)} у остальных стихов 1973–1995 годов; медиана у тех и других — ${fmt(V.line_med_venice)}.`;
 chart(()=>{ const host=$('#c-ven-sil'); host.innerHTML=''; EX.venice_sil.forEach(r=>{ const f=document.createElement('figure'); const cv=document.createElement('canvas');
   cv.setAttribute('role','img'); cv.setAttribute('aria-label',`Силуэт стихотворения «${r.t}»`); f.appendChild(cv);
-  const lines=r.syl.filter(Boolean).length; f.insertAdjacentHTML('beforeend',`<figcaption>${esc(r.t)}<span>${r.y} · ${lines} строк</span></figcaption>`); host.appendChild(f);
+  const lines=r.syl.filter(Boolean).length; f.insertAdjacentHTML('beforeend',`<figcaption>${esc(r.t)}<span>${r.y} · ${pnr(lines,RUF.line)}</span></figcaption>`); host.appendChild(f);
   drawSil(cv,r.syl,{W:Math.max(96,Math.min(140,f.clientWidth||112)),maxH:230,lh:2}); cv.style.background='var(--thumb)'; cv.style.border='1px solid var(--ring)'; }); });
 chart(()=>{ const box=$('#c-ven-fields'); const F=Object.keys(V.fields_venice).sort((a,b)=>(V.fields_venice[b]-V.fields_poetry[b])-(V.fields_venice[a]-V.fields_poetry[a]));
   const rowH=30,labelW=156; const h=F.length*rowH+24; const [s,w]=svg(box,h);
@@ -5300,12 +5311,12 @@ chart(()=>{ const box=$('#c-ven-fields'); const F=Object.keys(V.fields_venice).s
   el('line',{x1:x0,x2:x0,y1:0,y2:h-20,stroke:css('--axis')},s);
 });
 table($('#c-ven-fields'),['Поле','Венеция','Остальные стихи'],Object.keys(V.fields_venice).map(f=>[f,V.fields_venice[f],V.fields_poetry[f]]));
-hbars($('#c-ven-dist'),V.distinctive.map(r=>({l:r.w,v:r.z,k:norm(r.w),tip:`${esc(r.w)}: ${r.n} раз в венецианских стихах, z = ${fmt1(r.z)}`})),{labelW:112,rowH:22,onClick:r=>{ if(LEX[r.k]) openWord(r.k,true); }});
-hbars($('#c-ven-nab'),V.nab.lex.map(r=>({l:r.w,v:r.per10k,tip:`${esc(r.w)}: ${r.n} раз в «Набережной», ${fmt1(r.per10k)} на 10 000 слов`})),{color:'var(--s2)',labelW:112,rowH:22});
+hbars($('#c-ven-dist'),V.distinctive.map(r=>({l:r.w,v:r.z,k:norm(r.w),tip:`${esc(r.w)}: ${pnr(r.n,RUF.raz)} в венецианских стихах, z = ${fmt1(r.z)}`})),{labelW:112,rowH:22,onClick:r=>{ if(LEX[r.k]) openWord(r.k,true); }});
+hbars($('#c-ven-nab'),V.nab.lex.map(r=>({l:r.w,v:r.per10k,tip:`${esc(r.w)}: ${pnr(r.n,RUF.raz)} в «Набережной», ${fmt1(r.per10k)} на 10 000 слов`})),{color:'var(--s2)',labelW:112,rowH:22});
 
 /* ================= проза ================= */
 const SE=D.sentences, WL=D.word_len, ES=EX.essays.filter(e=>e.sm!=null);
-$('#t-prose').innerHTML=`В прозе ${fmt(SE.n)} предложений: медиана — ${fmt1(SE.median)} слов, среднее — ${fmt1(SE.mean)}, каждое десятое длиннее ${fmt(SE.p90)} слов. Слово в прозе длиннее, чем в стихах: ${fmt1(WL.prose.mean)} против ${fmt1(WL.poetry.mean)} букв. На карте эссе видно, что длинные вещи пишутся длинными предложениями.`;
+$('#t-prose').innerHTML=`В прозе ${pn(SE.n,RUF.sent)}: медиана — ${pn(SE.median,RUF.word,1)}, среднее — ${fmt1(SE.mean)}, каждое десятое длиннее ${fmt(SE.p90)} ${plural(SE.p90,['слова','слов'])}. Слово в прозе длиннее, чем в стихах: ${fmt1(WL.prose.mean)} против ${fmt1(WL.poetry.mean)} ${plural(WL.poetry.mean,RUF.letter,1)}. На карте эссе видно, что длинные вещи пишутся длинными предложениями.`;
 chart(()=>{ const box=$('#c-essays'); const h=340; const [s,w]=svg(box,h); const L=44,R=18,T=16,B=30;
   const xs=ES.map(e=>Math.log10(e.w)); const x0=Math.floor(Math.min(...xs)*4)/4, x1=Math.ceil(Math.max(...xs)*4)/4; const ymax=niceMax(Math.max(...ES.map(e=>e.sm))*1.1);
   const sx=v=>L+(w-L-R)*(Math.log10(v)-x0)/(x1-x0), sy=v=>h-B-(h-B-T)*v/ymax; const ax=el('g',{class:'ax'},s);
@@ -5314,40 +5325,40 @@ chart(()=>{ const box=$('#c-essays'); const h=340; const [s,w]=svg(box,h); const
   txt(s,L+4,T+8,'слов в предложении, медиана',{style:'fill:var(--ink-2)'});
   const lab=new Set([...ES].sort((a,b)=>b.w-a.w).slice(0,3).concat([...ES].sort((a,b)=>b.sm-a.sm).slice(0,2)).map(e=>e.t));
   ES.forEach(e=>{ el('circle',{cx:sx(e.w),cy:sy(e.sm),r:5,fill:css('--s2'),opacity:.8,stroke:css('--surface'),'stroke-width':1.5,
-      'data-tip':`«${esc(tidy(e.t))}»${e.y?', '+e.y:''}<br>${fmt(e.w)} слов · медиана ${fmt1(e.sm)} слов в предложении<br>тире ${fmt1(e.dash)}, скобок ${fmt1(e.par)} на 1000 слов`},s);
+      'data-tip':`«${esc(tidy(e.t))}»${e.y?', '+e.y:''}<br>${pn(e.w,RUF.word)} · медиана ${pn(e.sm,RUF.word,1)} в предложении<br>тире ${fmt1(e.dash)}, скобок ${fmt1(e.par)} на 1000 слов`},s);
     if(lab.has(e.t)){ const t=tidy(e.t).replace(/\s*[-–(].*$/,''); const right=sx(e.w)<w*0.75; txt(s,sx(e.w)+(right?8:-8),sy(e.sm)+4,t.length>34?t.slice(0,32)+'…':t,{'text-anchor':right?'start':'end',style:'font-family:var(--f-body);font-size:12.5px;fill:var(--ink)'}); } });
 });
 table($('#c-essays'),['Текст','Год','Слов','Медиана слов в предл.','Тире на 1000','Скобок на 1000'],ES.slice().sort((a,b)=>b.w-a.w).map(e=>[tidy(e.t),e.y?String(e.y):'—',e.w,e.sm,e.dash,e.par]));
-vbars($('#c-sent'),SE.hist.map(r=>({l:r.b,v:r.n,tip:`${r.b} слов: ${fmt(r.n)} предложений`})),{h:220,color:'var(--s2)',fmtv:fmt});
+vbars($('#c-sent'),SE.hist.map(r=>({l:r.b,v:r.n,tip:`${r.b} слов: ${pn(r.n,RUF.sent)}`})),{h:220,color:'var(--s2)',fmtv:fmt});
 chart(()=>{ const box=$('#c-wl'); const h=220; const [s,w]=svg(box,h); const L=34,R=10,T=12,B=26;
   const A=WL.poetry.hist, Bp=WL.prose.hist; const mx=niceMax(Math.max(...A,...Bp)); const sx=i=>L+(w-L-R)*i/14, sy=v=>h-B-(h-B-T)*v/mx;
   const ax=el('g',{class:'ax'},s); ticks(mx,4).forEach(t=>{ el('line',{x1:L,x2:w-R,y1:sy(t),y2:sy(t),stroke:css('--grid')},ax); txt(ax,L-6,sy(t)+4,t,{'text-anchor':'end'}); });
   [1,3,5,7,9,11,13,15].forEach(i=>txt(ax,sx(i-1),h-8,i===15?'15+':i,{'text-anchor':'middle'}));
   [[A,'--s1'],[Bp,'--s2']].forEach(([arr,c])=>{ el('polyline',{points:arr.map((v,i)=>`${sx(i)},${sy(v)}`).join(' '),fill:'none',stroke:css(c),'stroke-width':2},s);
     arr.forEach((v,i)=>el('circle',{cx:sx(i),cy:sy(v),r:2.5,fill:css(c),stroke:css('--surface'),'stroke-width':1.5},s)); });
-  A.forEach((v,i)=>el('rect',{class:'hit',x:sx(i)-(w-L-R)/28,y:T,width:(w-L-R)/14,height:h-B-T,'data-tip':`${i+1}${i===14?'+':''} букв: стихи ${fmt1(v)}%, проза ${fmt1(Bp[i])}%`},s));
+  A.forEach((v,i)=>el('rect',{class:'hit',x:sx(i)-(w-L-R)/28,y:T,width:(w-L-R)/14,height:h-B-T,'data-tip':`${i+1}${i===14?'+':''} ${plural(i+1,RUF.letter)}: стихи ${fmt1(v)}%, проза ${fmt1(Bp[i])}%`},s));
 });
-$('#q-sent').innerHTML=`Самое длинное предложение — ${SE.longest.words} слов, эссе «${esc(tidy(SE.longest.title))}»: «${esc(SE.longest.start)}…»`;
+$('#q-sent').innerHTML=`Самое длинное предложение — ${pnr(SE.longest.words,RUF.word)}, эссе «${esc(tidy(SE.longest.title))}»: «${esc(SE.longest.start)}…»`;
 
 /* ================= английский, рекорды ================= */
 const EN=D.english;
-$('#t-en').innerHTML=`В семитомнике ${EN.poems} стихотворений, написанных Бродским по-английски, — ${fmt(EN.words)} слов. Английская строка у него длиннее русской: в среднем ${fmt1(EN.words_per_line)} слова против ${fmt1(EN.ru_words_per_line)}. Отчасти это свойство языка: в английском больше коротких служебных слов.`;
+$('#t-en').innerHTML=`В семитомнике ${EN.poems} ${plural(EN.poems,['стихотворение, написанное Бродским по-английски','стихотворения, написанных Бродским по-английски','стихотворений, написанных Бродским по-английски'])}, — ${pn(EN.words,RUF.word)}. Английская строка у него длиннее русской: в среднем ${pn(EN.words_per_line,RUF.word,1)} против ${fmt1(EN.ru_words_per_line)}. Отчасти это свойство языка: в английском больше коротких служебных слов.`;
 const ENSTOP=new Set(['don','were','our','where','can','will','has','had','have','just','now','how','its','your']);
 hbars($('#c-en'),EN.top.filter(r=>!ENSTOP.has(r.w)).slice(0,12).map(r=>({l:r.w,v:r.n})),{color:'var(--neutral-bar)',labelW:90,rowH:22,fmtv:fmt});
 const RC=D.records;
-[['Самое длинное стихотворение',`«${tidy(RC.longest_poem.t)}»`,`${fmt(RC.longest_poem.lines)} строк, ${fmt(RC.longest_poem.words)} слов`],
- ['Медиана',`${fmt(RC.median_lines)} строк`,'Половина стихотворений короче, половина длиннее'],
- ['Самое короткое',`${RC.shortest_poem.lines} строк`,RC.shortest_poem.t],
- ['Длинная строка',`${RC.p99_syllables} слогов`,'99% строк не длиннее этого'],
- ['Самое частое эпитетное сочетание',EX.epithets.all[0][0],`${EX.epithets.all[0][1]} раз в стихах`],
- ['Самая частая рифма',`${VS.rhyme.top_pairs[0][0]} — ${VS.rhyme.top_pairs[0][1]}`,`${VS.rhyme.top_pairs[0][2]} раз`],
- ['Самое длинное слово',RC.longest_single_word.w,`${RC.longest_single_word.len} букв · «${tidy(RC.longest_single_word.t)}»`],
- ['Самая длинная связка через дефис',RC.longest_word.w.replace(/-/g,'-​'),`${RC.longest_word.len} букв · «${RC.longest_word.t}»`]]
+[['Самое длинное стихотворение',`«${tidy(RC.longest_poem.t)}»`,`${pn(RC.longest_poem.lines,RUF.line)}, ${pn(RC.longest_poem.words,RUF.word)}`],
+ ['Медиана',`${pn(RC.median_lines,RUF.line)}`,'Половина стихотворений короче, половина длиннее'],
+ ['Самое короткое',`${pnr(RC.shortest_poem.lines,RUF.line)}`,RC.shortest_poem.t],
+ ['Длинная строка',`${pnr(RC.p99_syllables,RUF.syl)}`,'99% строк не длиннее этого'],
+ ['Самое частое эпитетное сочетание',EX.epithets.all[0][0],`${pnr(EX.epithets.all[0][1],RUF.raz)} в стихах`],
+ ['Самая частая рифма',`${VS.rhyme.top_pairs[0][0]} — ${VS.rhyme.top_pairs[0][1]}`,`${pnr(VS.rhyme.top_pairs[0][2],RUF.raz)}`],
+ ['Самое длинное слово',RC.longest_single_word.w,`${pnr(RC.longest_single_word.len,RUF.letter)} · «${tidy(RC.longest_single_word.t)}»`],
+ ['Самая длинная связка через дефис',RC.longest_word.w.replace(/-/g,'-​'),`${pnr(RC.longest_word.len,RUF.letter)} · «${RC.longest_word.t}»`]]
  .forEach(([k,v,d])=>$('#records').insertAdjacentHTML('beforeend',`<div class="rec"><div class="k">${k}</div><div class="v">${esc(v)}</div><div class="d">${esc(d)}</div></div>`));
 
 /* ================= методика ================= */
-[`Источник — объединённая книга: ${fmt(O.total_records)} текстов (сайт iosif-brodskiy.ru и «Сочинения Иосифа Бродского» в 7 томах, Пушкинский фонд). Анализируются только собственные русские тексты; жанр определён по форме: стихами считается текст, где не меньше 85% строк короче 76 знаков.`,
- `Из стихов убраны редакторские пометы («Текст приводится по СИП», «— С. В.»), сноски и строки с датой; ${RC.dropped_editorial_lines} строки длиннее 28 слов признаны вставками прозы и отброшены. «Набережная неисцелимых» входит в прозу один раз, в полной редакции семитомника.`,
+[`Источник — объединённая книга: ${pn(O.total_records,RUF.text)} (сайт iosif-brodskiy.ru и «Сочинения Иосифа Бродского» в 7 томах, Пушкинский фонд). Анализируются только собственные русские тексты; жанр определён по форме: стихами считается текст, где не меньше 85% строк короче 76 знаков.`,
+ `Из стихов убраны редакторские пометы («Текст приводится по СИП», «— С. В.»), сноски и строки с датой; ${RC.dropped_editorial_lines} ${plural(RC.dropped_editorial_lines,['строка длиннее 28 слов признана вставкой прозы и отброшена','строки длиннее 28 слов признаны вставками прозы и отброшены','строк длиннее 28 слов признаны вставками прозы и отброшены'])}. «Набережная неисцелимых» входит в прозу один раз, в полной редакции семитомника.`,
  `Леммы — <code>pymorphy3</code>, первый разбор без снятия омонимии: «есть» (быть/кушать) неразличимо и исключено из списков глаголов. Словоискатель работает по начальным формам; буквы ё и е не различаются.`,
  `Год стихотворения взят из даты в последних строках (${fmt1(D.years.share_dated)}%). Без даты период берётся из раздела сайта «по годам»; такие стихотворения стоят в конце своего периода.`,
  `Слоги — число гласных в строке. MATTR — средняя доля разных лемм в скользящем окне 500 лемм. Кривая роста словаря — число разных лемм по мере чтения стихов в хронологическом порядке.`,
@@ -5444,13 +5455,12 @@ const MFAM = [['двусложные: ямб, хорей',['ямб','хорей'
 /* словарь рифм */
 const RD=VS.rhyme_dict; const RDN={}; Object.keys(RD).forEach(k=>{ RDN[norm(k)]=k; });
 const RD_KEYS=Object.keys(RDN);
-const rdPl=(n,a,b,c)=>{ const x=n%10,y=n%100; return x===1&&y!==11?a:(x>=2&&x<=4&&(y<12||y>14)?b:c); };
-$('#rd-size').textContent=Object.keys(RD).length>=VS.rhyme_dict_size?`${fmt(VS.rhyme_dict_size)} ${rdPl(VS.rhyme_dict_size,'слово','слова','слов')} с рифмой, все в словаре`:`${fmt(VS.rhyme_dict_size)} ${rdPl(VS.rhyme_dict_size,'слово','слова','слов')} с рифмой; в словаре — ${fmt(Object.keys(RD).length)} самых рифмуемых`;
+$('#rd-size').textContent=Object.keys(RD).length>=VS.rhyme_dict_size?`${fmt(VS.rhyme_dict_size)} ${plural(VS.rhyme_dict_size,RUF.word)} с рифмой, все в словаре`:`${fmt(VS.rhyme_dict_size)} ${plural(VS.rhyme_dict_size,RUF.word)} с рифмой; в словаре — ${fmt(Object.keys(RD).length)} самых рифмуемых`;
 function rdOpen(word){
   const k=RDN[norm(word)]; const out=$('#rd-out'); $('#rd-input').value=word;
   if(!k){ out.innerHTML=`<p class="muted">Такого слова нет среди рифмуемых концов строк. Попробуйте другую форму: «ночь», «ночи», «ночью» — это разные рифмы.</p>`; return; }
   const P=RD[k]; const tot=P.reduce((a,x)=>a+x[1],0);
-  out.innerHTML=`<div class="big">${esc(k)}</div><p style="margin:0 0 8px">рифмуется ${fmt(tot)} ${rdPl(tot,'раз','раза','раз')}; разных партнёров — ${P.length}:</p>
+  out.innerHTML=`<div class="big">${esc(k)}</div><p style="margin:0 0 8px">рифмуется ${fmt(tot)} ${plural(tot,RUF.raz)}; разных партнёров — ${P.length}:</p>
     <div class="rchips">${P.map(([w,n])=>`<button type="button" data-w="${esc(w)}">${esc(w)}<small>${n}</small></button>`).join('')}</div>`;
   out.querySelectorAll('button[data-w]').forEach(b=>b.addEventListener('click',()=>rdOpen(b.dataset.w)));
 }
@@ -5468,9 +5478,9 @@ rdSug(''); rdOpen(RDN['ночь']?'ночь':RD_KEYS[0]);
     e.slice(0,2).map(([a,b,pid])=>`<div class="ex">${esc(a)}<br>${esc(b)}</div><div class="src">${esc(pidTitle(pid))}</div>`).join('')}</div>`);
   g.insertAdjacentHTML('beforeend',`<div class="term"><h3>Фраза через строфу</h3><p class="what">Предложение начинается в одной строфе, а кончается в следующей. Строфа перестаёт быть законченной мыслью и становится просто рамкой.</p></div>`);
   const H=VS.phrase.hist; const keys=Object.keys(H).map(Number).sort((a,b)=>a-b);
-  vbars($('#c-shist'),keys.map(k=>({l:k===25?'25+':String(k),v:H[k],tip:`${k===25?'25 и больше':k} строк: ${fmt(H[k])} предложений`})),{h:220,every:4,fmtv:fmt});
+  vbars($('#c-shist'),keys.map(k=>({l:k===25?'25+':String(k),v:H[k],tip:`${k===25?'25 и больше строк':pnr(k,RUF.line)}: ${pn(H[k],RUF.sent)}`})),{h:220,every:4,fmtv:fmt});
   dots($('#c-cross'),VS.phrase.by_period.map((r,i)=>({l:PSH[i],v:r.cross_stanza,tip:`${PER[i]}: ${fmt1(r.cross_stanza)}% предложений переходят в следующую строфу<br>медиана фразы — ${r.med_lines} стр., каждая десятая длиннее ${r.p90_lines} стр.`})),{h:220,min:0,max:Math.max(20,niceMax(Math.max(...VS.phrase.by_period.map(r=>r.cross_stanza)))),unit:'%',fmtv:v=>fmt1(v)});
-  hbars($('#c-longsent'),VS.phrase.longest.slice(0,10).map(([n,st,pid])=>({l:(t=>t.length>38?t.slice(0,36)+'…':t)(tidy(PS[pid].t)),v:n,tip:`${esc(pidTitle(pid))}<br>одно предложение на ${n} строк и ${st} строф`})),{labelW:260,rowH:22,fmtv:fmt});
+  hbars($('#c-longsent'),VS.phrase.longest.slice(0,10).map(([n,st,pid])=>({l:(t=>t.length>38?t.slice(0,36)+'…':t)(tidy(PS[pid].t)),v:n,tip:`${esc(pidTitle(pid))}<br>одно предложение на ${n} ${plural(n,['строку','строки','строк'])} и ${st} ${plural(st,['строфу','строфы','строф'])}`})),{labelW:260,rowH:22,fmtv:fmt});
 })();
 
 /* ---------- звук ---------- */
@@ -5478,7 +5488,7 @@ rdSug(''); rdOpen(RDN['ночь']?'ночь':RD_KEYS[0]);
   const B=VS.sound.by_period; const o=B.reduce((a,r)=>a+r.obs*r.n,0)/B.reduce((a,r)=>a+r.n,0), b=B.reduce((a,r)=>a+(r.base||0)*r.n,0)/B.reduce((a,r)=>a+r.n,0);
   const ratio=o/b;
   $('#f-sound').textContent=`В стихах ${fmt1(o)}% строк содержат три разных слова и больше на один звук; в случайных строках из тех же слов — ${fmt1(b)}%. `+
-    (ratio>=1.15?`Совпадения случаются в ${fmt1(ratio)} раза чаще, чем если бы слова стояли наугад: звукопись — сознательный приём.`
+    (ratio>=1.15?`Совпадения случаются в ${fmt1(ratio)} ${plural(ratio,RUF.raz,1)} чаще, чем если бы слова стояли наугад: звукопись — сознательный приём.`
       :ratio<=0.9?`Это даже реже, чем при случайном порядке слов.`
       :`Разница невелика: аллитерация у Бродского — не систематический приём, а отдельные яркие строки вроде тех, что ниже.`);
   chart(()=>{ const box=$('#c-allit'); const h=230; const [s,w]=svg(box,h); const L=40,R=14,T=16,B2=28; const vals=B.flatMap(r=>[r.obs,r.base||0]); const hi=niceMax(Math.max(...vals)*1.15);
@@ -5558,7 +5568,7 @@ function wmApply(){
   const inGroup=m=>WM.group<0||m.c===WM.group;
   items.forEach(it=>{ const m=it.o.m; const dim=(WM.group>=0&&!inGroup(m))||(focus&&m.k!==focus&&!nb.has(m.k));
     const absent=it.known&&it.cnt===0; const isF=m.k===focus; const isN=nb.has(m.k);
-    const tip=`${esc(m.w)}<br>${it.known?`${fmt(it.cnt)} раз в стихах${p>=0?', '+PER[p]:''}`:`${fmt(m.n)} раз в стихах`}<br>нажмите, чтобы увидеть близкие слова`;
+    const tip=`${esc(m.w)}<br>${it.known?`${pn(it.cnt,RUF.raz)} в стихах${p>=0?', '+PER[p]:''}`:`${pn(m.n,RUF.raz)} в стихах`}<br>нажмите, чтобы увидеть близкие слова`;
     const ink=isF||isN||it.rise?'--mark':(dim?'--muted':'--ink');
     it.o.t.setAttribute('data-tip',tip); it.o.c.setAttribute('data-tip',tip);
     const st=it.o.t.style; st.fontSize=it.fs.toFixed(1)+'px'; st.fill=css(ink); st.fontWeight=(isF||it.rise)?'700':'400';
@@ -5580,7 +5590,7 @@ function wmReadout(){ const host=$('#wm-read'); const p=WM.per, k=WM.sel;
   const link=(kk)=>`<button type="button" class="chip" data-wk="${esc(kk)}">${esc(disp(kk))}</button>`;
   let html;
   if(k){ const m=WMK[k]; const nbs=(ST.neighbors[k]||[]);
-    html=`<b>${esc(m.w)}</b> — ${fmt(wmCount(m,-1))} раз в стихах${wmKnown(m)?`; по периодам: ${PER.map((pp,i)=>`${pshort(pp)}: ${fmt(wmCount(m,i))}`).join(', ')}`:''}.<br>Близкие по употреблению (линии на карте): ${nbs.map(link).join(' ')||'—'} <button type="button" class="btn" data-open="${esc(k)}">Открыть в словоискателе →</button>`;
+    html=`<b>${esc(m.w)}</b> — ${pn(wmCount(m,-1),RUF.raz)} в стихах${wmKnown(m)?`; по периодам: ${PER.map((pp,i)=>`${pshort(pp)}: ${fmt(wmCount(m,i))}`).join(', ')}`:''}.<br>Близкие по употреблению (линии на карте): ${nbs.map(link).join(' ')||'—'} <button type="button" class="btn" data-open="${esc(k)}">Открыть в словоискателе →</button>`;
   } else if(p>=0){ const top=wmTop(p);
     html=`<b>${esc(PER[p])}.</b> Красным выделены слова, которых в эти годы заметно больше, чем в среднем по всем стихам (не реже чем в 1,5 раза, не меньше 6 употреблений): ${top.map(m=>link(m.k)).join(' ')||'—'}`;
   } else html=`Размер слова — как часто Бродский его употребляет; цветная область — группа слов, которые он ставит в похожее окружение. Выберите период или нажмите «Играть», чтобы увидеть, как менялся словарь, и нажмите на слово, чтобы увидеть его ближайших соседей.`;
@@ -5607,7 +5617,7 @@ let distMode='form';
 (function(){
   const cpf=ST.cp_form.map(c=>c[0]), cpw=ST.cp_words.map(c=>c[0]);
   const yrs=ST.years;
-  $('#f-cp').textContent=`По форме стиха самые резкие переломы — ${cpf.slice(0,3).sort((a,b)=>a-b).map(y=>y+' год').join(', ')}; по словарю — ${cpw.slice(0,3).sort((a,b)=>a-b).map(y=>y+' год').join(', ')}. Год перелома — первый год нового отрезка; учтены годы, где шесть и больше стихотворений (${yrs.length} лет).`;
+  $('#f-cp').textContent=`По форме стиха самые резкие переломы — ${cpf.slice(0,3).sort((a,b)=>a-b).map(y=>y+' год').join(', ')}; по словарю — ${cpw.slice(0,3).sort((a,b)=>a-b).map(y=>y+' год').join(', ')}. Год перелома — первый год нового отрезка; учтены годы, где шесть и больше стихотворений (${pnr(yrs.length,['год','года','лет'])}).`;
   const draw=()=>{ const D2=distMode==='form'?ST.dist_form:ST.dist_words; const cps=distMode==='form'?cpf:cpw;
     $('#dist-t').textContent=distMode==='form'?'Насколько похожи годы по форме стиха':'Насколько похожи годы по самым частым словам';
     chart(()=>{ const box=$('#c-dist'); const n=yrs.length; const W=box.clientWidth||700; const L=46,T=10; const cell=Math.max(8,Math.min(26,Math.floor((W-L-10)/n))); const h=T+cell*n+34; const [s,w]=svg(box,h);
@@ -5630,7 +5640,7 @@ let distMode='form';
       txt(s,sx(0),h-2,yrs[0],{style:'font-size:10px;fill:var(--muted)'}); txt(s,sx(vals.length-1),h-2,yrs[yrs.length-1],{'text-anchor':'end',style:'font-size:10px;fill:var(--muted)'});
       vals.forEach((v,i)=>el('rect',{class:'hit',x:sx(i)-6,y:0,width:12,height:h,'data-tip':`${lab}, ${yrs[i]}: ${fmt2(v)}<br>стихотворений: ${ST.year_poems[i]}`},s)); });
   },$('#c-feats'));
-  const CLs=ST.clusters; $('#cl-u').textContent=`${fmt(ST.cluster_n)} стихотворений от 12 строк; строка — группа, ячейка — сколько её стихов в каждом периоде`;
+  const CLs=ST.clusters; $('#cl-u').textContent=`${pn(ST.cluster_n,RUF.poem)} от 12 строк; строка — группа, ячейка — сколько её стихов в каждом периоде`;
   $('#t-clusters').textContent=`Стихотворения разложены на шесть групп только по форме (длина строки, размер, рифма, перенос, фраза, существительные), без дат. Совпадение групп с периодами — ${fmt2(ST.ari)} по шкале, где 0 — случайное совпадение, а 1 — полное; случайная раскладка даёт не больше ${fmt2(ST.ari_null95)}. ${ST.ari>0.3?'Группы заметно повторяют периоды.':ST.ari>ST.ari_null95?'Связь с периодами есть, но слабая: стиль меняется постепенно, а внутри каждого периода уживаются очень разные стихи.':'Группы не повторяют периоды.'}`;
   heatTable($('#c-clusters'),CLs.map(c=>c.desc.join(' · ')),PSH,CLs.map(c=>c.by_period),{labelW:Math.min(420,($('#c-clusters').clientWidth||700)*0.55),cellH:30,fmtv:v=>fmt(v),
     tipf:(i,j)=>`группа: ${CLs[i].desc.join(', ')}<br>${PER[j]}: ${CLs[i].by_period[j]} стихотв. из ${CLs[i].n}; медианный год группы — ${CLs[i].year_med||'—'}`});
@@ -5651,7 +5661,7 @@ let distMode='form';
       return [d1-d0>=10?(c1>=50?V('v-part','отчасти'):V('v-yes','подтверждается')):V('v-no','не подтверждается'),
         `Дольник и тактовик: ${Math.round(d0)}% строк в 1961–1966 → ${Math.round(d1)}% в 1985–1996. Классические размеры в поздние годы — всё ещё ${Math.round(c1)}%.`]; }],
     ['Строка с годами становится длиннее', ()=>[SPp[5].med>SPp[1].med?V('v-yes','подтверждается'):V('v-no','не подтверждается'),
-        `Типичная строка: ${SPp[0].med} слогов в 1957–1960, ${SPp[1].med} в 1961–1966, ${SPp[5].med} в 1990-е.`]],
+        `Типичная строка: ${pnr(SPp[0].med,RUF.syl)} в 1957–1960, ${SPp[1].med} в 1961–1966, ${SPp[5].med} в 1990-е.`]],
     ['Фраза у Бродского не помещается в строфу', ()=>{ const a=PH[1].cross_stanza, b=Math.max(...PH.slice(2).map(r=>r.cross_stanza));
       return [b>=50?V('v-yes','подтверждается'):b>a?V('v-part','отчасти'):V('v-no','не подтверждается'),
         `Через границу строфы переходит ${fmt1(a)}% предложений в 1961–1966 и до ${fmt1(b)}% в поздние периоды. Растёт, но большинство фраз строфу не покидает.`]; }],
@@ -5681,7 +5691,7 @@ let distMode='form';
     [`${fmt1(FFp[1].share)}% → ${fmt1(FFp[2].share)}%`,'строк обрывается на предлоге, союзе или частице — скачок около 1967 года'],
     [`${Math.round(T[1]['точная'])}% → ${Math.round(T[5]['точная'])}%`,'строк с точной рифмой: 1961–1966 против 1990-х'],
     [cpf.join(', '),'годы, где алгоритм без подсказки нашёл самые резкие переломы формы стиха'],
-    [`${rd0[0]} — ${rd0[1]}`,`самая частая рифма: ${rd0[2]} раз`]];
+    [`${rd0[0]} — ${rd0[1]}`,`самая частая рифма: ${pnr(rd0[2],RUF.raz)}`]];
   $('#findings').innerHTML=find.map(([b,t])=>`<div><b>${esc(b)}</b><span>${esc(t)}</span></div>`).join('');
 })();
 
@@ -5715,7 +5725,6 @@ function bindQuotes(host){ host.querySelectorAll('button.lnk').forEach(b=>b.addE
 function sparkSVG(vals,{h=46,color='var(--s1)',labels=PSH,unit=''}={}){ const n=vals.length, w=n*30, mx=Math.max(...vals,1e-9);
   const bars=vals.map((v,i)=>{ const bh=Math.max(v>0?2:0,(h-14)*v/mx); return `<rect x="${i*30+4}" y="${h-12-bh}" width="22" height="${bh}" rx="2" fill="${color}" data-tip="${esc(labels[i])}: ${fmt1(v)}${unit}"/><text x="${i*30+15}" y="${h-1}" text-anchor="middle" style="font-size:8.5px;fill:var(--muted)">${esc(String(labels[i]).slice(2,4)+'–'+String(labels[i]).slice(-2))}</text>`; }).join('');
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w*1.5}px;display:block" role="img">${bars}</svg>`; }
-const RU_PLURAL=(n,a,b,c)=>{ const m=n%100, d=n%10; return (m>10&&m<20)?c:(d===1?a:(d>1&&d<5?b:c)); };
 
 /* ---------- карточка сущности (лица, места, слова) ---------- */
 function entityCard(host,o){
@@ -5741,7 +5750,7 @@ const KINDN={person:'человек',sacred:'божественное имя'};
   const bp=[...PPALL].sort((a,b)=>b.poems-a.poems||b.np-a.np), br=[...PPALL].sort((a,b)=>b.essays-a.essays||b.nr-a.nr);
   const top=(arr,f,n)=>arr.filter(x=>f(x)>0).slice(0,n).map(x=>x.name).join(', ');
   const E=PPL.edges.slice().sort((a,b)=>b[2]-a[2])[0];
-  $('#f-pers').textContent=`В текстах Бродского названо по имени ${fmt(PPL.total)} ${RU_PLURAL(PPL.total,'лицо','лица','лиц')}, в стихах — ${fmt(PPL.poems_named)}. Больше всего стихотворений, где они названы: ${top(bp,x=>x.poems,4)}. В прозе, по числу текстов: ${top(br,x=>x.essays,4)}. Ближе всего друг к другу стоят ${PN[E[0]].name} и ${PN[E[1]].name}: ${E[2]} ${RU_PLURAL(E[2],'общая строфа или абзац','общие строфы или абзацы','общих строф или абзацев')}.`;
+  $('#f-pers').textContent=`В текстах Бродского названо по имени ${fmt(PPL.total)} ${plural(PPL.total, ['лицо', 'лица', 'лиц'])}, в стихах — ${fmt(PPL.poems_named)}. Больше всего стихотворений, где они названы: ${top(bp,x=>x.poems,4)}. В прозе, по числу текстов: ${top(br,x=>x.essays,4)}. Ближе всего друг к другу стоят ${PN[E[0]].name} и ${PN[E[1]].name}: ${E[2]} ${plural(E[2], ['общая строфа или абзац', 'общие строфы или абзацы', 'общих строф или абзацев'])}.`;
 })();
 seg($('#seg-ppmode'),[['all','стихи и проза'],['poems','стихи'],['prose','проза']],PP.mode,v=>{ PP.mode=v; PP.per=-1; ppApply(); });
 (function(){ const h=$('#pp-per'); [[-1,'все годы'],...PER.map((p,i)=>[i,pshort(p)])].forEach(([i,l])=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=l; b.setAttribute('aria-pressed',String(i===PP.per));
@@ -5792,7 +5801,7 @@ function ppCard(){
   const nbs=(sel.nb||[]).map(([j,w])=>({label:PN[j].name+' · '+w,fn:()=>{ PP.other=null; PP.sel=j; ppApply(); }}));
   const yrs=sel.y0?(sel.y0===sel.y1?String(sel.y0):sel.y0+'–'+sel.y1):'';
   entityCard(host,{eyebrow:'Карточка лица',title:sel.name,meta:(KINDN[sel.kind]||'')+(yrs?' · в стихах '+yrs+' годов':''),
-    tiles:[[fmt(sel.np),'упоминаний в стихах'],[fmt(sel.nr),'в прозе'],[fmt(sel.poems),RU_PLURAL(sel.poems,'стихотворение','стихотворения','стихотворений')],[fmt(sel.essays),RU_PLURAL(sel.essays,'прозаический текст','прозаических текста','прозаических текстов')],[fmt(sel.texts),'текстов всего'],[sel.i!=null?fmt(sel.nb.length):'—','ближайших имён']],
+    tiles:[[fmt(sel.np),plural(sel.np,['упоминание в стихах','упоминания в стихах','упоминаний в стихах'])],[fmt(sel.nr),'в прозе'],[fmt(sel.poems),plural(sel.poems, ['стихотворение', 'стихотворения', 'стихотворений'])],[fmt(sel.essays),plural(sel.essays, ['прозаический текст', 'прозаических текста', 'прозаических текстов'])],[fmt(sel.texts),plural(sel.texts,['текст всего','текста всего','текстов всего'])],[sel.i!=null?fmt(sel.nb.length):'—','ближайших имён']],
     per:sel.per,chips:nbs,chipsTitle:'Чаще всего рядом (сколько общих строф или абзацев)',ctx:sel.ctx,word:sel.name,
     note:sel.i==null?'Это имя не попало в сеть: оно встречается реже, чем у 120 самых упоминаемых.':''});
 }
@@ -5812,7 +5821,7 @@ chart(drawNet,$('#c-net'));
   hbars($('#c-pp-poems'),rows(bp,x=>x.poems),{color:'var(--s1)',labelW:110,rowH:22,fmtv:fmt,onClick:open});
   hbars($('#c-pp-prose'),rows(br,x=>x.essays),{color:'var(--s2)',labelW:110,rowH:22,fmtv:fmt,onClick:open});
   const hp=[...PPALL].sort((a,b)=>b.np-a.np).slice(0,20);
-  heatTable($('#c-pp-heat'),hp.map(x=>x.name),PSH,hp.map(x=>x.per.slice(0,6)),{labelW:120,cellH:24,fmtv:v=>v?fmt(Math.round(v)):'',tipf:(i,j)=>`${esc(hp[i].name)} · ${PER[j]}: ${fmt(hp[i].per[j])} упоминаний в стихах`,onRow:i=>{ ppSelectByName(hp[i].name); goTo('personazhi'); }});
+  heatTable($('#c-pp-heat'),hp.map(x=>x.name),PSH,hp.map(x=>x.per.slice(0,6)),{labelW:120,cellH:24,fmtv:v=>v?fmt(Math.round(v)):'',tipf:(i,j)=>`${esc(hp[i].name)} · ${PER[j]}: ${pn(hp[i].per[j],['упоминание в стихах','упоминания в стихах','упоминаний в стихах'])}`,onRow:i=>{ ppSelectByName(hp[i].name); goTo('personazhi'); }});
   const all=[...PPALL].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
   $('#pp-all-n').textContent=fmt(all.length);
   $('#pp-all').addEventListener('toggle',function(){ if(!this.open||$('#pp-allchips').childElementCount) return; const h=$('#pp-allchips');
@@ -5824,14 +5833,14 @@ const PL=WD.places;
 (function(){
   const NP_=PL.named; const bp=[...NP_].sort((a,b)=>b.poems-a.poems||b.np-a.np), br=[...NP_].sort((a,b)=>b.essays-a.essays||b.nr-a.nr);
   const top=(arr,f,n)=>arr.filter(x=>f(x)>0).slice(0,n).map(x=>x.name).join(', ');
-  $('#f-place').textContent=`Бродский называет ${fmt(PL.total_named)} ${RU_PLURAL(PL.total_named,'место','места','мест')}: города, страны, реки, моря. Больше всего стихотворений, где они названы: ${top(bp,x=>x.poems,5)}. В прозе, по числу текстов: ${top(br,x=>x.essays,5)}.`;
+  $('#f-place').textContent=`Бродский называет ${fmt(PL.total_named)} ${plural(PL.total_named, ['место', 'места', 'мест'])}: города, страны, реки, моря. Больше всего стихотворений, где они названы: ${top(bp,x=>x.poems,5)}. В прозе, по числу текстов: ${top(br,x=>x.essays,5)}.`;
   const pick=o=>{ entityCard($('#pl-card'),{eyebrow:'Карточка места',title:o.name,meta:o.y0?'в стихах '+(o.y0===o.y1?o.y0:o.y0+'–'+o.y1)+' годов':'',
-    tiles:[[fmt(o.np),'упоминаний в стихах'],[fmt(o.nr),'в прозе'],[fmt(o.poems),RU_PLURAL(o.poems,'стихотворение','стихотворения','стихотворений')],[fmt(o.essays),RU_PLURAL(o.essays,'прозаический текст','прозаических текста','прозаических текстов')],[fmt(o.texts),'текстов всего'],[fmt(o.n),'упоминаний']],per:o.per,ctx:o.ctx,word:o.name,color:'var(--s2)'}); };
+    tiles:[[fmt(o.np),plural(o.np,['упоминание в стихах','упоминания в стихах','упоминаний в стихах'])],[fmt(o.nr),'в прозе'],[fmt(o.poems),plural(o.poems, ['стихотворение', 'стихотворения', 'стихотворений'])],[fmt(o.essays),plural(o.essays, ['прозаический текст', 'прозаических текста', 'прозаических текстов'])],[fmt(o.texts),plural(o.texts,['текст всего','текста всего','текстов всего'])],[fmt(o.n),plural(o.n,RUF.mention)]],per:o.per,ctx:o.ctx,word:o.name,color:'var(--s2)'}); };
   const tp=[...NP_].sort((a,b)=>b.texts-a.texts||b.n-a.n).slice(0,20);
-  hbars($('#c-pl-top'),tp.map(x=>({l:x.name,v:x.texts,k:x.name,tip:`${esc(x.name)}: ${fmt(x.texts)} текстов; в стихах ${fmt(x.np)}, в прозе ${fmt(x.nr)} упоминаний<br>нажмите, чтобы открыть карточку`})),{color:'var(--s2)',labelW:120,rowH:22,fmtv:fmt,onClick:r=>pick(NP_.find(x=>x.name===r.k))});
+  hbars($('#c-pl-top'),tp.map(x=>({l:x.name,v:x.texts,k:x.name,tip:`${esc(x.name)}: ${pn(x.texts,RUF.text)}; в стихах ${fmt(x.np)}, в прозе ${pn(x.nr,RUF.mention)}<br>нажмите, чтобы открыть карточку`})),{color:'var(--s2)',labelW:120,rowH:22,fmtv:fmt,onClick:r=>pick(NP_.find(x=>x.name===r.k))});
   table($('#c-pl-top'),['Место','Текстов','В стихах','В прозе'],tp.map(x=>[x.name,x.texts,x.np,x.nr]));
   const hp=[...NP_].sort((a,b)=>b.np-a.np).slice(0,16);
-  heatTable($('#c-pl-heat'),hp.map(x=>x.name),PSH,hp.map(x=>x.per.slice(0,6)),{labelW:120,cellH:24,fmtv:v=>v?fmt(Math.round(v)):'',tipf:(i,j)=>`${esc(hp[i].name)} · ${PER[j]}: ${fmt(hp[i].per[j])} упоминаний в стихах`,onRow:i=>pick(hp[i])});
+  heatTable($('#c-pl-heat'),hp.map(x=>x.name),PSH,hp.map(x=>x.per.slice(0,6)),{labelW:120,cellH:24,fmtv:v=>v?fmt(Math.round(v)):'',tipf:(i,j)=>`${esc(hp[i].name)} · ${PER[j]}: ${pn(hp[i].per[j],['упоминание в стихах','упоминания в стихах','упоминаний в стихах'])}`,onRow:i=>pick(hp[i])});
   pick(bp[0]&&bp[0].np>=1?NP_.find(x=>x.name==='Рим')||bp[0]:NP_[0]);
 })();
 
@@ -5843,14 +5852,14 @@ function shelf(hostId,groups,{noun,unit,findId,extra=null}){
   const total=all.reduce((a,b)=>a+b.n,0);
   const byP=[...all].sort((a,b)=>b.np-a.np), byR=[...all].sort((a,b)=>b.nr-a.nr);
   const topN=(arr,f,n)=>arr.filter(x=>f(x)>0).slice(0,n).map(x=>`${x.w} (${f(x)})`).join(', ');
-  const fid=document.getElementById(findId); if(fid) fid.textContent=`В текстах Бродского нашлось ${fmt(all.length)} ${RU_PLURAL(all.length,'слово','слова','слов')} из этой темы, всего ${fmt(total)} ${RU_PLURAL(total,'упоминание','упоминания','упоминаний')}. В стихах чаще всего: ${topN(byP,x=>x.np,5)}. В прозе: ${topN(byR,x=>x.nr,5)}.${extra?' '+extra(all):''}`;
+  const fid=document.getElementById(findId); if(fid) fid.textContent=`В текстах Бродского нашлось ${fmt(all.length)} ${plural(all.length, ['слово', 'слова', 'слов'])} из этой темы, всего ${fmt(total)} ${plural(total, ['упоминание', 'упоминания', 'упоминаний'])}. В стихах чаще всего: ${topN(byP,x=>x.np,5)}. В прозе: ${topN(byR,x=>x.nr,5)}.${extra?' '+extra(all):''}`;
   host.innerHTML=`<div class="shelf"><div class="shelf-main"><div class="shelf-groups" id="${hostId}-g"></div></div><aside class="card shelf-card" id="${hostId}-card" aria-live="polite"></aside></div>
     <div class="panel"><div class="cap"><span class="t">Как менялись эти слова в стихах</span><span class="u">упоминаний на 10 000 слов, по группам</span></div><div class="legend" id="${hostId}-leg"></div><div class="chart" id="${hostId}-chart"></div></div>
     <div class="panel"><div class="cap"><span class="t">Редкие гости</span><span class="u">слова, которые встречаются один или два раза; наведите, чтобы увидеть строку</span></div><div class="chips" id="${hostId}-rare"></div></div>
     <p class="muted" style="font-size:13.5px">${SHELF_NOTE}</p>`;
   const card=document.getElementById(hostId+'-card');
   const show=it=>{ const sibs=G[it.gi].items.filter(x=>x.w!==it.w).slice(0,8).map(x=>({label:x.w+' · '+x.n,fn:()=>show({...x,g:it.g,gi:it.gi})}));
-    entityCard(card,{eyebrow:'Карточка слова',title:it.w,meta:it.g+' · в '+fmt(it.texts)+' '+RU_PLURAL(it.texts,'тексте','текстах','текстах'),tiles:[[fmt(it.n),RU_PLURAL(it.n,'упоминание','упоминания','упоминаний')],[fmt(it.np),'в стихах'],[fmt(it.nr),'в прозе']],per:it.per,chips:sibs,chipsTitle:'Из той же группы',ctx:it.ctx,word:it.w,color:col(it.gi)}); };
+    entityCard(card,{eyebrow:'Карточка слова',title:it.w,meta:it.g+' · в '+fmt(it.texts)+' '+plural(it.texts, ['тексте', 'текстах', 'текстах']),tiles:[[fmt(it.n),plural(it.n, ['упоминание', 'упоминания', 'упоминаний'])],[fmt(it.np),'в стихах'],[fmt(it.nr),'в прозе']],per:it.per,chips:sibs,chipsTitle:'Из той же группы',ctx:it.ctx,word:it.w,color:col(it.gi)}); };
   const gh=document.getElementById(hostId+'-g');
   G.forEach((g,gi)=>{ const mx=Math.max(...g.items.map(i=>i.n)); const div=document.createElement('div'); div.className='sh-group';
     const rates=g.per.slice(0,6).map((v,i)=>per10k(v,i));
@@ -5867,7 +5876,7 @@ function shelf(hostId,groups,{noun,unit,findId,extra=null}){
     const mx=niceMax(Math.max(...rowsP.map(r=>r.parts.reduce((a,b)=>a+b.v,0)),1e-9)); const sx=v=>L+(w-L-R)*v/mx; const ax=el('g',{class:'ax'},s);
     ticks(mx,4).forEach(t=>{ el('line',{x1:sx(t),x2:sx(t),y1:T,y2:h-Bm,stroke:css('--grid')},ax); txt(ax,sx(t),h-8,fmt1(t),{'text-anchor':'middle'}); });
     rowsP.forEach((r,i)=>{ const y=T+i*rowH; txt(s,L-8,y+rowH/2+2,pshort(r.p),{'text-anchor':'end',style:'fill:var(--ink)'}); let x=sx(0);
-      r.parts.forEach(pt=>{ const ww=sx(pt.v)-sx(0); if(ww<=0) return; el('rect',{x:x+1,y:y+4,width:Math.max(0,ww-2),height:rowH-10,rx:2,fill:css('--g'+(pt.gi+1)),'data-tip':`${esc(r.p)} · ${esc(pt.g)}: ${fmt1(pt.v)} на 10 000 слов (${fmt(pt.c)} упоминаний)`},s); x+=ww; });
+      r.parts.forEach(pt=>{ const ww=sx(pt.v)-sx(0); if(ww<=0) return; el('rect',{x:x+1,y:y+4,width:Math.max(0,ww-2),height:rowH-10,rx:2,fill:css('--g'+(pt.gi+1)),'data-tip':`${esc(r.p)} · ${esc(pt.g)}: ${fmt1(pt.v)} на 10 000 слов (${pn(pt.c,RUF.mention)})`},s); x+=ww; });
       const tot=r.parts.reduce((a,b)=>a+b.v,0); txt(s,sx(tot)+6,y+rowH/2+3,fmt1(tot)); });
   },document.getElementById(hostId+'-chart'));
   table(document.getElementById(hostId+'-chart'),['Период',...G.map(g=>g.g)],rowsP.map(r=>[r.p,...r.parts.map(p=>+p.v.toFixed(1))]));
@@ -5882,7 +5891,7 @@ shelf('sh-places',PL.generic,{findId:'f-places2'});
 shelf('sh-transport',WD.transport,{findId:'f-transport'});
 shelf('sh-food',WD.food,{findId:'f-food'});
 shelf('sh-drinks',WD.drinks,{findId:'f-drinks',extra:all=>{ const g=all.find(x=>x.w==='граппа'); const d=all.find(x=>x.w==='водка'), v=all.find(x=>x.w==='вино');
-  return (v&&d?`Вина (${v.n}) втрое чаще, чем водки (${d.n}). `:'')+(g?`Граппа встречается ${g.n} ${RU_PLURAL(g.n,'раз','раза','раз')}, оба — в «${g.ctx[0].t}».`:''); }});
+  return (v&&d?`Вина (${v.n}) втрое чаще, чем водки (${d.n}). `:'')+(g?`Граппа встречается ${g.n} ${plural(g.n, ['раз', 'раза', 'раз'])}, оба — в «${g.ctx[0].t}».`:''); }});
 [`Персонажи и места найдены автоматически. Имя — это слово с заглавной буквы внутри фразы (в стихах с заглавной в начале каждой строки начало строки не считается), у которого не меньше 70% написаний с заглавной. Лицо или место определяется по разбору pymorphy3 и по соседям: рядом с именем или инициалами — лицо, после предлога «в», «на», «из» — место. Ручных отборов нет, кроме коротких исправлений: склеены написания одного человека («Харди» и «Гарди», «Уистан» и «Оден»), убраны праздники, названия книг и сам автор, Гомер отнесён к лицам.`,
  `Связь между двумя лицами в сети — они названы в одной строфе стихотворения (стихи без пустых строк режутся по 12 строк) или в одном абзаце прозы. Круги имён найдены спектральной кластеризацией по этим связям. Расположение узлов рассчитано силовой раскладкой: рядом стоят те, кого часто называют вместе. В сеть входят 120 самых упоминаемых, остальные лица есть в поиске.`,
  `Слова для мест, транспорта, еды и напитков берутся из списков, которые я составил; в текстах считаются те слова, что там нашлись. Слова с частым другим значением в списки не вошли («виски» — височки, «паром» — пар, «угол», «камера», «рынок»). Слово считается, если его начальная форма совпадает; форма, похожая на другое слово («парка» — парк или куртка), не засчитывается, поэтому числа — нижняя оценка. Слова, которых нет в списках, не найдены; проверка на пропуски делалась по строкам, но полноты не гарантирует.`]
@@ -5930,7 +5939,6 @@ document.fonts?.ready.then(()=>{ if(booted) drawPages(); else enqueue(drawPages)
   for (const k in VS.rhyme_dict) for (const [w, n] of VS.rhyme_dict[k]) { add(k, w, n); add(w, k, n); }
   ADJ.forEach((m, k) => { let s = 0; m.forEach(v => { s += v; }); WT.set(k, s); });
   const nDict = Object.keys(VS.rhyme_dict).length;
-  const plr = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : (a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many); };
 
   const panel = document.createElement('div'); panel.className = 'panel'; panel.id = 'rg-panel';
   panel.innerHTML = '<div class="cap"><span class="t">Граф рифм</span><span class="u" id="rg-u"></span></div>' +
@@ -6050,13 +6058,13 @@ document.fonts?.ready.then(()=>{ if(booted) drawPages(); else enqueue(drawPages)
     const gE = el('g', {}, s), gN = el('g', {}, s), nb = G.N.map(() => new Set());
     const lines = G.E.map(([i, j, n]) => { nb[i].add(j); nb[j].add(i);
       return el('line', { x1: P[i][0], y1: P[i][1], x2: P[j][0], y2: P[j][1], stroke: css('--axis'), 'stroke-width': (0.7 + 2.6 * Math.sqrt(n / maxE)).toFixed(2), 'stroke-opacity': 0.8,
-        'data-tip': `${esc(G.N[i])} — ${esc(G.N[j])}: ${fmt(n)} ${plr(n, 'раз', 'раза', 'раз')}` }, gE); });
+        'data-tip': `${esc(G.N[i])} — ${esc(G.N[j])}: ${fmt(n)} ${plural(n, ['раз', 'раза', 'раз'])}` }, gE); });
     const famCol = f => f >= 0 ? css('--g' + (f + 1)) : css('--neutral-bar');
     const labelled = new Set(mode === 'map' ? G.N.map((x, i) => i).sort((a, b) => WT.get(G.N[b]) - WT.get(G.N[a])).slice(0, narrow ? 24 : 160) : G.N.map((x, i) => i));
     const groups = G.N.map((word, i) => {
       const ring = G.ring[i], deg = ADJ.get(word) ? ADJ.get(word).size : 0, tot = WT.get(word) || 0;
-      const g = el('g', { class: 'clickable', tabindex: 0, role: 'button', 'aria-label': `${word}: ${deg} ${plr(deg, 'партнёр', 'партнёра', 'партнёров')}`,
-        'data-tip': `<b>${esc(word)}</b><br>${fmt(deg)} ${plr(deg, 'слово', 'слова', 'слов')} в рифму, ${fmt(tot)} ${plr(tot, 'рифма', 'рифмы', 'рифм')}` }, gN);
+      const g = el('g', { class: 'clickable', tabindex: 0, role: 'button', 'aria-label': `${word}: ${deg} ${plural(deg, ['партнёр', 'партнёра', 'партнёров'])}`,
+        'data-tip': `<b>${esc(word)}</b><br>${fmt(deg)} ${plural(deg, ['слово', 'слова', 'слов'])} в рифму, ${fmt(tot)} ${plural(tot, ['рифма', 'рифмы', 'рифм'])}` }, gN);
       const r = ring === 0 ? 10 : mode === 'map' ? 3 + 7 * Math.sqrt(tot / maxW) : ring === 1 ? 6 : 4;
       const fill = ring === 0 ? css('--mark') : mode === 'map' ? famCol(fam[i]) : ring === 1 ? css('--s1') : css('--neutral-bar');
       el('circle', { cx: P[i][0], cy: P[i][1], r: r.toFixed(1), fill, stroke: css('--surface'), 'stroke-width': 1.5 }, g);
@@ -6079,14 +6087,14 @@ document.fonts?.ready.then(()=>{ if(booted) drawPages(); else enqueue(drawPages)
     const nE = G.E.length, u = document.querySelector('#rg-u'), lg = document.querySelector('#rg-legend'), note = document.querySelector('#rg-note');
     if (mode === 'ego') {
       const deg = ADJ.get(center) ? ADJ.get(center).size : 0;
-      u.textContent = `«${center}»: ${fmt(deg)} ${plr(deg, 'слово', 'слова', 'слов')} в рифму`;
+      u.textContent = `«${center}»: ${fmt(deg)} ${plural(deg, ['слово', 'слова', 'слов'])} в рифму`;
       lg.innerHTML = `<span><i style="background:${css('--mark')}"></i>слово в центре</span><span><i style="background:${css('--s1')}"></i>рифмуется с ним</span><span><i style="background:${css('--neutral-bar')}"></i>рифмы его рифм</span>`;
       note.textContent = 'Линия — пара рифм в стихах Бродского: чем толще, тем чаще. Нажмите на слово, чтобы поставить его в центр; словарь выше откроет его рифмы.';
     } else {
-      u.textContent = `${fmt(G.N.length)} самых рифмуемых слов, ${fmt(nE)} ${plr(nE, 'пара', 'пары', 'пар')}`;
+      u.textContent = `${fmt(G.N.length)} ${plural(G.N.length, ['самое рифмуемое слово', 'самых рифмуемых слова', 'самых рифмуемых слов'])}, ${fmt(nE)} ${plural(nE, ['пара', 'пары', 'пар'])}`;
       const fams = []; fam.forEach((f, i) => { if (f >= 0) (fams[f] = fams[f] || []).push(i); });
       lg.innerHTML = fams.map((ids, f) => ids ? `<span><i style="background:${famCol(f)}"></i>${ids.sort((a, b) => WT.get(G.N[b]) - WT.get(G.N[a])).slice(0, 3).map(i => esc(G.N[i])).join(', ')}</span>` : '').join('');
-      note.textContent = `Цвет — «семья»: слова, которые рифмуются в основном друг с другом. Размер точки — сколько раз слово стоит в рифме. Данные — словарь рифм: ${nDict >= VS.rhyme_dict_size ? 'полный, ' + fmt(nDict) + ' ' + plr(nDict, 'слово', 'слова', 'слов') + ' с рифмой' : fmt(nDict) + ' самых рифмуемых слов из ' + fmt(VS.rhyme_dict_size)}, и их пары. Нажмите на слово, чтобы увидеть его окружение.`;
+      note.textContent = `Цвет — «семья»: слова, которые рифмуются в основном друг с другом. Размер точки — сколько раз слово стоит в рифме. Данные — словарь рифм: ${nDict >= VS.rhyme_dict_size ? 'полный, ' + fmt(nDict) + ' ' + plural(nDict, ['слово', 'слова', 'слов']) + ' с рифмой' : fmt(nDict) + ' ' + plural(nDict, ['самое рифмуемое слово', 'самых рифмуемых слова', 'самых рифмуемых слов']) + ' из ' + fmt(VS.rhyme_dict_size)}, и их пары. Нажмите на слово, чтобы увидеть его окружение.`;
     }
   }
   function setMode() { seg(document.querySelector('#rg-mode'), [['ego', 'Вокруг слова'], ['map', 'Карта рифм']], mode, v => { mode = v; draw(); }); }
