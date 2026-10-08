@@ -65,6 +65,11 @@ main{padding-block:44px 24px}
 .card p{margin:12px 0 18px;font-size:15.5px;color:var(--ink-2)}
 .card .go{margin-top:auto;font:500 13px var(--f-mono);color:var(--ink)}
 .card:hover .go{color:var(--accent)}
+.card.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:28px}
+.card.wide .art{flex:none;width:200px;margin:0}
+.card.wide .txt{display:flex;flex-direction:column;min-width:0}
+.card.wide p{max-width:62ch}
+@media (max-width:640px){.card.wide{flex-direction:column;align-items:stretch;gap:0}.card.wide .art{width:auto;margin-bottom:16px}}
 footer{padding-block:28px 56px;font:12.5px/1.6 var(--f-mono);color:var(--muted)}
 footer a{color:var(--ink)}
 footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex-wrap:wrap;gap:6px 24px}
@@ -109,6 +114,15 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     <h2>Ромен Гари<span>на просвет</span></h2>
     <p>Маски псевдонимов и их голоса: Гари, Ажар, Богат, Синибальди.</p>
     <div class="go">Открыть исследование →</div>
+  </a>
+  <a class="card wide" href="golosa/">
+    <div class="art" aria-hidden="true"><div class="art-a"><b>?</b><i></i></div><div class="art-c"><svg viewBox="0 0 200 128" width="200" height="128" style="display:block" aria-hidden="true"><rect x="4" y="14" width="74" height="40" rx="6" fill="var(--accent)"></rect><path d="M18 54 L14 68 L32 54 Z" fill="var(--accent)"></path><rect x="64" y="46" width="74" height="40" rx="6" fill="var(--ink)"></rect><path d="M120 86 L126 100 L108 86 Z" fill="var(--ink)"></path><rect x="122" y="78" width="74" height="40" rx="6" fill="none" stroke="var(--accent)" stroke-width="3"></rect><g fill="var(--surface)"><circle cx="28" cy="34" r="3.5"></circle><circle cx="41" cy="34" r="3.5"></circle><circle cx="54" cy="34" r="3.5"></circle><circle cx="88" cy="66" r="3.5"></circle><circle cx="101" cy="66" r="3.5"></circle><circle cx="114" cy="66" r="3.5"></circle></g><g fill="var(--accent)"><circle cx="146" cy="98" r="3.5"></circle><circle cx="159" cy="98" r="3.5"></circle><circle cx="172" cy="98" r="3.5"></circle></g></svg></div></div>
+    <div class="txt">
+      <div class="y">Реконструкция голосов · 300 вопросов</div>
+      <h2>Голоса<span>на просвет</span></h2>
+      <p>Бродский, Чехов и Гари за одним столом. Каждый составил сто вопросов и ответил на все триста. Вытяните вопрос и прочтите три ответа рядом.</p>
+      <div class="go">Задать вопрос →</div>
+    </div>
   </a>
 </div></div></main>
 <footer><div class="inner"><div class="row">

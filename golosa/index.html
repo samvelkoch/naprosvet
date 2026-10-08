@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Голоса на просвет</title>
+<meta name="description" content="Бродский, Чехов и Ромен Гари отвечают на одни и те же вопросы. Реконструкция голосов по текстам авторов.">
+<meta property="og:type" content="website"><meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="ГОЛОСА НА_ПРОСВЕТ">
+<meta property="og:description" content="Три писателя, триста вопросов. Тяните вопрос, отвечают все трое.">
+<script src="../theme.js"></script>
+<link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="preload" href="data.json" as="fetch" crossorigin>
+<style>
+:root{
+  --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
+  --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f;
+  --desk:#221a14; --desk-2:#3a2a1f; --htext:#f7f0e2; --htext-2:#d6c9b4; --hlabel:#b9ab96; --hmark:#f0765a;
+  --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif)}
+.inner{max-width:1240px;margin-inline:auto;padding-inline:clamp(16px,4vw,36px)}
+button{font:inherit;color:inherit}
+
+.bar{position:sticky;top:0;z-index:30;background:var(--desk);color:var(--htext);border-bottom:1px solid rgba(255,255,255,.09)}
+.bar .inner{display:flex;align-items:center;gap:12px;min-height:50px}
+.brand{font:600 12.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--htext);text-decoration:none;white-space:nowrap}
+.brand i{font-style:normal;color:var(--hmark)}
+.brand:hover{color:var(--hmark)}
+
+body>header{background:var(--desk);color:var(--htext);padding-block:44px 40px;
+  background-image:radial-gradient(120% 90% at 78% 0%,var(--desk-2) 0%,var(--desk) 62%)}
+.eyebrow{font:12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--hlabel)}
+h1{margin:.3em 0 .25em;font-weight:400;line-height:1}
+h1 .t{display:block;font:600 clamp(46px,10vw,108px)/1 var(--f-mono);letter-spacing:-.045em;text-transform:uppercase;
+  text-shadow:2.5px 1.5px 0 rgba(240,118,90,.55)}
+h1 .t i{font-style:normal;color:var(--hmark);text-shadow:none}
+.lede{max-width:60ch;font-size:19px;color:var(--htext-2);margin:14px 0 0}
+
+.note{margin:22px 0 0;max-width:78ch;border-left:2px solid var(--hmark);padding:2px 0 2px 16px;font-size:15px;color:var(--htext-2)}
+.note b{color:var(--htext);font-weight:700}
+.note details{margin-top:6px}
+.note summary{cursor:pointer;font:500 12.5px var(--f-mono);color:var(--hmark);list-style:none}
+.note summary::-webkit-details-marker{display:none}
+.note summary::after{content:" ↓"}
+.note details[open] summary::after{content:" ↑"}
+.note details p{margin:10px 0 0}
+.note ul{margin:8px 0 0;padding-left:18px}
+.note li{margin:4px 0}
+.note li small{font:11.5px var(--f-mono);color:var(--hlabel)}
+
+main{padding-block:28px 24px}
+.tools{position:sticky;top:50px;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin:-10px 0 8px;padding:10px 0;background:var(--page)}
+@media (max-width:700px){
+  body>header{padding-block:28px 28px}
+  .tools{position:static}
+  .seg{width:100%}.seg span{display:none}.seg button{flex:1}.seg button:first-of-type{border-left:0}
+  .tools .right{position:fixed;left:0;right:0;bottom:0;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--page);border-top:1px solid var(--ring)}
+  .tools .right .btn{flex:1}
+  footer{padding-bottom:110px}
+}
+.seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--ring);background:var(--surface)}
+.seg span{font:11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 10px 9px 12px;align-self:center}
+.seg button{font:500 13px var(--f-mono);background:none;border:0;border-left:1px solid var(--ring);padding:9px 12px;cursor:pointer;color:var(--ink-2)}
+.seg button:hover{color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.btn{font:500 13.5px var(--f-mono);cursor:pointer;border:1px solid var(--ink);background:var(--surface);padding:10px 16px;color:var(--ink)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#1b1010}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#1b1010}}
+.btn[hidden]{display:none}
+.tools .right{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.count{font:12px var(--f-mono);color:var(--muted)}
+
+.q{position:relative;background:var(--surface);border:1px solid var(--ring);padding:22px clamp(18px,3vw,32px) 24px;
+  box-shadow:0 14px 26px -18px rgba(21,24,36,.32)}
+.q::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;background:linear-gradient(225deg,var(--page) 50%,var(--fold) 50%)}
+.q .meta{font:11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mark)}
+.q .meta em{font-style:normal;color:var(--muted)}
+.q h2{margin:10px 0 0;font:italic 400 clamp(23px,3vw,32px)/1.3 var(--f-serif);max-width:52ch}
+
+.answers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px;align-items:start}
+@media (max-width:900px){.answers{grid-template-columns:1fr}}
+.col{background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:18px 20px 20px;min-height:180px}
+.col .head{margin-bottom:12px}
+.col h3{margin:0;font:600 19px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase}
+.col .who{font:11.5px/1.5 var(--f-mono);color:var(--muted);margin-top:4px}
+.col .own{display:inline-block;margin-top:8px;font:11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mark);border:1px solid currentColor;padding:1px 6px}
+.col .own[hidden]{display:none}
+.col .body p{margin:0 0 .8em;font-size:16.5px;line-height:1.62;color:var(--ink)}
+.col .body p:last-child{margin-bottom:0}
+.col .body em{color:var(--muted)}
+.col .body p.typing::after{content:"";display:inline-block;width:.5em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.col .body p.later{display:none}
+
+.status{font:13px var(--f-mono);color:var(--muted);padding:40px 0}
+.keys{margin-top:18px;font:12px var(--f-mono);color:var(--muted)}
+.keys kbd{font:inherit;border:1px solid var(--ring);padding:0 5px;background:var(--surface)}
+@media (hover:none){.keys{display:none}}
+
+footer{padding-block:28px 56px;font:12.5px/1.6 var(--f-mono);color:var(--muted)}
+footer a{color:var(--ink)}
+footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex-wrap:wrap;gap:6px 24px}
+</style><!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=113309794', 'ym');
+
+    ym(113309794, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/113309794" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+</head>
+<body>
+<div class="bar"><div class="inner"><a class="brand" href="../">← На<i>_</i>просвет</a></div></div>
+<header><div class="inner">
+  <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
+  <h1><span class="t">Голоса<i>_</i></span></h1>
+  <p class="lede">Три писателя за одним столом. Каждый составил сто вопросов, каждый ответил на все триста. Тяните вопрос, и отвечают все трое.</p>
+  <div class="note">
+    <b>Это не цитаты.</b> Ответы написаны языковой моделью, которой мы дали голос автора: его письма, интервью, книги, биографию.
+    Это реконструкция, исследовательская работа, а не спиритический сеанс.
+    <details>
+      <summary>Как сделаны голоса</summary>
+      <p>Для каждого автора собран портрет: что он знал, во что верил, как строил фразу, где и в каком году он сейчас «находится». Персона знает свою жизнь до этой точки и ничего не знает о том, что было после. Вопросы заданы по порядку, одним разговором; ответы не редактировались, длину выбирала сама персона.</p>
+      <ul id="personas"></ul>
+      <p>Голос складывается из того же корпуса, что и исследования на этом сайте. Где персона ошибается в фактах или говорит то, чего автор не сказал бы, это предмет разговора, а не истина.</p>
+    </details>
+  </div>
+</div></header>
+<main><div class="inner">
+  <div class="tools">
+    <div class="seg" role="group" aria-label="Чей вопрос">
+      <span>Спрашивает</span>
+      <button type="button" data-by="" aria-pressed="true">Все</button>
+      <button type="button" data-by="brodsky" aria-pressed="false">Бродский</button>
+      <button type="button" data-by="chekhov" aria-pressed="false">Чехов</button>
+      <button type="button" data-by="gary" aria-pressed="false">Гари</button>
+    </div>
+    <span class="count" id="count"></span>
+    <div class="right">
+      <button type="button" class="btn" id="skip" hidden>Показать сразу</button>
+      <button type="button" class="btn primary" id="next">Другой вопрос →</button>
+    </div>
+  </div>
+  <div id="stage"><div class="status">Собираем голоса…</div></div>
+  <div class="keys"><kbd>→</kbd> другой вопрос · <kbd>←</kbd> предыдущий · <kbd>Esc</kbd> показать ответы сразу</div>
+</div></main>
+<footer><div class="inner"><div class="row">
+  <span>Исследования: <a href="../brodsky/">Бродский</a> · <a href="../chekhov/">Чехов</a> · <a href="../gary/">Ромен Гари</a></span>
+</div></div></footer>
+<script>
+(function () {
+  var ORDER = ['brodsky', 'chekhov', 'gary'];
+  var SHORT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
+  var GEN = { brodsky: 'Бродского', chekhov: 'Чехова', gary: 'Гари' };
+  var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, зима 1900', gary: 'Париж, 1980' };
+  // знаков в секунду: у каждого свой темп
+  var CPS = { brodsky: 70, chekhov: 85, gary: 95 };
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var D, deck = [], pos = -1, filter = '', cols = [], raf = 0;
+  var stage = document.getElementById('stage'), btnNext = document.getElementById('next'),
+      btnSkip = document.getElementById('skip'), count = document.getElementById('count');
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  function buildDeck(firstId) {
+    deck = [];
+    for (var i = 0; i < D.questions.length; i++) if (!filter || D.questions[i].by === filter) deck.push(i);
+    shuffle(deck);
+    if (firstId != null) { var k = deck.indexOf(firstId); if (k > 0) { deck.splice(k, 1); deck.unshift(firstId); } }
+    pos = -1;
+  }
+
+  function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+  function render(i) {
+    stop();
+    var q = D.questions[i];
+    stage.innerHTML = '';
+    var card = el('section', 'q');
+    var meta = el('div', 'meta', 'Спрашивает ' + SHORT[q.by] + ' ');
+    meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
+    card.appendChild(meta);
+    card.appendChild(el('h2', null, q.q));
+    stage.appendChild(card);
+
+    var grid = el('div', 'answers'); cols = [];
+    ORDER.forEach(function (a) {
+      var col = el('article', 'col'), head = el('div', 'head');
+      head.appendChild(el('h3', null, SHORT[a]));
+      head.appendChild(el('div', 'who', D.authors[a].years + ' · ' + WHERE[a]));
+      var own = el('span', 'own', 'свой вопрос'); own.hidden = a !== q.by; head.appendChild(own);
+      col.appendChild(head);
+      var body = el('div', 'body'); col.appendChild(body);
+      var paras = q.a[a].split(/\n\s*\n/).map(function (t) { return t.replace(/\s*\n\s*/g, ' ').trim(); }).filter(Boolean).map(parse);
+      var ps = paras.map(function (pa) {
+        var p = el('p', 'later');
+        pa.nodes = pa.segs.map(function (sg) { var n = el(sg.em ? 'em' : 'span'); p.appendChild(n); return n; });
+        body.appendChild(p); return p;
+      });
+      grid.appendChild(col);
+      cols.push({ a: a, ps: ps, paras: paras, pi: 0, ci: 0, acc: 0, wait: 240 + Math.random() * 500, done: false });
+    });
+    stage.appendChild(grid);
+
+    count.textContent = 'вопрос ' + (pos + 1) + ' из ' + deck.length;
+    history.replaceState(null, '', '#' + q.id);
+    if (calm) return finish();
+    btnSkip.hidden = false;
+    var last = performance.now();
+    raf = requestAnimationFrame(function tick(now) {
+      var dt = Math.min(now - last, 64); last = now;
+      var busy = false;
+      for (var c = 0; c < cols.length; c++) { step(cols[c], dt); if (!cols[c].done) busy = true; }
+      if (busy) raf = requestAnimationFrame(tick); else finish();
+    });
+  }
+
+  // *ремарка* в ответах — курсив; остальной текст без разметки
+  function parse(t) {
+    var segs = [], re = /\*([^*]+)\*/g, m, last = 0;
+    while ((m = re.exec(t))) { if (m.index > last) segs.push({ t: t.slice(last, m.index) }); segs.push({ t: m[1], em: true }); last = re.lastIndex; }
+    if (last < t.length) segs.push({ t: t.slice(last) });
+    return { segs: segs, text: segs.map(function (x) { return x.t; }).join('') };
+  }
+  function show(pa, n) {
+    for (var i = 0, off = 0; i < pa.segs.length; i++) {
+      var t = pa.segs[i].t, k = Math.max(0, Math.min(t.length, n - off));
+      if (pa.nodes[i].textContent.length !== k) pa.nodes[i].textContent = t.slice(0, k);
+      off += t.length;
+    }
+  }
+
+  // одна колонка, один кадр: печатаем текущий абзац, паузы на точках и между абзацами
+  function step(c, dt) {
+    if (c.done) return;
+    if (c.wait > 0) { c.wait -= dt; return; }
+    var pa = c.paras[c.pi], text = pa.text, p = c.ps[c.pi];
+    if (c.ci === 0) { p.classList.remove('later'); p.classList.add('typing'); }
+    c.acc += dt * CPS[c.a] / 1000;
+    var n = Math.floor(c.acc); if (!n) return;
+    c.acc -= n;
+    var end = Math.min(text.length, c.ci + n);
+    for (var k = c.ci; k < end; k++) if ('.!?…'.indexOf(text[k]) >= 0 && text[k + 1] === ' ') { end = k + 1; c.wait = 160 + Math.random() * 220; c.acc = 0; break; }
+    c.ci = end; show(pa, end);
+    if (c.ci >= text.length) {
+      p.classList.remove('typing'); c.pi++; c.ci = 0; c.acc = 0;
+      if (c.pi >= c.paras.length) c.done = true; else c.wait = 380;
+    }
+  }
+
+  function finish() {
+    stop();
+    cols.forEach(function (c) { c.done = true; c.ps.forEach(function (p, i) { show(c.paras[i], Infinity); p.className = ''; }); });
+    btnSkip.hidden = true;
+  }
+
+  function next() { if (pos + 1 >= deck.length) buildDeck(); pos++; render(deck[pos]); }
+  function prev() { if (pos > 0) { pos--; render(deck[pos]); } }
+
+  function fromHash() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    for (var i = 0; i < D.questions.length; i++) if (D.questions[i].id === id) return i;
+    return null;
+  }
+
+  function personas() {
+    var ul = document.getElementById('personas');
+    ORDER.forEach(function (a) {
+      var li = el('li'), au = D.authors[a];
+      li.appendChild(el('b', null, au.name + '. '));
+      li.appendChild(document.createTextNode(au.persona_note + ' '));
+      li.appendChild(el('small', null, 'Источники: ' + au.sources.join('; ')));
+      ul.appendChild(li);
+    });
+  }
+
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!D) return;
+      filter = b.dataset.by;
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      buildDeck(); next();
+    });
+  });
+  btnNext.addEventListener('click', function () { if (D) next(); });
+  btnSkip.addEventListener('click', finish);
+  document.addEventListener('keydown', function (e) {
+    if (!D || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'Escape' && raf) finish();
+  });
+
+  fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    D = d; personas();
+    buildDeck(fromHash()); next();
+  }).catch(function () {
+    stage.innerHTML = '<div class="status">Не получилось загрузить ответы. Обновите страницу.</div>';
+  });
+})();
+</script>
+</body></html>
