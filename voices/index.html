@@ -234,7 +234,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 <!-- /Yandex.Metrika counter -->
 </head>
 <body>
-<div class="bar"><div class="inner"><a class="brand" href="../">← На<i>_</i>просвет</a></div></div>
+<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a></div></div>
 <header><div class="inner"><div class="hero-grid"><div class="hero-text">
   <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
   <h1><span class="t">Голоса<i>_</i></span></h1>
@@ -544,8 +544,11 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     if (pos >= 0) render(deck[pos]);
     controls();
   }
-  function advance() {
+  // в «Чей ответ?» ручка и барабан меняют неотвеченный вопрос на другой, раунд при этом не засчитывается
+  function swapRound() { if (mode === 'play' && G && G.cur && !G.cur.done) { G.round--; G.cur.done = true; } }
+  function advance(swap) {
     if (mode === 'play') {
+      if (swap) swapRound();
       if (G.cur && !G.cur.done) return btnCheck.focus();
       if (G.cur && G.round >= ROUNDS) return summary();
     }
@@ -652,7 +655,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function nudge(k) {
     if (spinning || k === 2) return;
     var i = win[k], d = k - 2, n = Math.abs(d), extra = [];
-    place(i);
+    swapRound(); place(i);
     if (calm) { park(i); return render(i); }
     spinning = true; stop(); drum.classList.remove('landed');
     for (var j = 0; j < n; j++) extra.push(pick());
@@ -671,7 +674,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function pull() {
     if (!D || spinning) return;
     if (!calm) { lever.classList.remove('pull'); void lever.offsetWidth; lever.classList.add('pull'); }
-    setTimeout(advance, calm ? 0 : 260);
+    setTimeout(function () { advance(true); }, calm ? 0 : 260);
   }
   lever.addEventListener('click', function (e) { e.stopPropagation(); pull(); });
   lever.addEventListener('animationend', function () { lever.classList.remove('pull'); });
@@ -703,7 +706,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   drum.addEventListener('click', function (e) {
     if (!D) return;
     var r = e.target.closest('.strip div.nb');
-    if (r) nudge(+r.dataset.k); else advance();
+    if (r) nudge(+r.dataset.k); else advance(true);
   });
   drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); advance(); } });
   document.querySelectorAll('.seg.mode button').forEach(function (b) { b.addEventListener('click', function () { if (D && b.dataset.mode !== mode) setMode(b.dataset.mode); }); });
