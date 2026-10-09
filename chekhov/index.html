@@ -85,7 +85,7 @@ a{color:var(--accent)}
 .brand{font-family:var(--f-mono); font-size:12.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; display:none; align-items:center; white-space:nowrap; color:var(--htext)}
 .brand i{font-style:normal; color:var(--hmark)}
 @media (min-width:900px){ .brand{display:flex} }
-.tabs{display:flex; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0; margin-inline:-6px}
+.tabs{position:relative; display:flex; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0; margin-inline:-6px}
 .tabs::-webkit-scrollbar{display:none}
 .tabs button{font-family:var(--f-mono); font-size:13px; color:var(--hlabel); background:transparent; border:0; border-bottom:3px solid transparent;
   padding:4px 13px 0; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:8px; flex:none}
@@ -441,7 +441,7 @@ input[type=search]{font-family:var(--f-mono); font-size:14px; padding:6px 10px; 
 </style>
 
 <div id="tip" role="tooltip" hidden></div>
-<div class="bar"><div class="inner"><div class="brand">Чехов<i>_</i> на просвет</div><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-proza" aria-current="false"><small>II</small>Проза</button><button type="button" data-part="part-piesy" aria-current="false"><small>III</small>Пьесы</button><button type="button" data-part="part-pisma" aria-current="false"><small>IV</small>Письма</button><button type="button" data-part="part-vrach" aria-current="false"><small>V</small>Врач</button><button type="button" data-part="part-slova" aria-current="false"><small>VI</small>Слова</button><button type="button" data-part="part-mir" aria-current="false"><small>VII</small>Мир Чехова</button><button type="button" data-part="part-konec" aria-current="false"><small>VIII</small>Рекорды и методика</button></nav></div></div>
+<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-proza" aria-current="false"><small>II</small>Проза</button><button type="button" data-part="part-piesy" aria-current="false"><small>III</small>Пьесы</button><button type="button" data-part="part-pisma" aria-current="false"><small>IV</small>Письма</button><button type="button" data-part="part-vrach" aria-current="false"><small>V</small>Врач</button><button type="button" data-part="part-slova" aria-current="false"><small>VI</small>Слова</button><button type="button" data-part="part-mir" aria-current="false"><small>VII</small>Мир Чехова</button><button type="button" data-part="part-konec" aria-current="false"><small>VIII</small>Рекорды и методика</button></nav></div></div>
 <header class="hero" id="top">
   <div class="inner">
     <div class="hero-grid">

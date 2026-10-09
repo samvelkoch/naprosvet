@@ -234,7 +234,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 <!-- /Yandex.Metrika counter -->
 </head>
 <body>
-<div class="bar"><div class="inner"><a class="brand" href="../">← На<i>_</i>просвет</a></div></div>
+<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a></div></div>
 <header><div class="inner"><div class="hero-grid"><div class="hero-text">
   <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
   <h1><span class="t">Голоса<i>_</i></span></h1>
@@ -278,9 +278,10 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   </dialog>
   <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div>
     <button type="button" class="lever" id="lever" aria-label="Потянуть ручку: крутить барабан" title="Потянуть ручку"><svg viewBox="0 0 64 236" aria-hidden="true">
-      <rect x="22" y="104" width="20" height="28" rx="4" fill="currentColor" opacity=".25"/>
-      <g class="rod"><rect x="29.5" y="44" width="5" height="74" rx="2.5" fill="currentColor"/><circle class="knob" cx="32" cy="38" r="11" fill="var(--accent)"/></g>
-      <circle cx="32" cy="118" r="5" fill="currentColor"/>
+      <rect x="25" y="70" width="14" height="96" rx="7" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".45"/>
+      <rect x="29" y="76" width="6" height="84" rx="3" fill="currentColor" opacity=".12"/>
+      <g class="rod"><path d="M30.2 118 L31 46 h2 L33.8 118 Z" fill="currentColor"/><circle class="knob" cx="32" cy="38" r="10" fill="var(--accent)"/><circle cx="28.5" cy="34.5" r="3" fill="#fff" opacity=".45"/></g>
+      <circle cx="32" cy="118" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/>
     </svg></button></div>
   <div id="stage"><div class="status">Собираем голоса…</div></div>
   <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий вопрос · <kbd>Esc</kbd> показать ответы сразу · соседний вопрос в барабане можно выбрать кликом</div>
@@ -544,8 +545,11 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     if (pos >= 0) render(deck[pos]);
     controls();
   }
-  function advance() {
+  // в «Чей ответ?» ручка и барабан меняют неотвеченный вопрос на другой, раунд при этом не засчитывается
+  function swapRound() { if (mode === 'play' && G && G.cur && !G.cur.done) { G.round--; G.cur.done = true; } }
+  function advance(swap) {
     if (mode === 'play') {
+      if (swap) swapRound();
       if (G.cur && !G.cur.done) return btnCheck.focus();
       if (G.cur && G.round >= ROUNDS) return summary();
     }
@@ -652,7 +656,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function nudge(k) {
     if (spinning || k === 2) return;
     var i = win[k], d = k - 2, n = Math.abs(d), extra = [];
-    place(i);
+    swapRound(); place(i);
     if (calm) { park(i); return render(i); }
     spinning = true; stop(); drum.classList.remove('landed');
     for (var j = 0; j < n; j++) extra.push(pick());
@@ -671,7 +675,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function pull() {
     if (!D || spinning) return;
     if (!calm) { lever.classList.remove('pull'); void lever.offsetWidth; lever.classList.add('pull'); }
-    setTimeout(advance, calm ? 0 : 260);
+    setTimeout(function () { advance(true); }, calm ? 0 : 260);
   }
   lever.addEventListener('click', function (e) { e.stopPropagation(); pull(); });
   lever.addEventListener('animationend', function () { lever.classList.remove('pull'); });
@@ -703,7 +707,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   drum.addEventListener('click', function (e) {
     if (!D) return;
     var r = e.target.closest('.strip div.nb');
-    if (r) nudge(+r.dataset.k); else advance();
+    if (r) nudge(+r.dataset.k); else advance(true);
   });
   drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); advance(); } });
   document.querySelectorAll('.seg.mode button').forEach(function (b) { b.addEventListener('click', function () { if (D && b.dataset.mode !== mode) setMode(b.dataset.mode); }); });

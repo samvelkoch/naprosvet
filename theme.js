@@ -28,6 +28,17 @@
     '.bug-menu a b{display:block;font-weight:600}.bug-menu a span{display:block;color:#b9ab96;font-size:11.5px;margin-top:3px}' +
     '.bug-menu a:hover,.bug-menu a:focus-visible{background:#f0765a;color:#1b1010;outline:none}.bug-menu a:hover span,.bug-menu a:focus-visible span{color:#3a1d14}' +
     '.bug-menu .bm-note{color:#f0765a;font-size:11.5px;padding:0 12px}.bug-menu .bm-note:empty{display:none}.bug-menu .bm-note:not(:empty){padding:6px 12px 4px}' +
+    /* ссылка на главную в верхней панели: одна и та же на всех страницах */
+    '.bar a.brand.home{display:flex;align-items:center;gap:8px;flex:none;text-decoration:none;color:#f7f0e2}' +
+    '.bar-tight a.brand.home{padding-right:16px;border-right:1px solid rgba(247,240,226,.18)}' +
+    '.bar a.brand.home .ar{font-size:15px;letter-spacing:0}.bar a.brand.home:hover,.bar a.brand.home:hover .nm i{color:#f0765a}' +
+    '.bar a.brand.home:focus-visible{outline:2px solid #f0765a;outline-offset:-2px}' +
+    '@media (max-width:640px){.bar-tight a.brand.home .nm{display:none}.bar-tight a.brand.home{padding-right:12px}}' +
+    /* в панели с разделами кнопки сжимаются до значков, чтобы не отнимать место у вкладок */
+    '@media (max-width:1279px){.bar-tight .theme-btn .lb,.bar-tight .bug-btn .lb{display:none}.bar-tight .theme-btn,.bar-tight .bug-btn{padding:0}}' +
+    '.bar-tight .tabs{position:relative}' +
+    '.bar-tight .tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}' +
+    '.bar-tight .bug-btn{margin-left:4px}' +
     '.theme-float{position:absolute;top:18px;right:clamp(16px,4vw,36px);z-index:5}' +
     '@media (hover:none) and (pointer:coarse){input[type=search],input[type=text],select,textarea{font-size:16px!important}}';
   document.head.appendChild(css);
@@ -107,6 +118,7 @@
       root.setAttribute('data-theme', next); save(next); paint(btn);
     });
     var bar = document.querySelector('.bar .inner');
+    if (bar && bar.querySelector('.tabs')) bar.parentNode.classList.add('bar-tight');
     if (bar) bar.appendChild(bugLink('bug-btn', '<span class="ic" aria-hidden="true">!</span><span class="lb">Нашли ошибку?</span>'));
     else { var row = document.querySelector('footer .row'); if (row) row.appendChild(bugLink('bug-link', 'Нашли ошибку или неточность? Напишите нам →')); }
     if (bar) bar.appendChild(btn);
