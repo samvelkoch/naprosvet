@@ -18,16 +18,17 @@
   --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
   --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f;
   --desk:#221a14; --desk-2:#3a2a1f; --htext:#f7f0e2; --htext-2:#d6c9b4; --hlabel:#b9ab96; --hmark:#f0765a;
+  --ok:#2f7a45;
   --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
   --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
   --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
-  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f;
 }}
 :root[data-theme="dark"]{color-scheme:dark;
   --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
-  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif)}
@@ -51,15 +52,25 @@ h1 .t i{font-style:normal;color:var(--hmark);text-shadow:none}
 
 .note{margin:22px 0 0;max-width:78ch;border-left:2px solid var(--hmark);padding:2px 0 2px 16px;font-size:15px;color:var(--htext-2)}
 .note b{color:var(--htext);font-weight:700}
-.note details{margin-top:6px}
-.note summary{cursor:pointer;font:500 12.5px var(--f-mono);color:var(--hmark);list-style:none}
-.note summary::-webkit-details-marker{display:none}
-.note summary::after{content:" ↓"}
-.note details[open] summary::after{content:" ↑"}
-.note details p{margin:10px 0 0}
-.note ul{margin:8px 0 0;padding-left:18px}
-.note li{margin:4px 0}
-.note li small{font:11.5px var(--f-mono);color:var(--hlabel)}
+.note .more{display:inline-block;margin-top:6px;font:500 12.5px var(--f-mono);color:var(--hmark);text-decoration:none}
+.note .more:hover{text-decoration:underline}
+
+.method{padding-block:36px 8px;scroll-margin-top:56px}
+.method h2{margin:0;font:600 clamp(26px,4vw,38px)/1.05 var(--f-mono);letter-spacing:-.03em;text-transform:uppercase}
+.mlede{max-width:72ch;margin:14px 0 22px;color:var(--ink-2)}
+.mcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+@media (max-width:900px){.mcards{grid-template-columns:1fr}}
+.mcard{background:var(--surface);border:1px solid var(--ring);padding:20px 22px}
+.mcard .y{font:11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mark)}
+.mcard h3{margin:6px 0 10px;font:600 22px/1.1 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase}
+.mcard p{margin:0 0 .8em;font-size:15.5px;line-height:1.6;color:var(--ink-2)}
+.mcard details{border-top:1px dashed var(--ring);margin-top:12px;padding-top:10px}
+.mcard summary{cursor:pointer;font:500 12.5px var(--f-mono);color:var(--accent);list-style:none}
+.mcard summary::-webkit-details-marker{display:none}
+.mcard summary::after{content:" ↓"}
+.mcard details[open] summary::after{content:" ↑"}
+.mcard details p:first-of-type{margin-top:12px}
+.mcard strong{color:var(--ink)}
 
 main{padding-block:28px 24px}
 .tools{position:sticky;top:50px;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin:-10px 0 8px;padding:10px 0;background:var(--page)}
@@ -84,6 +95,7 @@ main{padding-block:28px 24px}
 :root[data-theme="dark"] .btn.primary{color:#1b1010}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#1b1010}}
 .btn[hidden]{display:none}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
 .tools .right{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
 .count{font:12px var(--f-mono);color:var(--muted)}
 
@@ -124,6 +136,28 @@ main{padding-block:28px 24px}
 .strip div span{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:700px){.drum{--rh:40px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
 #stage.dim{opacity:.35;transition:opacity .2s}
+.seg.mode button:first-child{border-left:0}
+.seg.mode button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pick button{font:500 12.5px var(--f-mono);border:1px solid var(--ring);background:none;padding:6px 10px;cursor:pointer;color:var(--ink-2)}
+.pick button:hover{border-color:var(--accent);color:var(--accent)}
+.pick button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.pick button:disabled{cursor:default}
+.pick button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.col .tag{font:600 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.col.ok{border-top-color:var(--ok)}.col.bad{border-top-color:var(--mark)}
+.verdict{display:block;margin-top:6px;font:500 12px var(--f-mono)}
+.col.ok .verdict{color:var(--ok)}.col.bad .verdict{color:var(--mark)}
+.gmsg{margin-top:16px;font:13.5px var(--f-mono);color:var(--ink-2)}
+.summary{background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:26px clamp(18px,3vw,32px)}
+.summary .big{font:600 clamp(30px,5vw,48px)/1.05 var(--f-mono);letter-spacing:-.03em;text-transform:uppercase}
+.summary .big i{font-style:normal;color:var(--accent)}
+.summary .rows{display:grid;gap:10px;margin:22px 0 18px;max-width:560px}
+.summary .r{display:grid;grid-template-columns:96px 1fr 54px;align-items:center;gap:12px;font:13px var(--f-mono)}
+.summary .bar2{height:10px;background:var(--fold)}
+.summary .bar2 i{display:block;height:100%;background:var(--accent)}
+.summary p{margin:0 0 14px;color:var(--ink-2)}
+.summary .acts{display:flex;gap:10px;flex-wrap:wrap}
 .status{font:13px var(--f-mono);color:var(--muted);padding:40px 0}
 .keys{margin-top:18px;font:12px var(--f-mono);color:var(--muted)}
 .keys kbd{font:inherit;border:1px solid var(--ring);padding:0 5px;background:var(--surface)}
@@ -155,17 +189,16 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   <div class="note">
     <b>Это не цитаты.</b> Ответы написаны языковой моделью, которой мы дали голос автора: его письма, интервью, книги, биографию.
     Это реконструкция, исследовательская работа, а не спиритический сеанс.
-    <details>
-      <summary>Как сделаны голоса</summary>
-      <p>Для каждого автора собран портрет: что он знал, во что верил, как строил фразу, где и в каком году он сейчас «находится». Персона знает свою жизнь до этой точки и ничего не знает о том, что было после. Вопросы заданы по порядку, одним разговором; ответы не редактировались, длину выбирала сама персона.</p>
-      <ul id="personas"></ul>
-      <p>Голос складывается из того же корпуса, что и исследования на этом сайте. Где персона ошибается в фактах или говорит то, чего автор не сказал бы, это предмет разговора, а не истина.</p>
-    </details>
+    <a class="more" href="#method">Как сделаны голоса ↓</a>
   </div>
 </div></header>
 <main><div class="inner">
   <div class="tools">
-    <div class="seg" role="group" aria-label="Чей вопрос">
+    <div class="seg mode" role="group" aria-label="Режим">
+      <button type="button" data-mode="read" aria-pressed="true">Читать</button>
+      <button type="button" data-mode="play" aria-pressed="false">Чей ответ?</button>
+    </div>
+    <div class="seg by" role="group" aria-label="Чей вопрос">
       <span>Спрашивает</span>
       <button type="button" data-by="" aria-pressed="true">Все</button>
       <button type="button" data-by="brodsky" aria-pressed="false">Бродский</button>
@@ -175,13 +208,56 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     <span class="count" id="count"></span>
     <div class="right">
       <button type="button" class="btn" id="skip" hidden>Показать сразу</button>
+      <button type="button" class="btn primary" id="check" hidden disabled>Проверить</button>
       <button type="button" class="btn primary" id="next">Крутить барабан ↻</button>
     </div>
   </div>
   <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div></div>
   <div id="stage"><div class="status">Собираем голоса…</div></div>
-  <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий · <kbd>Esc</kbd> показать ответы сразу</div>
+  <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий вопрос · <kbd>Esc</kbd> показать ответы сразу</div>
 </div></main>
+<section class="method" id="method"><div class="inner">
+  <h2>Как сделаны голоса</h2>
+  <p class="mlede">Каждый голос здесь — персона: языковая модель с подробной инструкцией, которую мы составили по текстам автора. Персона «живёт» в одной точке его жизни и не знает, что было потом. Опросники ей задавали по порядку, одним разговором. Ни одну персону мы не проверяли слепым сравнением с настоящим автором, поэтому читайте ответы как правдоподобную реконструкцию, а не как свидетельство.</p>
+  <div class="mcards">
+    <article class="mcard">
+      <div class="y">1940–1996 · Венеция, ноябрь 1993</div>
+      <h3>Бродский</h3>
+      <p>Персона Бродского собрана из его собственных слов: 15 интервью, речей, русских стихов и живой речи из фильма «Прогулки с Бродским» (Венеция, 1993), около 24 тысяч его слов. Эссе мы для голоса не брали: почти все они переведены с английского другими людьми. Персона «живёт» в Венеции в ноябре 1993 года и не знает, что было потом. Её мнения о сегодняшнем дне — наша реконструкция, а не его слова.</p>
+      <details><summary>Подробнее</summary>
+      <p>Персона Бродского — это не он, а наша попытка услышать, как бы он ответил. Вот из чего она сделана.</p>
+<p><strong>Источники.</strong> Мы собрали 754 текста Бродского (около 630 тысяч слов): стихи, эссе, речи, интервью, переводы. Для голоса взяли только то, что он сам сказал по-русски: 15 интервью, стихи и прямую речь из фильма Алексея Шишова и Елены Якович «Прогулки с Бродским» по книге Якович, около 24 тысяч его слов. Эссе для голоса не годились: почти все они переведены с английского другими людьми. Писем, дневников и мемуаров современников в нашей основе почти нет.</p>
+<p><strong>Время.</strong> Персона «живёт» в Венеции в ноябре 1993 года, где снят фильм. Ей 53 года, она не знает ни о своей смерти, ни о XXI веке. На вопросы о будущем она удивляется и говорит, что вы, видимо, «из будущего».</p>
+<p><strong>Портрет.</strong> Справочник фактов с источниками у каждой даты, сортировка 99 ценностей, сверенная с его интервью, и подробная инструкция о том, как он думает вслух, шутит и о чём молчит. Длину ответа мы не ограничиваем: короткий он или длинный, решает персона.</p>
+<p><strong>Проверка и границы.</strong> Мы сверяли ценности и цитаты с корпусом и разговаривали с персоной сотнями вопросов. Слепого сравнения с настоящим Бродским не было. Персона пишет глаже, чем он говорил, чаще повторяет любимые словечки, а её мнения о том, чего он не застал, — наша реконструкция, а не его слова.</p>
+      </details>
+    </article>
+    <article class="mcard">
+      <div class="y">1860–1904 · Ялта, январь 1900</div>
+      <h3>Чехов</h3>
+      <p>Голос Чехова собран из того, что он написал сам: 30 томов собрания сочинений и писем, около 2,4 млн слов, из них 4494 письма. Интервью он не давал, мемуаров современников мы не брали, поэтому это голос его писем, а не устной речи. Персона говорит из Ялты, января 1900 года, но помнит всю жизнь до 1904-го. О том, что было после, не знает. Цитаты в ответах сверены с текстом, мнения о нашем времени домыслены моделью.</p>
+      <details><summary>Подробнее</summary>
+      <p>Персона Чехова собрана только из его собственных текстов: Полного собрания сочинений и писем в 30 томах, около 2,4 млн слов. Главный источник — 4494 письма 1875–1904 годов, из них взят голос. Проза и пьесы нужны были для взглядов и для того, чтобы не путать автора с его героями: слова Астрова остаются словами Астрова. Интервью Чехов не давал, мемуаров современников и биографий в наших материалах не было. Поэтому это голос писем: как он говорил вслух, мы не знаем.</p>
+<p>Говорит персона из Ялты, конца января 1900 года. Это самый густой месяц его переписки: за одну неделю он пишет сестре, Книппер, Суворину, Мизиновой. Помнит она при этом всю жизнь, до Баденвейлера 1904 года. О мире после своей смерти не знает и принимает его как новость.</p>
+<p>Мы посчитали, как часто в письмах встречаются вопросы, тире, «впрочем», «кажется», многоточия, и задали нормы на ответ. Средняя фраза у Чехова 9–10 слов во все годы. Слов вроде «смысл жизни» и «ей-богу» в его письмах почти нет, и персона их не произносит. К собеседнику она обращается на «Вы».</p>
+<p>Персону проверяли тестовыми разговорами и скриптами: считали маркеры, искали повторы и сверяли каждую цитату с текстом собрания. Промпт прошёл четыре версии. Слепого сравнения с участием читателей не было.</p>
+<p>Чаще всего персона ошибается в мелочах: досочиняет обстоятельства, которых нет в письмах. Её мнения о нашем времени — вывод из его взглядов, а не его слова.</p>
+      </details>
+    </article>
+    <article class="mcard">
+      <div class="y">1914–1980 · Париж, 1978–1980</div>
+      <h3>Ромен Гари</h3>
+      <p>Ромен Гари здесь говорит из Парижа 1978–1980 годов и не знает ничего, что случилось после его смерти. Ответы пишет языковая модель по подробной инструкции, составленной нами по его книге бесед «Ночь будет спокойной», «Обещанию на рассвете», радиоинтервью, эссе об Эмиле Ажаре и биографии Мириам Анисимов. Большинство книг прочитано в русских переводах. Говорит он по-русски, на языке своего детства. Каждый ответ сочинён заново: это правдоподобная реконструкция, а не цитата.</p>
+      <details><summary>Подробнее</summary>
+      <p>Гари в этом проекте отвечает из Парижа конца 1970-х. Ему за шестьдесят, Джин Сиберг уже нет, тайна Эмиля Ажара ещё не раскрыта. О том, что было после декабря 1980 года, он не знает, а вопросы о будущем встречает как бумаги, принесённые неизвестно откуда.</p>
+<p>В основе около 580 тысяч слов. Его собственные слова: книга бесед «Ночь будет спокойной», «Обещание на рассвете», эссе «Жизнь и смерть Эмиля Ажара», радиоинтервью, опросник Пруста. Два романа: «Пляска Чингиз-Хаима» и «Повинная голова». Взгляд со стороны: биография Мириам Анисимов и статьи исследователей. Книги мы читали в русских переводах, интервью по-французски. Писем, стихов и романов, подписанных Ажаром, в материалах нет.</p>
+<p>По этим текстам мы вместе с языковой моделью составили психологический профиль и инструкцию для персоны. В ней записаны факты биографии, взгляды, темы, к которым он возвращается, то, о чём он молчит, два режима речи (откровенный и «для публики»), длина ответов и характерные обороты. Обороты выписаны вручную из его интервью. Частотный анализ мы делали, но в голос он не вошёл: статистика переводов больше говорит о переводчиках.</p>
+<p>Проверяли разговорами: задавали вопросы, сверяли ответы с тем, что знаем о Гари, правили инструкцию, когда голос сбивался. Слепого сравнения с его настоящими ответами не было.</p>
+<p>Модель домысливает подробности: имена, даты, обстановку. Она легко соглашается с фактом, если его принёс собеседник. Каждый ответ сочинён заново, даже когда в нём звучат его настоящие фразы. Читайте эти ответы как правдоподобную реконструкцию, а не как свидетельство.</p>
+      </details>
+    </article>
+  </div>
+</div></section>
 <footer><div class="inner"><div class="row">
   <span>Исследования: <a href="../brodsky/">Бродский</a> · <a href="../chekhov/">Чехов</a> · <a href="../gary/">Ромен Гари</a></span>
 </div></div></footer>
@@ -190,14 +266,16 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   var ORDER = ['brodsky', 'chekhov', 'gary'];
   var SHORT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
   var GEN = { brodsky: 'Бродского', chekhov: 'Чехова', gary: 'Гари' };
-  var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, зима 1900', gary: 'Париж, 1980' };
+  var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, январь 1900', gary: 'Париж, 1978–1980' };
   // знаков в секунду: у каждого свой темп
   var CPS = { brodsky: 70, chekhov: 85, gary: 95 };
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var D, deck = [], pos = -1, filter = '', cols = [], raf = 0;
   var stage = document.getElementById('stage'), btnNext = document.getElementById('next'),
-      btnSkip = document.getElementById('skip'), count = document.getElementById('count');
+      btnSkip = document.getElementById('skip'), count = document.getElementById('count'),
+      btnCheck = document.getElementById('check');
+  var mode = /[?&]play\b/.test(location.search) ? 'play' : 'read';
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -215,13 +293,10 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function render(i) {
     stop();
     var q = D.questions[i];
+    history.replaceState(null, '', location.pathname + (mode === 'play' ? '?play' : '') + '#' + q.id);
+    if (mode === 'play') return renderGame(q);
     stage.innerHTML = '';
-    var card = el('section', 'q');
-    var meta = el('div', 'meta', 'Спрашивает ' + SHORT[q.by] + ' ');
-    meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
-    card.appendChild(meta);
-    card.appendChild(el('h2', null, q.q));
-    stage.appendChild(card);
+    stage.appendChild(qcard(q));
 
     var grid = el('div', 'answers'); cols = [];
     ORDER.forEach(function (a) {
@@ -231,19 +306,14 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       var own = el('span', 'own', 'свой вопрос'); own.hidden = a !== q.by; head.appendChild(own);
       col.appendChild(head);
       var body = el('div', 'body'); col.appendChild(body);
-      var paras = q.a[a].split(/\n\s*\n/).map(function (t) { return t.replace(/\s*\n\s*/g, ' ').trim(); }).filter(Boolean).map(parse);
-      var ps = paras.map(function (pa) {
-        var p = el('p', 'later');
-        pa.nodes = pa.segs.map(function (sg) { var n = el(sg.em ? 'em' : 'span'); p.appendChild(n); return n; });
-        body.appendChild(p); return p;
-      });
+      var paras = answer(q.a[a]), ps = paras.map(function (pa) { var p = el('p', 'later'); fillP(p, pa); body.appendChild(p); return p; });
       grid.appendChild(col);
       cols.push({ a: a, ps: ps, paras: paras, pi: 0, ci: 0, acc: 0, wait: 240 + Math.random() * 500, done: false });
     });
     stage.appendChild(grid);
 
     count.textContent = 'вопрос ' + (pos + 1) + ' из ' + deck.length;
-    history.replaceState(null, '', '#' + q.id);
+    controls();
     if (calm) return finish();
     btnSkip.hidden = false;
     var last = performance.now();
@@ -253,6 +323,17 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       for (var c = 0; c < cols.length; c++) { step(cols[c], dt); if (!cols[c].done) busy = true; }
       if (busy) raf = requestAnimationFrame(tick); else finish();
     });
+  }
+
+  function answer(t) { return t.split(/\n\s*\n/).map(function (x) { return x.replace(/\s*\n\s*/g, ' ').trim(); }).filter(Boolean).map(parse); }
+  function fillP(p, pa) { pa.nodes = pa.segs.map(function (sg) { var n = el(sg.em ? 'em' : 'span'); p.appendChild(n); return n; }); }
+  function qcard(q) {
+    var card = el('section', 'q');
+    var meta = el('div', 'meta', 'Спрашивает ' + SHORT[q.by] + ' ');
+    meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
+    card.appendChild(meta);
+    card.appendChild(el('h2', null, q.q));
+    return card;
   }
 
   // *ремарка* в ответах — курсив; остальной текст без разметки
@@ -294,6 +375,109 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     btnSkip.hidden = true;
   }
 
+  // «Чей ответ?»: три ответа без подписей в случайном порядке, игрок назначает автора каждому; серия из 10 вопросов
+  var ROUNDS = 10, G = null, LET = ['А', 'Б', 'В'];
+  function newGame() { G = { round: 0, hit: 0, by: {}, conf: {}, cur: null }; ORDER.forEach(function (a) { G.by[a] = 0; G.conf[a] = {}; }); }
+  function renderGame(q) {
+    if (!G || G.round >= ROUNDS) newGame();
+    G.round++;
+    var order = shuffle(ORDER.slice()), cur = G.cur = { order: order, guess: [null, null, null], cols: [], done: false };
+    stage.innerHTML = ''; stage.appendChild(qcard(q));
+    var grid = el('div', 'answers');
+    order.forEach(function (a, k) {
+      var col = el('article', 'col'), head = el('div', 'head');
+      head.appendChild(el('div', 'tag', 'Ответ ' + LET[k]));
+      var pk = el('div', 'pick'); pk.setAttribute('role', 'group'); pk.setAttribute('aria-label', 'Кто отвечает: ответ ' + LET[k]);
+      ORDER.forEach(function (b) {
+        var bt = el('button', null, SHORT[b]); bt.type = 'button'; bt.dataset.a = b; bt.setAttribute('aria-pressed', 'false');
+        bt.addEventListener('click', function () { guess(k, b); });
+        pk.appendChild(bt);
+      });
+      head.appendChild(pk); col.appendChild(head);
+      var body = el('div', 'body');
+      answer(q.a[a]).forEach(function (pa) { var p = el('p'); fillP(p, pa); show(pa, Infinity); body.appendChild(p); });
+      col.appendChild(body); grid.appendChild(col); cur.cols.push({ col: col, head: head, pk: pk });
+    });
+    stage.appendChild(grid);
+    count.textContent = 'вопрос ' + G.round + ' из ' + ROUNDS + ' · угадано ' + G.hit + ' из ' + (G.round - 1) * 3;
+    controls();
+  }
+  // один автор на колонку: если он уже стоит у другой, они меняются местами
+  function guess(k, b) {
+    var cur = G.cur; if (cur.done) return;
+    var j = cur.guess.indexOf(b);
+    if (j >= 0 && j !== k) cur.guess[j] = cur.guess[k];
+    cur.guess[k] = cur.guess[k] === b ? null : b;
+    cur.cols.forEach(function (c, i) { c.pk.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-pressed', String(bt.dataset.a === cur.guess[i])); }); });
+    controls();
+  }
+  function check() {
+    var cur = G.cur; if (!cur || cur.done || cur.guess.indexOf(null) >= 0) return;
+    cur.done = true; var hits = 0;
+    cur.order.forEach(function (a, k) {
+      var g = cur.guess[k], ok = g === a, c = cur.cols[k];
+      if (ok) { hits++; G.by[a]++; } else G.conf[a][g] = (G.conf[a][g] || 0) + 1;
+      c.col.classList.add(ok ? 'ok' : 'bad');
+      c.head.innerHTML = '';
+      c.head.appendChild(el('h3', null, SHORT[a]));
+      c.head.appendChild(el('div', 'who', D.authors[a].years + ' · ' + WHERE[a]));
+      c.head.appendChild(el('span', 'verdict', ok ? '✓ угадано' : '✗ ты решил: ' + SHORT[g]));
+    });
+    G.hit += hits;
+    var m = el('div', 'gmsg', ['Мимо: все трое не на своих местах.', 'Один из трёх угадан.', 'Два из трёх. Третий сам встал на место.', 'Все трое угаданы.'][hits === 2 ? 2 : hits]);
+    stage.appendChild(m);
+    count.textContent = 'вопрос ' + G.round + ' из ' + ROUNDS + ' · угадано ' + G.hit + ' из ' + G.round * 3;
+    controls();
+  }
+  function summary() {
+    stop(); G.cur = null;
+    var box = el('section', 'summary'), total = ROUNDS * 3;
+    var big = el('div', 'big'); big.innerHTML = 'Угадано <i>' + G.hit + '</i> из ' + total; box.appendChild(big);
+    var rows = el('div', 'rows');
+    ORDER.forEach(function (a) {
+      var r = el('div', 'r'); r.appendChild(el('span', null, SHORT[a]));
+      var b = el('div', 'bar2'), i = el('i'); i.style.width = (G.by[a] / ROUNDS * 100) + '%'; b.appendChild(i); r.appendChild(b);
+      r.appendChild(el('span', null, G.by[a] + ' из ' + ROUNDS)); rows.appendChild(r);
+    });
+    box.appendChild(rows);
+    var best = ORDER.slice().sort(function (x, y) { return G.by[y] - G.by[x]; }), worst = best[2], mix = null, mixN = 0;
+    for (var g in G.conf[worst]) if (G.conf[worst][g] > mixN) { mix = g; mixN = G.conf[worst][g]; }
+    var line = SHORT[best[0]] + ' узнаётся лучше всех' + (G.by[best[0]] === ROUNDS ? ', без единой ошибки' : '') + '.';
+    if (mix) line += ' ' + SHORT[worst] + ' чаще всего прячется за ' + (mix === 'gary' ? 'Гари' : mix === 'chekhov' ? 'Чеховым' : 'Бродским') + '.';
+    box.appendChild(el('p', null, line));
+    var text = 'Голоса… «Чей ответ?»: угадал ' + G.hit + ' из ' + total + ' (' + ORDER.map(function (a) { return SHORT[a] + ' ' + G.by[a] + '/' + ROUNDS; }).join(', ') + '). ' + location.origin + location.pathname + '?play';
+    var acts = el('div', 'acts'), cp = el('button', 'btn', 'Скопировать результат'); cp.type = 'button';
+    cp.addEventListener('click', function () {
+      try { navigator.clipboard.writeText(text).then(function () { cp.textContent = 'Скопировано'; }, function () {}); } catch (e) {}
+    });
+    acts.appendChild(cp); box.appendChild(acts);
+    stage.innerHTML = ''; stage.appendChild(box);
+    count.textContent = 'серия окончена';
+    controls();
+  }
+  function controls() {
+    var play = mode === 'play', cur = G && G.cur;
+    btnSkip.hidden = play || !raf;
+    btnCheck.hidden = !play || !cur || cur.done;
+    btnCheck.disabled = !(cur && cur.guess.indexOf(null) < 0);
+    btnNext.hidden = play && !!cur && !cur.done;
+    btnNext.textContent = !play ? 'Крутить барабан ↻' : !G.cur ? 'Новая серия ↻' : G.round >= ROUNDS ? 'Итоги серии →' : 'Следующий вопрос ↻';
+  }
+  function setMode(m) {
+    if (spinning) return;
+    mode = m; newGame();
+    document.querySelectorAll('.seg.mode button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.mode === m)); });
+    if (pos >= 0) render(deck[pos]);
+    controls();
+  }
+  function advance() {
+    if (mode === 'play') {
+      if (G.cur && !G.cur.done) return btnCheck.focus();
+      if (G.cur && G.round >= ROUNDS) return summary();
+    }
+    next();
+  }
+
   // барабан: лента вопросов едет вверх и замедляется, в центральной строке останавливается следующий вопрос колоды
   var drum = document.getElementById('drum'), strip = document.getElementById('strip'), win = [], spinning = false;
   var INIT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
@@ -330,7 +514,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     pos++; var i = deck[pos];
     spin(i, function () { render(i); });
   }
-  function prev() { if (!spinning && pos > 0) { pos--; park(deck[pos]); render(deck[pos]); } }
+  function prev() { if (!spinning && mode === 'read' && pos > 0) { pos--; park(deck[pos]); render(deck[pos]); } }
 
   function fromHash() {
     var id = decodeURIComponent(location.hash.slice(1));
@@ -338,38 +522,30 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     return null;
   }
 
-  function personas() {
-    var ul = document.getElementById('personas');
-    ORDER.forEach(function (a) {
-      var li = el('li'), au = D.authors[a];
-      li.appendChild(el('b', null, au.name + '. '));
-      li.appendChild(document.createTextNode(au.persona_note + ' '));
-      li.appendChild(el('small', null, 'Источники: ' + au.sources.join('; ')));
-      ul.appendChild(li);
-    });
-  }
-
-  document.querySelectorAll('.seg button').forEach(function (b) {
+  document.querySelectorAll('.seg.by button').forEach(function (b) {
     b.addEventListener('click', function () {
       if (!D || spinning) return;
       filter = b.dataset.by;
-      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      buildDeck(); next();
+      document.querySelectorAll('.seg.by button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      buildDeck(); if (mode === 'play') newGame(); next();
     });
   });
-  btnNext.addEventListener('click', function () { if (D) next(); });
-  drum.addEventListener('click', function () { if (D) next(); });
-  drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); next(); } });
+  btnNext.addEventListener('click', function () { if (D) advance(); });
+  btnCheck.addEventListener('click', check);
+  drum.addEventListener('click', function () { if (D) advance(); });
+  drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); advance(); } });
+  document.querySelectorAll('.seg.mode button').forEach(function (b) { b.addEventListener('click', function () { if (D && b.dataset.mode !== mode) setMode(b.dataset.mode); }); });
   btnSkip.addEventListener('click', finish);
   document.addEventListener('keydown', function (e) {
     if (!D || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-    if (e.key === 'ArrowRight' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); next(); }
+    if (e.key === 'ArrowRight' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); advance(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     else if (e.key === 'Escape' && raf) finish();
   });
 
   fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
-    D = d; personas();
+    D = d; newGame();
+    document.querySelectorAll('.seg.mode button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.mode === mode)); });
     stage.innerHTML = '<div class="status">Барабан крутится…</div>';
     var first = fromHash();
     buildDeck(first);
