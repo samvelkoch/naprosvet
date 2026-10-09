@@ -109,6 +109,21 @@ main{padding-block:28px 24px}
 @keyframes blink{50%{opacity:0}}
 .col .body p.later{display:none}
 
+.drum{--rh:46px;position:relative;margin:0 0 18px;background:var(--surface);border:1px solid var(--ring);cursor:pointer;user-select:none;-webkit-user-select:none;
+  box-shadow:inset 0 10px 18px -14px rgba(21,24,36,.35),inset 0 -10px 18px -14px rgba(21,24,36,.35)}
+.drum:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.drum-win{height:calc(var(--rh) * 5);overflow:hidden;
+  -webkit-mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent);mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent)}
+.drum::after{content:"";position:absolute;left:0;right:0;top:calc(var(--rh) * 2);height:var(--rh);border-block:1px solid var(--accent);pointer-events:none;
+  background:linear-gradient(90deg,var(--accent) 0 4px,transparent 4px)}
+.drum.landed::after{animation:land .6s ease-out}
+@keyframes land{0%{background-color:rgba(184,57,31,.22)}100%{background-color:transparent}}
+.strip{will-change:transform}
+.strip div{height:var(--rh);display:flex;align-items:center;gap:14px;padding:0 18px 0 22px;white-space:nowrap;overflow:hidden;font:italic 17px/1 var(--f-serif);color:var(--ink-2)}
+.strip div b{flex:none;width:72px;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
+.strip div span{overflow:hidden;text-overflow:ellipsis}
+@media (max-width:700px){.drum{--rh:40px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
+#stage.dim{opacity:.35;transition:opacity .2s}
 .status{font:13px var(--f-mono);color:var(--muted);padding:40px 0}
 .keys{margin-top:18px;font:12px var(--f-mono);color:var(--muted)}
 .keys kbd{font:inherit;border:1px solid var(--ring);padding:0 5px;background:var(--surface)}
@@ -160,11 +175,12 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     <span class="count" id="count"></span>
     <div class="right">
       <button type="button" class="btn" id="skip" hidden>Показать сразу</button>
-      <button type="button" class="btn primary" id="next">Другой вопрос →</button>
+      <button type="button" class="btn primary" id="next">Крутить барабан ↻</button>
     </div>
   </div>
+  <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div></div>
   <div id="stage"><div class="status">Собираем голоса…</div></div>
-  <div class="keys"><kbd>→</kbd> другой вопрос · <kbd>←</kbd> предыдущий · <kbd>Esc</kbd> показать ответы сразу</div>
+  <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий · <kbd>Esc</kbd> показать ответы сразу</div>
 </div></main>
 <footer><div class="inner"><div class="row">
   <span>Исследования: <a href="../brodsky/">Бродский</a> · <a href="../chekhov/">Чехов</a> · <a href="../gary/">Ромен Гари</a></span>
@@ -278,8 +294,43 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     btnSkip.hidden = true;
   }
 
-  function next() { if (pos + 1 >= deck.length) buildDeck(); pos++; render(deck[pos]); }
-  function prev() { if (pos > 0) { pos--; render(deck[pos]); } }
+  // барабан: лента вопросов едет вверх и замедляется, в центральной строке останавливается следующий вопрос колоды
+  var drum = document.getElementById('drum'), strip = document.getElementById('strip'), win = [], spinning = false;
+  var INIT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
+  function pick() { var pool = deck.length ? deck : [0]; return pool[Math.floor(Math.random() * pool.length)]; }
+  function row(i) {
+    var d = el('div'), q = D.questions[i];
+    d.appendChild(el('b', null, window.innerWidth <= 700 ? INIT[q.by][0] : INIT[q.by]));
+    d.appendChild(el('span', null, q.q));
+    return d;
+  }
+  function fill(list) { strip.innerHTML = ''; list.forEach(function (i) { strip.appendChild(row(i)); }); }
+  function park(i) { win = [pick(), pick(), i, pick(), pick()]; fill(win); strip.style.transform = ''; }
+
+  function spin(target, done) {
+    if (calm) { park(target); return done(); }
+    spinning = true; stop(); stage.classList.add('dim'); drum.classList.remove('landed');
+    var n = 30 + Math.floor(Math.random() * 8), list = win.slice();
+    for (var k = 0; k < n; k++) list.push(pick());
+    var t = list.length; list.push(target, pick(), pick());
+    fill(list);
+    var h = strip.firstChild.offsetHeight, dist = (t - 2) * h;
+    var anim = strip.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + -dist + 'px)' }],
+      { duration: 3600 + Math.random() * 900, easing: 'cubic-bezier(.12,.62,.08,1)', fill: 'forwards' });
+    anim.onfinish = function () {
+      win = list.slice(t - 2, t + 3); fill(win); anim.cancel();
+      void drum.offsetWidth; drum.classList.add('landed');
+      spinning = false; stage.classList.remove('dim'); done();
+    };
+  }
+
+  function next() {
+    if (spinning) return;
+    if (pos + 1 >= deck.length) buildDeck();
+    pos++; var i = deck[pos];
+    spin(i, function () { render(i); });
+  }
+  function prev() { if (!spinning && pos > 0) { pos--; park(deck[pos]); render(deck[pos]); } }
 
   function fromHash() {
     var id = decodeURIComponent(location.hash.slice(1));
@@ -300,24 +351,29 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 
   document.querySelectorAll('.seg button').forEach(function (b) {
     b.addEventListener('click', function () {
-      if (!D) return;
+      if (!D || spinning) return;
       filter = b.dataset.by;
       document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
       buildDeck(); next();
     });
   });
   btnNext.addEventListener('click', function () { if (D) next(); });
+  drum.addEventListener('click', function () { if (D) next(); });
+  drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); next(); } });
   btnSkip.addEventListener('click', finish);
   document.addEventListener('keydown', function (e) {
     if (!D || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowRight' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     else if (e.key === 'Escape' && raf) finish();
   });
 
   fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
     D = d; personas();
-    buildDeck(fromHash()); next();
+    stage.innerHTML = '<div class="status">Барабан крутится…</div>';
+    var first = fromHash();
+    buildDeck(first);
+    if (first != null) { pos = 0; park(first); render(first); } else { park(pick()); next(); }
   }).catch(function () {
     stage.innerHTML = '<div class="status">Не получилось загрузить ответы. Обновите страницу.</div>';
   });
