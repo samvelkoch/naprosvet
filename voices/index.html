@@ -2,10 +2,10 @@
 <html lang="ru"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Голоса…</title>
+<title>Голоса</title>
 <meta name="description" content="Бродский, Чехов и Ромен Гари отвечают на одни и те же вопросы. Реконструкция голосов по текстам авторов.">
 <meta property="og:type" content="website"><meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="ГОЛОСА…">
+<meta property="og:title" content="ГОЛОСА_">
 <meta property="og:description" content="Три писателя, триста вопросов. Тяните вопрос, отвечают все трое.">
 <script src="../theme.js"></script>
 <link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -207,7 +207,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 <div class="bar"><div class="inner"><a class="brand" href="../">← На<i>_</i>просвет</a></div></div>
 <header><div class="inner">
   <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
-  <h1><span class="t">Голоса<i>…</i></span></h1>
+  <h1><span class="t">Голоса<i>_</i></span></h1>
   <p class="lede">Три писателя, три анкеты по сто вопросов. Каждый ответил на все триста. Тяните вопрос, и отвечают все трое.</p>
   <div class="note">
     <b>Это не цитаты.</b> Ответы написаны языковой моделью, которой мы дали «голос» автора: его письма, интервью, книги, биографию.
@@ -480,7 +480,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     var line = SHORT[best[0]] + ' узнаётся лучше всех' + (G.by[best[0]] === ROUNDS ? ', без единой ошибки' : '') + '.';
     if (mix) line += ' ' + SHORT[worst] + ' чаще всего прячется за ' + (mix === 'gary' ? 'Гари' : mix === 'chekhov' ? 'Чеховым' : 'Бродским') + '.';
     box.appendChild(el('p', null, line));
-    var text = 'Голоса… «Чей ответ?»: угадал ' + G.hit + ' из ' + total + ' (' + ORDER.map(function (a) { return SHORT[a] + ' ' + G.by[a] + '/' + ROUNDS; }).join(', ') + '). ' + location.origin + location.pathname + '?play';
+    var text = 'Голоса, «Чей ответ?»: угадал ' + G.hit + ' из ' + total + ' (' + ORDER.map(function (a) { return SHORT[a] + ' ' + G.by[a] + '/' + ROUNDS; }).join(', ') + '). ' + location.origin + location.pathname + '?play';
     var acts = el('div', 'acts'), cp = el('button', 'btn', 'Скопировать результат'); cp.type = 'button';
     cp.addEventListener('click', function () {
       try { navigator.clipboard.writeText(text).then(function () { cp.textContent = 'Скопировано'; }, function () {}); } catch (e) {}
