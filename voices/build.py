@@ -1,7 +1,8 @@
 """Сводит ответы персон в один файл для страницы «Голоса…» (/voices/).
 
 src/<отвечает>.<составитель>-100.json — 9 файлов (3 опросника × 3 автора),
-src/questionnaires.json — названия разделов каждого опросника.
+src/questionnaires.json — названия разделов каждого опросника,
+src/themes.json — сквозные темы (1–2 на вопрос).
 Результат: data.json рядом со страницей.
 
     python3 voices/build.py
@@ -22,6 +23,7 @@ def load(path):
 
 def main():
     meta = load(SRC / "questionnaires.json")
+    themes = load(SRC / "themes.json")
     authors, questions = {}, []
     for qid, q in meta.items():
         composer = q["composer"]
@@ -41,6 +43,7 @@ def main():
                 "id": f"{composer}/{r['id']}",
                 "by": composer,
                 "s": r["section"],
+                "t": themes["map"][f"{composer}/{r['id']}"],
                 "q": r["question"],
                 "a": {a: rows[a][i]["answer"].strip() for a in AUTHORS},
             })
@@ -48,6 +51,7 @@ def main():
         "authors": authors,
         # разделы по составителю опросника: questions[].by + questions[].s → название
         "sections": {v["composer"]: {s["id"]: f"{s['num']}. {s['title']}" for s in v["sections"]} for v in meta.values()},
+        "themes": themes["themes"],
         "questions": questions,
     }
     out = HERE / "data.json"
