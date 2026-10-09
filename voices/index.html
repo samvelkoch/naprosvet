@@ -18,17 +18,17 @@
   --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
   --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f;
   --desk:#221a14; --desk-2:#3a2a1f; --htext:#f7f0e2; --htext-2:#d6c9b4; --hlabel:#b9ab96; --hmark:#f0765a;
-  --ok:#2f7a45;
+  --ok:#2f7a45; --hsheet:#f3ebd9; --lptone:#ffffff;
   --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
   --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
   --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
-  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f; --hsheet:#e4d9c3; --lptone:#efebe5;
 }}
 :root[data-theme="dark"]{color-scheme:dark;
   --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
-  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --desk-2:#241a13; --ok:#7cc48f; --hsheet:#e4d9c3; --lptone:#efebe5;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif)}
@@ -49,6 +49,23 @@ h1 .t{display:block;font:600 clamp(46px,10vw,108px)/1 var(--f-mono);letter-spaci
   text-shadow:2.5px 1.5px 0 rgba(240,118,90,.55)}
 h1 .t i{font-style:normal;color:var(--hmark);text-shadow:none}
 .lede{max-width:60ch;font-size:19px;color:var(--htext-2);margin:14px 0 0}
+
+/* портрет на первом экране: лист с рисунком, как у писателей, но статичный */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px 44px;align-items:center}
+@media (min-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr) minmax(240px,min(32%,360px))}}
+.hero-text{min-width:0}
+.hero-portrait{display:flex;justify-content:center;min-width:0}
+.lp{margin:0;width:min(58%,260px);transform:rotate(1.4deg);--fold-bg:var(--desk)}
+@media (min-width:900px){.lp{width:min(100%,360px)}}
+.lp-sheet{position:relative;aspect-ratio:4/5;background-color:var(--hsheet);overflow:hidden;isolation:isolate;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .28  0 0 0 0 .2  0 0 0 .11 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  box-shadow:0 1px 0 rgba(0,0,0,.25),0 22px 34px -18px rgba(0,0,0,.6)}
+.lp-sheet::after{content:"";position:absolute;top:0;right:0;width:7%;aspect-ratio:1;z-index:2;pointer-events:none;
+  background:linear-gradient(225deg,var(--fold-bg) 50%,rgba(60,45,30,.32) 50%)}
+.lp-art{position:absolute;inset:0;
+  -webkit-mask-image:radial-gradient(ellipse 98% 90% at 50% 44%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 98% 90% at 50% 44%,#000 60%,transparent 100%)}
+.lp-art::after{content:"";position:absolute;inset:0;background:var(--lptone);mix-blend-mode:multiply;pointer-events:none}
+.lp-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;mix-blend-mode:multiply}
 
 .note{margin:22px 0 0;max-width:78ch;border-left:2px solid var(--hmark);padding:2px 0 2px 16px;font-size:15px;color:var(--htext-2)}
 .note b{color:var(--htext);font-weight:700}
@@ -128,7 +145,7 @@ main{padding-block:28px 24px}
 .drum:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .drum-win{height:calc(var(--rh) * 5);overflow:hidden;
   -webkit-mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent);mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent)}
-.drum::after{content:"";position:absolute;left:0;right:0;top:calc(var(--rh) * 2);height:var(--rh);border-block:1px solid var(--accent);pointer-events:none;
+.drum::after{content:"";position:absolute;left:0;right:64px;top:calc(var(--rh) * 2);height:var(--rh);border-block:1px solid var(--accent);pointer-events:none;
   background:linear-gradient(90deg,var(--accent) 0 4px,transparent 4px)}
 .drum.landed::after{animation:land .6s ease-out}
 @keyframes land{0%{background-color:rgba(184,57,31,.22)}100%{background-color:transparent}}
@@ -136,7 +153,20 @@ main{padding-block:28px 24px}
 .strip div{height:var(--rh);display:flex;align-items:center;gap:14px;padding:0 18px 0 22px;white-space:nowrap;overflow:hidden;font:italic 17px/1 var(--f-serif);color:var(--ink-2)}
 .strip div b{flex:none;width:72px;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
 .strip div span{overflow:hidden;text-overflow:ellipsis}
-@media (max-width:700px){.drum{--rh:40px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
+.drum{padding-right:64px}
+.strip div.nb:hover{color:var(--accent)}
+.strip div.nb:hover b{text-decoration:underline}
+.strip div.cur{cursor:default}
+/* ручка: тянешь вниз, барабан крутится */
+.lever{position:absolute;top:0;right:0;bottom:0;width:64px;border:0;border-left:1px solid var(--ring);background:none;padding:0;cursor:pointer;color:var(--ink-2)}
+.lever svg{display:block;width:100%;height:100%}
+.lever .rod{transform-box:view-box;transform-origin:32px 118px}
+.lever:hover .knob{fill:var(--mark)}
+.lever:focus-visible{outline:2px solid var(--mark);outline-offset:-3px}
+.lever.pull .rod{animation:pull .75s cubic-bezier(.3,.7,.3,1)}
+@keyframes pull{0%{transform:scaleY(1)}30%{transform:scaleY(-1)}45%{transform:scaleY(-1)}100%{transform:scaleY(1)}}
+.drum.busy .lever{cursor:progress}
+@media (max-width:700px){.drum{--rh:40px;padding-right:48px}.drum::after{right:48px}.lever{width:48px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
 #stage.dim{opacity:.35;transition:opacity .2s}
 .seg.mode button:first-child{border-left:0}
 .seg.mode button[aria-pressed="true"]{background:var(--accent);color:#fff}
@@ -205,7 +235,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 </head>
 <body>
 <div class="bar"><div class="inner"><a class="brand" href="../">← На<i>_</i>просвет</a></div></div>
-<header><div class="inner">
+<header><div class="inner"><div class="hero-grid"><div class="hero-text">
   <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
   <h1><span class="t">Голоса<i>_</i></span></h1>
   <p class="lede">Три писателя, три анкеты по сто вопросов. Каждый ответил на все триста. Тяните вопрос, и отвечают все трое.</p>
@@ -214,7 +244,11 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     Это реконструкция, исследовательская работа, а не спиритический сеанс.
     <a class="more" href="#method">Как сделаны «голоса» ↓</a>
   </div>
-</div></header>
+  </div>
+  <aside class="hero-portrait" aria-hidden="true">
+    <figure class="lp"><div class="lp-sheet"><div class="lp-art"><img src="portrait.webp" width="800" height="1000" alt="" decoding="async"></div></div></figure>
+  </aside>
+</div></div></header>
 <main><div class="inner">
   <div class="tools">
     <div class="seg mode" role="group" aria-label="Режим">
@@ -242,9 +276,14 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     <div class="pn" id="pn"></div>
     <div class="pl" id="pl"></div>
   </dialog>
-  <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div></div>
+  <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div>
+    <button type="button" class="lever" id="lever" aria-label="Потянуть ручку: крутить барабан" title="Потянуть ручку"><svg viewBox="0 0 64 236" aria-hidden="true">
+      <rect x="22" y="104" width="20" height="28" rx="4" fill="currentColor" opacity=".25"/>
+      <g class="rod"><rect x="29.5" y="44" width="5" height="74" rx="2.5" fill="currentColor"/><circle class="knob" cx="32" cy="38" r="11" fill="var(--accent)"/></g>
+      <circle cx="32" cy="118" r="5" fill="currentColor"/>
+    </svg></button></div>
   <div id="stage"><div class="status">Собираем голоса…</div></div>
-  <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий вопрос · <kbd>Esc</kbd> показать ответы сразу</div>
+  <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий вопрос · <kbd>Esc</kbd> показать ответы сразу · соседний вопрос в барабане можно выбрать кликом</div>
 </div></main>
 <section class="method" id="method"><div class="inner">
   <h2>Как сделаны «голоса»</h2>
@@ -559,14 +598,14 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     pq.focus();
   }
   // выбранный вопрос встаёт в колоду следующим, барабан не крутится
-  function choose(i) {
+  function place(i) {
     var k = deck.indexOf(i);
     if (k >= 0) { deck.splice(k, 1); if (k <= pos) pos--; deck.splice(pos + 1, 0, i); }
     else deck.splice(pos + 1, 0, i);
-    pos++; park(i);
+    pos++;
     if (mode === 'play' && (!G.cur || G.round >= ROUNDS)) newGame();
-    render(i);
   }
+  function choose(i) { place(i); park(i); render(i); }
   pq.addEventListener('input', listPicker);
   document.getElementById('pclose').addEventListener('click', function () { picker.close(); });
   picker.addEventListener('click', function (e) { if (e.target === picker) picker.close(); });
@@ -582,12 +621,19 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     d.appendChild(el('span', null, q.q));
     return d;
   }
-  function fill(list) { strip.innerHTML = ''; list.forEach(function (i) { strip.appendChild(row(i)); }); }
+  function fill(list) {
+    strip.innerHTML = '';
+    list.forEach(function (i, k) {
+      var d = row(i);
+      if (list.length === 5) { d.dataset.k = k; d.className = k === 2 ? 'cur' : 'nb'; if (k !== 2) d.title = 'Выбрать этот вопрос'; }
+      strip.appendChild(d);
+    });
+  }
   function park(i) { win = [pick(), pick(), i, pick(), pick()]; fill(win); strip.style.transform = ''; }
 
   function spin(target, done) {
     if (calm) { park(target); return done(); }
-    spinning = true; stop(); stage.classList.add('dim'); drum.classList.remove('landed');
+    spinning = true; stop(); stage.classList.add('dim'); drum.classList.remove('landed'); drum.classList.add('busy');
     var n = 30 + Math.floor(Math.random() * 8), list = win.slice();
     for (var k = 0; k < n; k++) list.push(pick());
     var t = list.length; list.push(target, pick(), pick());
@@ -598,9 +644,37 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     anim.onfinish = function () {
       win = list.slice(t - 2, t + 3); fill(win); anim.cancel();
       void drum.offsetWidth; drum.classList.add('landed');
-      spinning = false; stage.classList.remove('dim'); done();
+      spinning = false; drum.classList.remove('busy'); stage.classList.remove('dim'); done();
     };
   }
+
+  // клик по соседней строке: лента доезжает на 1–2 строки, и этот вопрос становится выбранным
+  function nudge(k) {
+    if (spinning || k === 2) return;
+    var i = win[k], d = k - 2, n = Math.abs(d), extra = [];
+    place(i);
+    if (calm) { park(i); return render(i); }
+    spinning = true; stop(); drum.classList.remove('landed');
+    for (var j = 0; j < n; j++) extra.push(pick());
+    var list = d > 0 ? win.concat(extra) : extra.concat(win);
+    fill(list);
+    var h = strip.firstChild.offsetHeight, a = d > 0 ? 0 : -n * h, b = d > 0 ? -n * h : 0;
+    var anim = strip.animate([{ transform: 'translateY(' + a + 'px)' }, { transform: 'translateY(' + b + 'px)' }],
+      { duration: 260 + 140 * n, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' });
+    anim.onfinish = function () {
+      win = d > 0 ? list.slice(n, n + 5) : list.slice(0, 5); fill(win); anim.cancel();
+      void drum.offsetWidth; drum.classList.add('landed');
+      spinning = false; render(i);
+    };
+  }
+  var lever = document.getElementById('lever');
+  function pull() {
+    if (!D || spinning) return;
+    if (!calm) { lever.classList.remove('pull'); void lever.offsetWidth; lever.classList.add('pull'); }
+    setTimeout(advance, calm ? 0 : 260);
+  }
+  lever.addEventListener('click', function (e) { e.stopPropagation(); pull(); });
+  lever.addEventListener('animationend', function () { lever.classList.remove('pull'); });
 
   function next() {
     if (spinning || !deck.length) return;
@@ -626,7 +700,11 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   });
   btnNext.addEventListener('click', function () { if (D) advance(); });
   btnCheck.addEventListener('click', check);
-  drum.addEventListener('click', function () { if (D) advance(); });
+  drum.addEventListener('click', function (e) {
+    if (!D) return;
+    var r = e.target.closest('.strip div.nb');
+    if (r) nudge(+r.dataset.k); else advance();
+  });
   drum.addEventListener('keydown', function (e) { if (D && e.key === 'Enter') { e.preventDefault(); advance(); } });
   document.querySelectorAll('.seg.mode button').forEach(function (b) { b.addEventListener('click', function () { if (D && b.dataset.mode !== mode) setMode(b.dataset.mode); }); });
   btnSkip.addEventListener('click', finish);
