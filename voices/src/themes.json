@@ -1,0 +1,1001 @@
+{
+"themes": [
+{
+"id": "detstvo",
+"title": "Детство и семья"
+},
+{
+"id": "byt",
+"title": "Быт и привычки"
+},
+{
+"id": "dengi",
+"title": "Деньги и работа"
+},
+{
+"id": "remeslo",
+"title": "Ремесло и искусство"
+},
+{
+"id": "lyubov",
+"title": "Любовь и дружба"
+},
+{
+"id": "rodina",
+"title": "Родина и власть"
+},
+{
+"id": "vremya",
+"title": "Время и история"
+},
+{
+"id": "vera",
+"title": "Бог, смерть, смысл"
+},
+{
+"id": "sebya",
+"title": "Наедине с собой"
+},
+{
+"id": "pustyaki",
+"title": "Пустяки"
+}
+],
+"map": {
+"chekhov/q001": [
+"detstvo"
+],
+"chekhov/q002": [
+"detstvo"
+],
+"chekhov/q003": [
+"detstvo"
+],
+"chekhov/q004": [
+"detstvo"
+],
+"chekhov/q005": [
+"detstvo"
+],
+"chekhov/q006": [
+"remeslo",
+"detstvo"
+],
+"chekhov/q007": [
+"sebya"
+],
+"chekhov/q008": [
+"byt"
+],
+"chekhov/q009": [
+"byt"
+],
+"chekhov/q010": [
+"detstvo"
+],
+"chekhov/q011": [
+"sebya"
+],
+"chekhov/q012": [
+"sebya"
+],
+"chekhov/q013": [
+"byt"
+],
+"chekhov/q014": [
+"dengi"
+],
+"chekhov/q015": [
+"dengi"
+],
+"chekhov/q016": [
+"dengi"
+],
+"chekhov/q017": [
+"byt"
+],
+"chekhov/q018": [
+"byt",
+"pustyaki"
+],
+"chekhov/q019": [
+"byt"
+],
+"chekhov/q020": [
+"byt"
+],
+"chekhov/q021": [
+"byt"
+],
+"chekhov/q022": [
+"byt",
+"sebya"
+],
+"chekhov/q023": [
+"byt"
+],
+"chekhov/q024": [
+"byt",
+"vera"
+],
+"chekhov/q025": [
+"byt"
+],
+"chekhov/q026": [
+"dengi"
+],
+"chekhov/q027": [
+"dengi"
+],
+"chekhov/q028": [
+"dengi"
+],
+"chekhov/q029": [
+"remeslo"
+],
+"chekhov/q030": [
+"remeslo",
+"sebya"
+],
+"chekhov/q031": [
+"remeslo",
+"sebya"
+],
+"chekhov/q032": [
+"remeslo",
+"sebya"
+],
+"chekhov/q033": [
+"remeslo"
+],
+"chekhov/q034": [
+"remeslo",
+"dengi"
+],
+"chekhov/q035": [
+"remeslo"
+],
+"chekhov/q036": [
+"remeslo"
+],
+"chekhov/q037": [
+"remeslo"
+],
+"chekhov/q038": [
+"remeslo"
+],
+"chekhov/q039": [
+"remeslo",
+"dengi"
+],
+"chekhov/q040": [
+"remeslo"
+],
+"chekhov/q041": [
+"lyubov"
+],
+"chekhov/q042": [
+"sebya"
+],
+"chekhov/q043": [
+"detstvo"
+],
+"chekhov/q044": [
+"lyubov"
+],
+"chekhov/q045": [
+"lyubov"
+],
+"chekhov/q046": [
+"lyubov"
+],
+"chekhov/q047": [
+"lyubov"
+],
+"chekhov/q048": [
+"lyubov"
+],
+"chekhov/q049": [
+"rodina"
+],
+"chekhov/q050": [
+"detstvo"
+],
+"chekhov/q051": [
+"lyubov"
+],
+"chekhov/q052": [
+"sebya"
+],
+"chekhov/q053": [
+"sebya"
+],
+"chekhov/q054": [
+"sebya"
+],
+"chekhov/q055": [
+"vremya"
+],
+"chekhov/q056": [
+"vremya"
+],
+"chekhov/q057": [
+"vremya"
+],
+"chekhov/q058": [
+"vremya"
+],
+"chekhov/q059": [
+"rodina"
+],
+"chekhov/q060": [
+"rodina"
+],
+"chekhov/q061": [
+"rodina",
+"remeslo"
+],
+"chekhov/q062": [
+"rodina"
+],
+"chekhov/q063": [
+"rodina"
+],
+"chekhov/q064": [
+"rodina"
+],
+"chekhov/q065": [
+"rodina"
+],
+"chekhov/q066": [
+"vremya"
+],
+"chekhov/q067": [
+"rodina"
+],
+"chekhov/q068": [
+"byt"
+],
+"chekhov/q069": [
+"vremya"
+],
+"chekhov/q070": [
+"vremya"
+],
+"chekhov/q071": [
+"vremya"
+],
+"chekhov/q072": [
+"vera",
+"sebya"
+],
+"chekhov/q073": [
+"vera",
+"sebya"
+],
+"chekhov/q074": [
+"vera"
+],
+"chekhov/q075": [
+"vera"
+],
+"chekhov/q076": [
+"vera"
+],
+"chekhov/q077": [
+"vera",
+"sebya"
+],
+"chekhov/q078": [
+"sebya"
+],
+"chekhov/q079": [
+"sebya"
+],
+"chekhov/q080": [
+"sebya"
+],
+"chekhov/q081": [
+"sebya"
+],
+"chekhov/q082": [
+"remeslo"
+],
+"chekhov/q083": [
+"remeslo"
+],
+"chekhov/q084": [
+"sebya"
+],
+"chekhov/q085": [
+"pustyaki"
+],
+"chekhov/q086": [
+"pustyaki"
+],
+"chekhov/q087": [
+"pustyaki"
+],
+"chekhov/q088": [
+"pustyaki"
+],
+"chekhov/q089": [
+"pustyaki"
+],
+"chekhov/q090": [
+"pustyaki"
+],
+"chekhov/q091": [
+"pustyaki"
+],
+"chekhov/q092": [
+"pustyaki"
+],
+"chekhov/q093": [
+"pustyaki",
+"remeslo"
+],
+"chekhov/q094": [
+"pustyaki",
+"sebya"
+],
+"chekhov/q095": [
+"pustyaki"
+],
+"chekhov/q096": [
+"sebya"
+],
+"chekhov/q097": [
+"sebya"
+],
+"chekhov/q098": [
+"sebya"
+],
+"chekhov/q099": [
+"vera"
+],
+"chekhov/q100": [
+"vera"
+],
+"brodsky/q001": [
+"sebya"
+],
+"brodsky/q002": [
+"rodina",
+"detstvo"
+],
+"brodsky/q003": [
+"dengi",
+"remeslo"
+],
+"brodsky/q004": [
+"sebya",
+"detstvo"
+],
+"brodsky/q005": [
+"sebya"
+],
+"brodsky/q006": [
+"pustyaki"
+],
+"brodsky/q007": [
+"pustyaki"
+],
+"brodsky/q008": [
+"remeslo"
+],
+"brodsky/q009": [
+"remeslo"
+],
+"brodsky/q010": [
+"pustyaki",
+"byt"
+],
+"brodsky/q011": [
+"pustyaki",
+"byt"
+],
+"brodsky/q012": [
+"remeslo",
+"sebya"
+],
+"brodsky/q013": [
+"vremya"
+],
+"brodsky/q014": [
+"vremya"
+],
+"brodsky/q015": [
+"vremya"
+],
+"brodsky/q016": [
+"vremya"
+],
+"brodsky/q017": [
+"vremya"
+],
+"brodsky/q018": [
+"vremya"
+],
+"brodsky/q019": [
+"vremya"
+],
+"brodsky/q020": [
+"vremya"
+],
+"brodsky/q021": [
+"vremya"
+],
+"brodsky/q022": [
+"vremya"
+],
+"brodsky/q023": [
+"vremya"
+],
+"brodsky/q024": [
+"vremya"
+],
+"brodsky/q025": [
+"vremya",
+"sebya"
+],
+"brodsky/q026": [
+"vremya",
+"sebya"
+],
+"brodsky/q027": [
+"byt"
+],
+"brodsky/q028": [
+"rodina"
+],
+"brodsky/q029": [
+"rodina"
+],
+"brodsky/q030": [
+"rodina"
+],
+"brodsky/q031": [
+"rodina"
+],
+"brodsky/q032": [
+"rodina"
+],
+"brodsky/q033": [
+"rodina"
+],
+"brodsky/q034": [
+"rodina"
+],
+"brodsky/q035": [
+"dengi"
+],
+"brodsky/q036": [
+"dengi"
+],
+"brodsky/q037": [
+"rodina"
+],
+"brodsky/q038": [
+"rodina",
+"remeslo"
+],
+"brodsky/q039": [
+"rodina"
+],
+"brodsky/q040": [
+"rodina"
+],
+"brodsky/q041": [
+"rodina"
+],
+"brodsky/q042": [
+"rodina"
+],
+"brodsky/q043": [
+"remeslo"
+],
+"brodsky/q044": [
+"remeslo"
+],
+"brodsky/q045": [
+"remeslo"
+],
+"brodsky/q046": [
+"remeslo"
+],
+"brodsky/q047": [
+"remeslo"
+],
+"brodsky/q048": [
+"remeslo"
+],
+"brodsky/q049": [
+"remeslo"
+],
+"brodsky/q050": [
+"remeslo"
+],
+"brodsky/q051": [
+"remeslo"
+],
+"brodsky/q052": [
+"remeslo"
+],
+"brodsky/q053": [
+"remeslo"
+],
+"brodsky/q054": [
+"remeslo"
+],
+"brodsky/q055": [
+"vera"
+],
+"brodsky/q056": [
+"vera"
+],
+"brodsky/q057": [
+"vera"
+],
+"brodsky/q058": [
+"vera"
+],
+"brodsky/q059": [
+"vera",
+"sebya"
+],
+"brodsky/q060": [
+"vera",
+"sebya"
+],
+"brodsky/q061": [
+"vera"
+],
+"brodsky/q062": [
+"sebya"
+],
+"brodsky/q063": [
+"sebya"
+],
+"brodsky/q064": [
+"vera"
+],
+"brodsky/q065": [
+"lyubov"
+],
+"brodsky/q066": [
+"vera",
+"sebya"
+],
+"brodsky/q067": [
+"vera",
+"sebya"
+],
+"brodsky/q068": [
+"vera"
+],
+"brodsky/q069": [
+"sebya"
+],
+"brodsky/q070": [
+"sebya"
+],
+"brodsky/q071": [
+"sebya"
+],
+"brodsky/q072": [
+"sebya"
+],
+"brodsky/q073": [
+"detstvo"
+],
+"brodsky/q074": [
+"sebya"
+],
+"brodsky/q075": [
+"sebya"
+],
+"brodsky/q076": [
+"sebya"
+],
+"brodsky/q077": [
+"detstvo"
+],
+"brodsky/q078": [
+"lyubov"
+],
+"brodsky/q079": [
+"lyubov"
+],
+"brodsky/q080": [
+"vera",
+"detstvo"
+],
+"brodsky/q081": [
+"sebya"
+],
+"brodsky/q082": [
+"sebya"
+],
+"brodsky/q083": [
+"sebya"
+],
+"brodsky/q084": [
+"sebya"
+],
+"brodsky/q085": [
+"pustyaki"
+],
+"brodsky/q086": [
+"pustyaki"
+],
+"brodsky/q087": [
+"pustyaki"
+],
+"brodsky/q088": [
+"dengi",
+"sebya"
+],
+"brodsky/q089": [
+"sebya",
+"pustyaki"
+],
+"brodsky/q090": [
+"lyubov"
+],
+"brodsky/q091": [
+"pustyaki"
+],
+"brodsky/q092": [
+"pustyaki"
+],
+"brodsky/q093": [
+"sebya",
+"pustyaki"
+],
+"brodsky/q094": [
+"lyubov"
+],
+"brodsky/q095": [
+"pustyaki"
+],
+"brodsky/q096": [
+"pustyaki"
+],
+"brodsky/q097": [
+"detstvo"
+],
+"brodsky/q098": [
+"sebya",
+"pustyaki"
+],
+"brodsky/q099": [
+"sebya"
+],
+"brodsky/q100": [
+"sebya"
+],
+"gary/q001": [
+"sebya"
+],
+"gary/q002": [
+"sebya"
+],
+"gary/q003": [
+"sebya"
+],
+"gary/q004": [
+"pustyaki"
+],
+"gary/q005": [
+"sebya"
+],
+"gary/q006": [
+"pustyaki",
+"byt"
+],
+"gary/q007": [
+"pustyaki",
+"byt"
+],
+"gary/q008": [
+"pustyaki"
+],
+"gary/q009": [
+"sebya"
+],
+"gary/q010": [
+"sebya"
+],
+"gary/q011": [
+"detstvo"
+],
+"gary/q012": [
+"detstvo"
+],
+"gary/q013": [
+"detstvo"
+],
+"gary/q014": [
+"detstvo"
+],
+"gary/q015": [
+"detstvo"
+],
+"gary/q016": [
+"rodina",
+"detstvo"
+],
+"gary/q017": [
+"rodina"
+],
+"gary/q018": [
+"rodina"
+],
+"gary/q019": [
+"detstvo"
+],
+"gary/q020": [
+"detstvo"
+],
+"gary/q021": [
+"sebya"
+],
+"gary/q022": [
+"sebya"
+],
+"gary/q023": [
+"sebya"
+],
+"gary/q024": [
+"sebya"
+],
+"gary/q025": [
+"sebya"
+],
+"gary/q026": [
+"sebya"
+],
+"gary/q027": [
+"sebya",
+"vera"
+],
+"gary/q028": [
+"sebya"
+],
+"gary/q029": [
+"sebya"
+],
+"gary/q030": [
+"sebya"
+],
+"gary/q031": [
+"sebya"
+],
+"gary/q032": [
+"sebya"
+],
+"gary/q033": [
+"lyubov"
+],
+"gary/q034": [
+"lyubov"
+],
+"gary/q035": [
+"lyubov"
+],
+"gary/q036": [
+"lyubov"
+],
+"gary/q037": [
+"rodina"
+],
+"gary/q038": [
+"lyubov"
+],
+"gary/q039": [
+"lyubov"
+],
+"gary/q040": [
+"lyubov"
+],
+"gary/q041": [
+"lyubov"
+],
+"gary/q042": [
+"remeslo"
+],
+"gary/q043": [
+"remeslo"
+],
+"gary/q044": [
+"remeslo"
+],
+"gary/q045": [
+"remeslo"
+],
+"gary/q046": [
+"dengi"
+],
+"gary/q047": [
+"dengi",
+"remeslo"
+],
+"gary/q048": [
+"remeslo"
+],
+"gary/q049": [
+"remeslo",
+"sebya"
+],
+"gary/q050": [
+"remeslo"
+],
+"gary/q051": [
+"remeslo",
+"vera"
+],
+"gary/q052": [
+"vremya"
+],
+"gary/q053": [
+"vremya"
+],
+"gary/q054": [
+"vremya"
+],
+"gary/q055": [
+"vremya",
+"remeslo"
+],
+"gary/q056": [
+"vremya"
+],
+"gary/q057": [
+"rodina"
+],
+"gary/q058": [
+"rodina"
+],
+"gary/q059": [
+"rodina"
+],
+"gary/q060": [
+"remeslo",
+"vremya"
+],
+"gary/q061": [
+"vremya"
+],
+"gary/q062": [
+"vremya"
+],
+"gary/q063": [
+"vremya"
+],
+"gary/q064": [
+"vremya",
+"dengi"
+],
+"gary/q065": [
+"vremya"
+],
+"gary/q066": [
+"rodina"
+],
+"gary/q067": [
+"rodina",
+"remeslo"
+],
+"gary/q068": [
+"rodina",
+"remeslo"
+],
+"gary/q069": [
+"rodina"
+],
+"gary/q070": [
+"remeslo",
+"vremya"
+],
+"gary/q071": [
+"remeslo",
+"vremya"
+],
+"gary/q072": [
+"rodina"
+],
+"gary/q073": [
+"rodina"
+],
+"gary/q074": [
+"vera",
+"sebya"
+],
+"gary/q075": [
+"vera",
+"sebya"
+],
+"gary/q076": [
+"vera"
+],
+"gary/q077": [
+"vera"
+],
+"gary/q078": [
+"vera"
+],
+"gary/q079": [
+"vera"
+],
+"gary/q080": [
+"vera",
+"sebya"
+],
+"gary/q081": [
+"sebya"
+],
+"gary/q082": [
+"sebya"
+],
+"gary/q083": [
+"vremya"
+],
+"gary/q084": [
+"sebya"
+],
+"gary/q085": [
+"sebya"
+],
+"gary/q086": [
+"sebya"
+],
+"gary/q087": [
+"pustyaki"
+],
+"gary/q088": [
+"pustyaki",
+"byt"
+],
+"gary/q089": [
+"pustyaki"
+],
+"gary/q090": [
+"pustyaki"
+],
+"gary/q091": [
+"pustyaki"
+],
+"gary/q092": [
+"pustyaki"
+],
+"gary/q093": [
+"pustyaki"
+],
+"gary/q094": [
+"pustyaki",
+"sebya"
+],
+"gary/q095": [
+"pustyaki"
+],
+"gary/q096": [
+"pustyaki",
+"byt"
+],
+"gary/q097": [
+"remeslo",
+"pustyaki"
+],
+"gary/q098": [
+"pustyaki",
+"remeslo"
+],
+"gary/q099": [
+"vera"
+],
+"gary/q100": [
+"sebya"
+]
+}
+}

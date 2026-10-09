@@ -78,7 +78,7 @@ main{padding-block:28px 24px}
   body>header{padding-block:28px 28px}
   .tools{position:static}
   .seg{width:100%}.seg span{display:none}.seg button{flex:1}.seg button:first-of-type{border-left:0}
-  .tools .right{position:fixed;left:0;right:0;bottom:0;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--page);border-top:1px solid var(--ring)}
+  .tools .right{position:fixed;z-index:25;left:0;right:0;bottom:0;margin:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--page);border-top:1px solid var(--ring)}
   .tools .right .btn{flex:1}
   footer{padding-bottom:110px}
 }
@@ -158,6 +158,27 @@ main{padding-block:28px 24px}
 .summary .bar2 i{display:block;height:100%;background:var(--accent)}
 .summary p{margin:0 0 14px;color:var(--ink-2)}
 .summary .acts{display:flex;gap:10px;flex-wrap:wrap}
+.themes{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.themes span{font:11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);align-self:center;margin-right:4px}
+.themes button{font:500 12.5px var(--f-mono);border:1px solid var(--ring);background:var(--surface);padding:6px 10px;cursor:pointer;color:var(--ink-2)}
+.themes button:hover{color:var(--accent);border-color:var(--accent)}
+.themes button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.themes button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+@media (max-width:700px){.themes{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}.themes::-webkit-scrollbar{display:none}.themes button{flex:none}}
+.q .tags{color:var(--muted)}
+.picker{width:min(820px,calc(100vw - 24px));max-height:min(80vh,760px);padding:0;border:1px solid var(--ring);background:var(--surface);color:var(--ink);box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.picker[open]{display:flex;flex-direction:column}
+.picker::backdrop{background:rgba(20,14,10,.55)}
+.picker .ph{display:flex;gap:8px;padding:14px;border-bottom:1px solid var(--ring)}
+.picker input{flex:1;min-width:0;font:16px var(--f-serif);padding:9px 12px;border:1px solid var(--ring);background:var(--page);color:var(--ink)}
+.picker input:focus{outline:2px solid var(--mark);outline-offset:-1px}
+.picker .pn{padding:8px 16px 0;font:12px var(--f-mono);color:var(--muted)}
+.picker .pl{overflow-y:auto;padding:4px 0 12px}
+.picker h4{margin:14px 16px 4px;font:600 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mark)}
+.picker .pl button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 16px;font:16px/1.4 var(--f-serif);color:var(--ink-2);cursor:pointer}
+.picker .pl button:hover,.picker .pl button:focus-visible{background:var(--page);color:var(--accent);outline:none}
+.picker .pl button small{font:11px var(--f-mono);color:var(--muted);margin-right:8px}
+@media (max-width:700px){.tools .right #choose{flex:none;padding:0 12px}.tools .right #choose{font-size:0}.tools .right #choose::before{content:"☰";font-size:18px}}
 .status{font:13px var(--f-mono);color:var(--muted);padding:40px 0}
 .keys{margin-top:18px;font:12px var(--f-mono);color:var(--muted)}
 .keys kbd{font:inherit;border:1px solid var(--ring);padding:0 5px;background:var(--surface)}
@@ -207,11 +228,18 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     </div>
     <span class="count" id="count"></span>
     <div class="right">
+      <button type="button" class="btn" id="choose">Выбрать вопрос ☰</button>
       <button type="button" class="btn" id="skip" hidden>Показать сразу</button>
       <button type="button" class="btn primary" id="check" hidden disabled>Проверить</button>
       <button type="button" class="btn primary" id="next">Крутить барабан ↻</button>
     </div>
   </div>
+  <div class="themes" id="themes" role="group" aria-label="Тема"><span>Тема</span></div>
+  <dialog class="picker" id="picker" aria-label="Выбрать вопрос">
+    <div class="ph"><input type="search" id="pq" placeholder="Найти вопрос: смерть, кошка, Пушкин…" autocomplete="off"><button type="button" class="btn" id="pclose" aria-label="Закрыть">✕</button></div>
+    <div class="pn" id="pn"></div>
+    <div class="pl" id="pl"></div>
+  </dialog>
   <div class="drum" id="drum" role="button" tabindex="0" aria-label="Крутить барабан вопросов"><div class="drum-win"><div class="strip" id="strip"></div></div></div>
   <div id="stage"><div class="status">Собираем голоса…</div></div>
   <div class="keys"><kbd>→</kbd> или <kbd>Пробел</kbd> крутить барабан · <kbd>←</kbd> предыдущий вопрос · <kbd>Esc</kbd> показать ответы сразу</div>
@@ -280,9 +308,11 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
+  var theme = '';
+  function match(q) { return (!filter || q.by === filter) && (!theme || q.t.indexOf(theme) >= 0); }
   function buildDeck(firstId) {
     deck = [];
-    for (var i = 0; i < D.questions.length; i++) if (!filter || D.questions[i].by === filter) deck.push(i);
+    for (var i = 0; i < D.questions.length; i++) if (match(D.questions[i])) deck.push(i);
     shuffle(deck);
     if (firstId != null) { var k = deck.indexOf(firstId); if (k > 0) { deck.splice(k, 1); deck.unshift(firstId); } }
     pos = -1;
@@ -331,6 +361,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     var card = el('section', 'q');
     var meta = el('div', 'meta', 'Спрашивает ' + SHORT[q.by] + ' ');
     meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
+    meta.appendChild(el('em', 'tags', ' · ' + q.t.map(function (t) { return TNAME[t]; }).join(', ').toLowerCase()));
     card.appendChild(meta);
     card.appendChild(el('h2', null, q.q));
     return card;
@@ -478,6 +509,65 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     next();
   }
 
+  // темы: фильтр поверх «Спрашивает», общий для чтения и игры
+  var TNAME = {};
+  function themesUI() {
+    var box = document.getElementById('themes');
+    [{ id: '', title: 'Все' }].concat(D.themes).forEach(function (t) {
+      TNAME[t.id] = t.title;
+      var b = el('button', null, t.title); b.type = 'button'; b.dataset.t = t.id; b.setAttribute('aria-pressed', String(t.id === theme));
+      b.addEventListener('click', function () {
+        if (spinning || t.id === theme) return;
+        theme = t.id;
+        box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        refilter();
+      });
+      box.appendChild(b);
+    });
+  }
+  function refilter() {
+    buildDeck(); if (mode === 'play') newGame();
+    if (!deck.length) { stop(); stage.innerHTML = '<div class="status">Таких вопросов нет. Снимите один из фильтров.</div>'; count.textContent = ''; return; }
+    next();
+  }
+
+  // ручной выбор: список вопросов по текущим фильтрам, с поиском
+  var picker = document.getElementById('picker'), pq = document.getElementById('pq'), pl = document.getElementById('pl'), pn = document.getElementById('pn');
+  function listPicker() {
+    var needle = pq.value.trim().toLowerCase(), groups = {}, n = 0;
+    pl.innerHTML = '';
+    D.questions.forEach(function (q, i) {
+      if (!match(q) || (needle && q.q.toLowerCase().indexOf(needle) < 0)) return;
+      var key = q.by + '|' + q.s;
+      if (!groups[key]) { groups[key] = true; pl.appendChild(el('h4', null, 'Спрашивает ' + SHORT[q.by] + ' · ' + D.sections[q.by][q.s])); }
+      var b = el('button'); b.type = 'button';
+      b.appendChild(el('small', null, q.id.split('/')[1].replace('q', '№')));
+      b.appendChild(document.createTextNode(q.q));
+      b.addEventListener('click', function () { picker.close(); choose(i); });
+      pl.appendChild(b); n++;
+    });
+    pn.textContent = n ? 'Вопросов: ' + n + (filter || theme ? ' (по выбранным фильтрам)' : '') : 'Ничего не нашлось.';
+  }
+  function openPicker() {
+    if (!D || spinning) return;
+    listPicker();
+    if (picker.showModal) picker.showModal(); else picker.setAttribute('open', '');
+    pq.focus();
+  }
+  // выбранный вопрос встаёт в колоду следующим, барабан не крутится
+  function choose(i) {
+    var k = deck.indexOf(i);
+    if (k >= 0) { deck.splice(k, 1); if (k <= pos) pos--; deck.splice(pos + 1, 0, i); }
+    else deck.splice(pos + 1, 0, i);
+    pos++; park(i);
+    if (mode === 'play' && (!G.cur || G.round >= ROUNDS)) newGame();
+    render(i);
+  }
+  pq.addEventListener('input', listPicker);
+  document.getElementById('pclose').addEventListener('click', function () { picker.close(); });
+  picker.addEventListener('click', function (e) { if (e.target === picker) picker.close(); });
+  document.getElementById('choose').addEventListener('click', openPicker);
+
   // барабан: лента вопросов едет вверх и замедляется, в центральной строке останавливается следующий вопрос колоды
   var drum = document.getElementById('drum'), strip = document.getElementById('strip'), win = [], spinning = false;
   var INIT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
@@ -509,7 +599,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   }
 
   function next() {
-    if (spinning) return;
+    if (spinning || !deck.length) return;
     if (pos + 1 >= deck.length) buildDeck();
     pos++; var i = deck[pos];
     spin(i, function () { render(i); });
@@ -527,7 +617,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       if (!D || spinning) return;
       filter = b.dataset.by;
       document.querySelectorAll('.seg.by button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      buildDeck(); if (mode === 'play') newGame(); next();
+      refilter();
     });
   });
   btnNext.addEventListener('click', function () { if (D) advance(); });
@@ -537,14 +627,14 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   document.querySelectorAll('.seg.mode button').forEach(function (b) { b.addEventListener('click', function () { if (D && b.dataset.mode !== mode) setMode(b.dataset.mode); }); });
   btnSkip.addEventListener('click', finish);
   document.addEventListener('keydown', function (e) {
-    if (!D || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (!D || picker.open || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (e.key === 'ArrowRight' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); advance(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     else if (e.key === 'Escape' && raf) finish();
   });
 
   fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
-    D = d; newGame();
+    D = d; newGame(); themesUI();
     document.querySelectorAll('.seg.mode button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.mode === mode)); });
     stage.innerHTML = '<div class="status">Барабан крутится…</div>';
     var first = fromHash();
