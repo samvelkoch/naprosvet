@@ -18,16 +18,19 @@
   letter-spacing:.06em;text-transform:uppercase;
   -webkit-tap-highlight-color:transparent;
 }
-.app-nav a{
+.app-nav a,.app-nav button{
   position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
   color:var(--hlabel,#b9ab96);text-decoration:none;
 }
-.app-nav a svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
-.app-nav a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-nav button{margin:0;padding:0;border:0;border-radius:0;background:none;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer}
+html.app-author .app-nav{letter-spacing:.03em}
+.app-nav button[aria-expanded="true"]{color:var(--hmark,#f0765a)}
+.app-nav a svg,.app-nav button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
+.app-nav a span,.app-nav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .app-nav a[aria-current="page"]{color:var(--hmark,#f0765a)}
 .app-nav a[aria-current="page"]::before{content:"";position:absolute;top:-1px;left:50%;width:28px;height:2px;margin-left:-14px;background:var(--hmark,#f0765a)}
-.app-nav a:focus-visible{outline:2px solid var(--hmark,#f0765a);outline-offset:-4px}
-@media (hover:hover){.app-nav a:hover{color:var(--htext,#f7f0e2)}.app-nav a[aria-current="page"]:hover{color:var(--hmark,#f0765a)}}
+.app-nav a:focus-visible,.app-nav button:focus-visible{outline:2px solid var(--hmark,#f0765a);outline-offset:-4px}
+@media (hover:hover){.app-nav a:hover,.app-nav button:hover{color:var(--htext,#f7f0e2)}.app-nav a[aria-current="page"]:hover{color:var(--hmark,#f0765a)}}
 @media (prefers-reduced-motion:reduce){.app-nav,html.app-nav-on .tools .right{transition:none}}
 
 /* отступ снизу, чтобы панель не закрывала конец страницы */
@@ -93,3 +96,84 @@ html.app-nav-on.app-voices .app-ios-hint{bottom:calc(var(--app-nav-h,60px) + env
   color:#1b1010;background:var(--hmark,#f0765a);border:1px solid var(--hmark,#f0765a);border-radius:2px;
 }
 .app-welcome button:focus-visible{outline:2px solid var(--htext,#f7f0e2);outline-offset:3px}
+
+
+/* ---- страницы авторов: оглавление (лист снизу) и плашка «Продолжить». Только там, где видна нижняя панель ---- */
+.app-toc,.app-resume{display:none}
+@media (max-width:768px),(display-mode:standalone){
+  .app-toc:not([hidden]){display:block}
+  html.app-resume-on .app-resume{display:flex}
+}
+html.app-toc-open{overflow:hidden}
+.app-toc{position:fixed;inset:0;z-index:60;-webkit-tap-highlight-color:transparent}
+.app-toc .scrim{position:absolute;inset:0;background:rgba(14,10,8,.58);opacity:0;transition:opacity .22s ease}
+.app-toc .sheet{
+  position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;
+  max-height:70vh;max-height:70dvh;padding-bottom:env(safe-area-inset-bottom,0px);
+  background:var(--surface,#fcfaf5);color:var(--ink,#211b16);
+  border-top:1px solid var(--ring,rgba(33,27,22,.15));border-radius:12px 12px 0 0;box-shadow:0 -18px 40px -16px rgba(0,0,0,.5);
+  font:13px/1.35 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);
+  transform:translateY(100%);transition:transform .24s ease;
+}
+.app-toc.on .scrim{opacity:1}
+.app-toc.on .sheet{transform:none}
+.app-toc .hd{flex:none;display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;border-bottom:1px solid var(--ring,rgba(33,27,22,.15))}
+.app-toc .hd h2{margin:0;font:600 12px/1 var(--f-mono,monospace);letter-spacing:.14em;text-transform:uppercase}
+.app-toc .hd small{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:11px;color:var(--muted,#675d51)}
+.app-toc .x{flex:none;width:44px;height:44px;padding:0;cursor:pointer;font:300 28px/1 var(--f-mono,monospace);color:var(--ink,#211b16);background:none;border:0;border-radius:2px}
+.app-toc .list{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.app-toc .grp+.grp{border-top:1px solid var(--ring,rgba(33,27,22,.15))}
+.app-toc .p{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:48px;margin:0;padding:6px 16px;text-align:left;cursor:pointer;
+  font:500 13px/1.2 var(--f-mono,monospace);color:var(--ink,#211b16);background:none;border:0;border-radius:0;
+}
+.app-toc .p b{flex:none;width:34px;font-weight:600;color:var(--accent,#9a2f22)}
+.app-toc .p span{flex:1;min-width:0}
+.app-toc .p em{flex:none;font-style:normal;font-size:11px;color:var(--muted,#675d51)}
+.app-toc .p i{flex:none;width:12px;font-style:normal;font-size:18px;line-height:1;text-align:center;color:var(--muted,#675d51);transition:transform .15s ease}
+.app-toc .grp.open .p em{display:none}
+.app-toc .grp.open .p i{transform:rotate(90deg);color:var(--ink,#211b16)}
+.app-toc .ss{display:none;padding-bottom:6px}
+.app-toc .grp.open .ss{display:block}
+.app-toc .s{
+  display:flex;align-items:baseline;gap:8px;min-height:44px;padding:11px 16px 11px 62px;
+  color:var(--ink-2,#4b4238);text-decoration:none;box-shadow:inset 3px 0 0 transparent;
+}
+.app-toc .s .n{flex:none;width:34px;margin-left:-34px;font-size:11.5px;color:var(--muted,#675d51)}
+.app-toc .s .t{flex:1;min-width:0;font:15px/1.3 var(--f-body,"PT Serif",Georgia,serif)}
+.app-toc .s .now{flex:none;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent,#9a2f22)}
+.app-toc .s.cur{
+  color:var(--ink,#211b16);font-weight:600;
+  background:var(--accent-soft,rgba(154,47,34,.12));
+  background:color-mix(in srgb,var(--accent,#9a2f22) 13%,transparent);
+  box-shadow:inset 3px 0 0 var(--accent,#9a2f22);
+}
+.app-toc .s.cur .n{color:var(--accent,#9a2f22)}
+.app-toc button:focus-visible,.app-toc a:focus-visible{outline:2px solid var(--accent,#9a2f22);outline-offset:-2px}
+@media (hover:hover){.app-toc .p:hover,.app-toc .s:hover{background:var(--fold,rgba(0,0,0,.05))}}
+@media (prefers-reduced-motion:reduce){.app-toc .scrim,.app-toc .sheet,.app-toc .p i{transition:none}}
+
+/* плашка «Продолжить с …» над нижней панелью */
+.app-resume{
+  position:fixed;left:12px;right:12px;z-index:41;align-items:stretch;
+  bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 10px);
+  background:var(--surface,#fcfaf5);color:var(--ink,#211b16);
+  border:1px solid var(--ring,rgba(33,27,22,.15));border-radius:3px;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);
+  font:12.5px/1.2 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);
+}
+html.app-hint-on .app-resume{bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 84px)}
+.app-resume .go{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 4px 0 14px;color:inherit;text-decoration:none}
+.app-resume .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted,#675d51)}
+.app-resume .t b{font-weight:600;color:var(--ink,#211b16)}
+.app-resume .ar{flex:none;color:var(--accent,#9a2f22)}
+.app-resume button{flex:none;width:40px;margin:0;padding:0;cursor:pointer;font:300 22px/1 var(--f-mono,monospace);color:var(--muted,#675d51);background:none;border:0;border-left:1px solid var(--ring,rgba(33,27,22,.15))}
+.app-resume .go:focus-visible,.app-resume button:focus-visible{outline:2px solid var(--accent,#9a2f22);outline-offset:-2px}
+
+/* главная: строка под кнопкой «Открыть исследование →» */
+.app-resume-row{
+  display:block;margin-top:10px;padding-top:10px;cursor:pointer;
+  border-top:1px dashed var(--ring,rgba(33,27,22,.15));
+  font:500 12px/1.35 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);color:var(--accent,#9a2f22);
+}
+.app-resume-row:hover{text-decoration:underline;text-underline-offset:3px}
+.app-resume-row:focus-visible{outline:2px solid var(--mark,#b8391f);outline-offset:2px}

@@ -14,6 +14,7 @@
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
   function mq(q) { try { return window.matchMedia(q); } catch (e) { return { matches: false }; } }
   function goal(name) { try { if (window.ym) window.ym(YM_ID, 'reachGoal', name); } catch (e) {} }
   function on(m, fn) { if (!m.addEventListener) { if (m.addListener) m.addListener(fn); return; } m.addEventListener('change', fn); }
@@ -28,6 +29,8 @@
   var section = rel.split('/')[0];            // '', today, voices, shelf, brodsky, chekhov, gary
   var isVoices = section === 'voices';
   if (isVoices) root.className += ' app-voices';
+  var isAuthor = section === 'brodsky' || section === 'chekhov' || section === 'gary';
+  if (isAuthor) { root.className += ' app-author'; root.setAttribute('data-author', section); }
   if (isStandalone()) root.className += ' app-standalone';
 
   /* ---- день открытия: пригодится «Полке» ---- */
@@ -54,6 +57,7 @@
     today: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="13"/><path d="M3 8h14M7 2v4M13 2v4"/></svg>',
     voices: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8v4M7 4v12M11 7v6M15 3v14M19 9v2"/></svg>',
     home: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14"/><path d="M8 3v14M12 3v14"/></svg>',
+    toc: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h2M8 5h9M3 10h2M8 10h9M3 15h2M8 15h9"/></svg>',
     shelf: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 17h16M4 17V8h4v9M10 17V4h4v13"/></svg>'
   };
   var TABS = [
@@ -75,12 +79,21 @@
       html += '<a href="' + t.href + '"' + (t.key === act ? ' aria-current="page"' : '') + '>' + ICONS[t.key] + '<span>' + t.label + '</span></a>';
     }
     nav.innerHTML = html;
+    if (isAuthor && readRail().parts.length) {
+      tocBtn = doc.createElement('button');
+      tocBtn.type = 'button';
+      tocBtn.setAttribute('aria-haspopup', 'dialog');
+      tocBtn.setAttribute('aria-expanded', 'false');
+      tocBtn.innerHTML = ICONS.toc + '<span>Оглавление</span>';
+      tocBtn.addEventListener('click', function () { openToc(); });
+      nav.appendChild(tocBtn);
+    }
     doc.body.appendChild(nav);
     return nav;
   }
 
   var navMq = mq('(max-width:768px)');
-  var nav = null;
+  var nav = null, tocBtn = null;
   function syncNav() {
     var show = !!navMq.matches || isStandalone();
     var has = / app-nav-on(\s|$)/.test(' ' + root.className);
@@ -106,6 +119,226 @@
     window.addEventListener('scroll', function () {
       if (!tick) { tick = true; (window.requestAnimationFrame || window.setTimeout)(step, 16); }
     }, { passive: true });
+  }
+
+  /* ---- страницы авторов: оглавление, запоминание места, «продолжить» ---- */
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function hasCls(c) { return (' ' + root.className + ' ').indexOf(' ' + c + ' ') !== -1; }
+  function addCls(c) { if (!hasCls(c)) root.className += ' ' + c; }
+  function delCls(c) { root.className = (' ' + root.className + ' ').replace(' ' + c + ' ', ' ').replace(/^\s+|\s+$/g, ''); }
+
+  /* единственный источник: nav.rail страницы (части — .g, разделы — a[href^="#"]) */
+  var railData = null;
+  function readRail() {
+    if (railData) return railData;
+    var d = { parts: [], byId: {}, order: [] };
+    railData = d;
+    var rail = doc.querySelector('nav.rail');
+    if (!rail) return d;
+    var part = null;
+    for (var n = rail.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType !== 1) continue;
+      if (n.tagName === 'DIV' && /(^|\s)g(\s|$)/.test(n.className)) {
+        var t = n.textContent.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''), m = t.match(/^(\S+)\s*·\s*(.*)$/);
+        part = { n: m ? m[1] : '', name: m ? m[2] : t, items: [] };
+        d.parts.push(part);
+      } else if (n.tagName === 'A' && part) {
+        var href = n.getAttribute('href') || '';
+        if (href.charAt(0) !== '#') continue;
+        var sp = n.querySelector('span'), num = sp ? sp.textContent.replace(/\s+/g, '') : '';
+        var all = n.textContent.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+        var item = { id: href.slice(1), num: num, title: (sp ? all.slice(all.indexOf(num) + num.length) : all).replace(/^\s+/, ''), part: d.parts.length - 1 };
+        part.items.push(item);
+        d.byId[item.id] = item;
+        d.order.push(item.id);
+      }
+    }
+    return d;
+  }
+  function itemLabel(it) { return (it.num ? it.num + ' ' : '') + it.title; }
+
+  /* тот же критерий, что в theme.js: последний section[id], чей верх не ниже 35 % высоты окна */
+  function currentSection() {
+    var list = doc.querySelectorAll('section[id]'), line = window.innerHeight * 0.35, hit = null;
+    for (var i = 0; i < list.length; i++) { if (list[i].getBoundingClientRect().top <= line) hit = list[i]; else break; }
+    return hit;
+  }
+  function authorName() {
+    var t = doc.querySelector('h1 .typed');
+    if (t && t.textContent) return t.textContent.replace(/^\s+|\s+$/g, '');
+    var og = doc.querySelector('meta[property="og:title"]'), c = og ? (og.getAttribute('content') || '') : '';
+    return c.replace(/\s+на просвет\s*$/i, '');
+  }
+
+  /* лист «Оглавление» */
+  var toc = null, tocOpen = false, tocTimer = 0;
+  function tocBuild() {
+    var rd = readRail(), cur = currentSection(), curId = cur && rd.byId[cur.id] ? cur.id : '';
+    var openIdx = curId ? rd.byId[curId].part : 0, html = '';
+    for (var i = 0; i < rd.parts.length; i++) {
+      var p = rd.parts[i], open = i === openIdx;
+      html += '<div class="grp' + (open ? ' open' : '') + '">' +
+        '<button type="button" class="p" aria-expanded="' + (open ? 'true' : 'false') + '"><b>' + esc(p.n) + '</b><span>' + esc(p.name) + '</span>' +
+        '<em>' + p.items.length + '</em><i aria-hidden="true">›</i></button><div class="ss">';
+      for (var j = 0; j < p.items.length; j++) {
+        var it = p.items[j], is = it.id === curId;
+        html += '<a class="s' + (is ? ' cur' : '') + '" href="#' + esc(it.id) + '"' + (is ? ' aria-current="location"' : '') + '><span class="n">' + esc(it.num) + '</span>' +
+          '<span class="t">' + esc(it.title) + '</span>' + (is ? '<span class="now">сейчас</span>' : '') + '</a>';
+      }
+      html += '</div></div>';
+    }
+    return html;
+  }
+  function tocEnsure() {
+    if (toc) return;
+    toc = doc.createElement('div');
+    toc.className = 'app-toc';
+    toc.hidden = true;
+    toc.setAttribute('role', 'dialog');
+    toc.setAttribute('aria-modal', 'true');
+    toc.setAttribute('aria-label', 'Оглавление');
+    toc.innerHTML = '<div class="scrim"></div><div class="sheet"><div class="hd"><h2>Оглавление</h2><small></small>' +
+      '<button type="button" class="x" aria-label="Закрыть оглавление">×</button></div><div class="list"></div></div>';
+    toc.querySelector('.scrim').addEventListener('click', closeToc);
+    toc.querySelector('.x').addEventListener('click', closeToc);
+    toc.querySelector('.list').addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== this && !(el.tagName === 'A' || (el.tagName === 'BUTTON' && el.className === 'p'))) el = el.parentNode;
+      if (!el || el === this) return;
+      if (el.tagName === 'A') { closeToc(true); return; }   // переход по #id делает сама ссылка
+      var grp = el.parentNode, gs = this.querySelectorAll('.grp');
+      var wasOpen = / open(\s|$)/.test(' ' + grp.className);
+      for (var i = 0; i < gs.length; i++) {
+        var on = gs[i] === grp && !wasOpen;
+        gs[i].className = 'grp' + (on ? ' open' : '');
+        gs[i].querySelector('.p').setAttribute('aria-expanded', on ? 'true' : 'false');
+      }
+      if (!wasOpen) { var list = this, top = grp.offsetTop; if (list.scrollTop > top) list.scrollTop = top; }
+    });
+    doc.body.appendChild(toc);
+  }
+  function openToc() {
+    if (tocOpen) return;
+    tocEnsure();
+    dismissResume();
+    var list = toc.querySelector('.list');
+    toc.querySelector('small').textContent = authorName() + ' на просвет';
+    list.innerHTML = tocBuild();
+    clearTimeout(tocTimer);
+    toc.hidden = false;
+    tocOpen = true;
+    addCls('app-toc-open');
+    if (tocBtn) tocBtn.setAttribute('aria-expanded', 'true');
+    var cur = list.querySelector('.cur');
+    if (cur) {     // голова раскрытой части — к верхнему краю; если текущий раздел так не виден, ставим его на треть высоты
+      var gtop = cur.parentNode.parentNode.offsetTop;
+      list.scrollTop = Math.max(0, cur.offsetTop + cur.offsetHeight - gtop > list.clientHeight ? cur.offsetTop - list.clientHeight / 3 : gtop);
+    }
+    (window.requestAnimationFrame || window.setTimeout)(function () { toc.className = 'app-toc on'; }, 16);
+    goal('toc_open');
+    try { toc.querySelector('.x').focus({ preventScroll: true }); } catch (e) {}
+  }
+  function closeToc(viaLink) {
+    if (!tocOpen) return;
+    tocOpen = false;
+    delCls('app-toc-open');
+    toc.className = 'app-toc';
+    if (tocBtn) { tocBtn.setAttribute('aria-expanded', 'false'); if (viaLink !== true) { try { tocBtn.focus({ preventScroll: true }); } catch (e) {} } }
+    clearTimeout(tocTimer);
+    tocTimer = setTimeout(function () { if (!tocOpen) toc.hidden = true; }, 240);
+  }
+  doc.addEventListener('keydown', function (e) { if (tocOpen && (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27)) closeToc(); });
+
+  /* запоминание места: id раздела и подпись, чтобы главная и «Полка» не читали страницы авторов */
+  var KEY_POS = 'naprosvet-pos:', KEY_LABEL = 'naprosvet-pos-label:';
+  var resumeBox = null, resumeIdx = -1;      // resumeIdx >= 0: запись не трогаем, пока пользователь не определился
+  function savePos() {
+    if (resumeIdx >= 0) return;
+    var rd = readRail(), cur = currentSection();
+    if (!cur || !rd.byId[cur.id]) return;
+    if (rd.order[0] === cur.id) { lsDel(KEY_POS + section); lsDel(KEY_LABEL + section); return; } // начало: прогресса нет
+    lsSet(KEY_POS + section, cur.id);
+    lsSet(KEY_LABEL + section, itemLabel(rd.byId[cur.id]));
+  }
+  var posTimer = 0;
+  function onScrollPos() {
+    if (resumeIdx >= 0) checkResume();
+    if (posTimer) return;
+    posTimer = setTimeout(function () { posTimer = 0; savePos(); }, 500);
+  }
+  function dismissResume() {
+    resumeIdx = -1;
+    if (resumeBox && resumeBox.parentNode) resumeBox.parentNode.removeChild(resumeBox);
+    resumeBox = null;
+    delCls('app-resume-on');
+  }
+  function checkResume() {   // дошли до сохранённого места (или проскочили) — плашка не нужна
+    var cur = currentSection(), idx = cur ? readRail().order.indexOf(cur.id) : -1;
+    if (idx >= resumeIdx) dismissResume();
+  }
+  function showResume(it) {
+    resumeBox = doc.createElement('div');
+    resumeBox.className = 'app-resume';
+    resumeBox.innerHTML = '<a class="go" href="#' + esc(it.id) + '"><span class="t">Продолжить с <b>' + esc(itemLabel(it)) + '</b></span><span class="ar" aria-hidden="true">→</span></a>' +
+      '<button type="button" aria-label="Скрыть">×</button>';
+    resumeBox.querySelector('.go').addEventListener('click', dismissResume);
+    resumeBox.querySelector('button').addEventListener('click', dismissResume);
+    doc.body.appendChild(resumeBox);
+    addCls('app-resume-on');
+  }
+  function initAuthor() {
+    var rd = readRail();
+    if (!rd.order.length) return;
+    var id = lsGet(KEY_POS + section), it = id && rd.byId[id];
+    if (it && !location.hash && rd.order[0] !== id) {
+      resumeIdx = rd.order.indexOf(id);
+      var arm = function () {
+        setTimeout(function () {     // браузер мог вернуть прежнюю прокрутку при перезагрузке: тогда мы уже на месте
+          if (resumeIdx < 0) return;
+          checkResume();
+          if (resumeIdx >= 0 && !resumeBox) showResume(it);
+        }, 400);
+      };
+      if (doc.readyState === 'complete') arm(); else window.addEventListener('load', arm);
+    }
+    window.addEventListener('scroll', onScrollPos, { passive: true });
+    window.addEventListener('hashchange', dismissResume);
+    window.addEventListener('pagehide', function () { savePos(); });
+    doc.addEventListener('visibilitychange', function () { if (doc.visibilityState === 'hidden') savePos(); });
+  }
+
+  /* главная: под карточкой автора строка «Продолжить с …» */
+  function resume(author) {
+    if (!/^(brodsky|chekhov|gary)$/.test(author || '')) return null;
+    var id = lsGet(KEY_POS + author), label = lsGet(KEY_LABEL + author);
+    return id && label ? { id: id, label: label } : null;
+  }
+  function paintHomeResume() {
+    var cards = doc.querySelectorAll('a.card[href]');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i], m = (c.getAttribute('href') || '').match(/^(brodsky|chekhov|gary)\/$/);
+      if (!m) continue;
+      var old = c.querySelector('.app-resume-row');
+      if (old) old.parentNode.removeChild(old);
+      var r = resume(m[1]);
+      if (!r) continue;
+      var row = doc.createElement('span');
+      row.className = 'app-resume-row';
+      row.setAttribute('role', 'link');
+      row.tabIndex = 0;
+      row.textContent = 'Продолжить с ' + r.label + ' →';
+      row.setAttribute('data-href', m[1] + '/#' + r.id);
+      c.appendChild(row);
+    }
+  }
+  function homeResumeGo(e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && !el.getAttribute('data-href')) el = el.parentNode;
+    if (!el || el.nodeType !== 1) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.keyCode !== 13) return;
+    e.preventDefault();
+    e.stopPropagation();
+    location.href = BASE.href + el.getAttribute('data-href');
   }
 
   /* ---- установка ---- */
@@ -141,7 +374,7 @@
   });
   window.addEventListener('appinstalled', function () { deferred = null; paintInstall(); goal('app_install'); });
   /* на будущее («Полка» тоже умеет ставить) */
-  window.NaprosvetApp = { canInstall: function () { return !!deferred; }, install: installApp };
+  window.NaprosvetApp = { canInstall: function () { return !!deferred; }, install: installApp, resume: resume };
 
   /* подсказка для iPhone/iPad: Safari не умеет beforeinstallprompt */
   function iosHint() {
@@ -157,8 +390,10 @@
     box.querySelector('button').addEventListener('click', function () {
       lsSet('naprosvet-ios-hint', '1');
       if (box.parentNode) box.parentNode.removeChild(box);
+      delCls('app-hint-on');
     });
     doc.body.appendChild(box);
+    addCls('app-hint-on');
   }
 
   /* ---- дисклеймер первого запуска в приложении ---- */
@@ -188,6 +423,13 @@
     on(standaloneMq, syncNav);
     if (isVoices) autoHide();
     addInstallButton();
+    if (isAuthor) initAuthor();
+    if (section === '') {
+      paintHomeResume();
+      doc.addEventListener('click', homeResumeGo, true);
+      doc.addEventListener('keydown', homeResumeGo, true);
+      window.addEventListener('pageshow', function (e) { if (e.persisted) paintHomeResume(); });
+    }
     iosHint();
     welcome();
   }
