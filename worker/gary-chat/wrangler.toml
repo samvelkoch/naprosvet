@@ -1,0 +1,32 @@
+name = "gary-chat"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# persona.md подключается как строка (import PERSONA from "./persona.md")
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
+[vars]
+ALLOWED_ORIGINS = "https://samvelkoch.github.io"
+MODEL = "claude-opus-5-5"     # claude-sonnet-5-5 / claude-haiku-5-5 — см. README, раздел «Стоимость»
+EFFORT = "low"                # low | medium | high
+MAX_QUESTIONS = "5"           # вопросов за один разговор
+MAX_QUESTION_CHARS = "600"
+MAX_OUTPUT_TOKENS = "3000"
+IP_DAILY_QUESTIONS = "15"     # нужен KV (ниже); без KV лимиты по дням не проверяются
+GLOBAL_DAILY_QUESTIONS = "500"
+
+# Всплески: не больше 6 запросов в минуту с одного IP
+[[ratelimits]]
+name = "RL"
+namespace_id = "1001"
+simple = { limit = 6, period = 60 }
+
+# Дневные лимиты (по IP и общий). Создать: npx wrangler kv namespace create GARY_LIMITS
+# и вписать id. Если блок закомментирован, Worker работает без дневных лимитов.
+# [[kv_namespaces]]
+# binding = "LIMITS"
+# id = "<id из команды выше>"

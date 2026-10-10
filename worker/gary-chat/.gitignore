@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+.dev.vars
+# персона-промпт не публикуется в открытом репозитории: кладётся сюда перед deploy
+src/persona.md
