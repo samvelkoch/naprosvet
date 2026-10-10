@@ -39,6 +39,10 @@
 {
 "id": "pustyaki",
 "title": "Пустяки"
+},
+{
+"id": "ostrye",
+"title": "Острые вопросы"
 }
 ],
 "map": {
@@ -239,7 +243,8 @@
 "rodina"
 ],
 "chekhov/q063": [
-"rodina"
+"rodina",
+"ostrye"
 ],
 "chekhov/q064": [
 "rodina"
@@ -474,7 +479,8 @@
 "dengi"
 ],
 "brodsky/q037": [
-"rodina"
+"rodina",
+"ostrye"
 ],
 "brodsky/q038": [
 "rodina",
@@ -852,7 +858,8 @@
 "vremya"
 ],
 "gary/q057": [
-"rodina"
+"rodina",
+"ostrye"
 ],
 "gary/q058": [
 "rodina"
@@ -996,6 +1003,375 @@
 ],
 "gary/q100": [
 "sebya"
+],
+"posetiteli/q001": [
+"vremya"
+],
+"posetiteli/q002": [
+"byt",
+"pustyaki"
+],
+"posetiteli/q003": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q004": [
+"remeslo"
+],
+"posetiteli/q005": [
+"vremya",
+"rodina"
+],
+"posetiteli/q006": [
+"remeslo"
+],
+"posetiteli/q007": [
+"remeslo"
+],
+"posetiteli/q008": [
+"remeslo"
+],
+"posetiteli/q009": [
+"vremya"
+],
+"posetiteli/q010": [
+"rodina",
+"vremya"
+],
+"posetiteli/q011": [
+"vremya"
+],
+"posetiteli/q012": [
+"vremya"
+],
+"posetiteli/q013": [
+"byt"
+],
+"posetiteli/q014": [
+"pustyaki"
+],
+"posetiteli/q015": [
+"pustyaki"
+],
+"posetiteli/q016": [
+"remeslo"
+],
+"posetiteli/q017": [
+"remeslo"
+],
+"posetiteli/q018": [
+"byt",
+"pustyaki"
+],
+"posetiteli/q019": [
+"remeslo"
+],
+"posetiteli/q020": [
+"pustyaki"
+],
+"posetiteli/q021": [
+"detstvo"
+],
+"posetiteli/q022": [
+"vremya"
+],
+"posetiteli/q023": [
+"byt"
+],
+"posetiteli/q024": [
+"vremya"
+],
+"posetiteli/q025": [
+"byt",
+"pustyaki"
+],
+"posetiteli/q026": [
+"byt",
+"pustyaki"
+],
+"posetiteli/q027": [
+"pustyaki"
+],
+"posetiteli/q028": [
+"pustyaki"
+],
+"posetiteli/q029": [
+"pustyaki"
+],
+"posetiteli/q030": [
+"remeslo"
+],
+"posetiteli/q031": [
+"remeslo"
+],
+"posetiteli/q032": [
+"remeslo",
+"dengi"
+],
+"posetiteli/q033": [
+"byt"
+],
+"posetiteli/q034": [
+"rodina"
+],
+"posetiteli/q035": [
+"rodina"
+],
+"posetiteli/q036": [
+"rodina"
+],
+"posetiteli/q037": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q038": [
+"vremya"
+],
+"posetiteli/q039": [
+"rodina"
+],
+"posetiteli/q040": [
+"dengi",
+"sebya"
+],
+"posetiteli/q041": [
+"remeslo",
+"dengi"
+],
+"posetiteli/q042": [
+"pustyaki"
+],
+"posetiteli/q043": [
+"byt"
+],
+"posetiteli/q044": [
+"byt"
+],
+"posetiteli/q045": [
+"byt"
+],
+"posetiteli/q046": [
+"byt",
+"lyubov"
+],
+"posetiteli/q047": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q048": [
+"pustyaki"
+],
+"posetiteli/q049": [
+"remeslo"
+],
+"posetiteli/q050": [
+"vremya"
+],
+"posetiteli/q051": [
+"remeslo"
+],
+"posetiteli/q052": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q053": [
+"rodina"
+],
+"posetiteli/q054": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q055": [
+"rodina"
+],
+"posetiteli/q056": [
+"rodina"
+],
+"posetiteli/q057": [
+"rodina",
+"dengi"
+],
+"posetiteli/q058": [
+"dengi"
+],
+"posetiteli/q059": [
+"dengi"
+],
+"posetiteli/q060": [
+"dengi"
+],
+"posetiteli/q061": [
+"rodina",
+"byt"
+],
+"posetiteli/q062": [
+"byt"
+],
+"posetiteli/q063": [
+"rodina",
+"vremya"
+],
+"posetiteli/q064": [
+"rodina"
+],
+"posetiteli/q065": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q066": [
+"rodina"
+],
+"posetiteli/q067": [
+"lyubov",
+"ostrye"
+],
+"posetiteli/q068": [
+"sebya"
+],
+"posetiteli/q069": [
+"lyubov"
+],
+"posetiteli/q070": [
+"sebya"
+],
+"posetiteli/q071": [
+"sebya"
+],
+"posetiteli/q072": [
+"vera"
+],
+"posetiteli/q073": [
+"byt"
+],
+"posetiteli/q074": [
+"byt",
+"pustyaki"
+],
+"posetiteli/q075": [
+"pustyaki"
+],
+"posetiteli/q076": [
+"remeslo"
+],
+"posetiteli/q077": [
+"remeslo"
+],
+"posetiteli/q078": [
+"lyubov"
+],
+"posetiteli/q079": [
+"rodina",
+"byt"
+],
+"posetiteli/q080": [
+"sebya",
+"rodina"
+],
+"posetiteli/q081": [
+"vremya"
+],
+"posetiteli/q082": [
+"vremya",
+"ostrye"
+],
+"posetiteli/q083": [
+"vera"
+],
+"posetiteli/q084": [
+"vremya",
+"rodina",
+"ostrye"
+],
+"posetiteli/q085": [
+"rodina"
+],
+"posetiteli/q086": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q087": [
+"vera",
+"ostrye"
+],
+"posetiteli/q088": [
+"remeslo",
+"ostrye"
+],
+"posetiteli/q089": [
+"remeslo"
+],
+"posetiteli/q090": [
+"sebya",
+"rodina"
+],
+"posetiteli/q091": [
+"rodina"
+],
+"posetiteli/q092": [
+"lyubov",
+"ostrye"
+],
+"posetiteli/q093": [
+"lyubov",
+"ostrye"
+],
+"posetiteli/q094": [
+"lyubov",
+"ostrye"
+],
+"posetiteli/q095": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q096": [
+"remeslo",
+"ostrye"
+],
+"posetiteli/q097": [
+"vremya",
+"ostrye"
+],
+"posetiteli/q098": [
+"rodina",
+"vremya"
+],
+"posetiteli/q099": [
+"remeslo"
+],
+"posetiteli/q100": [
+"pustyaki"
+],
+"posetiteli/q101": [
+"detstvo",
+"ostrye"
+],
+"posetiteli/q102": [
+"detstvo",
+"ostrye"
+],
+"posetiteli/q103": [
+"vera",
+"ostrye"
+],
+"posetiteli/q104": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q105": [
+"rodina"
+],
+"posetiteli/q106": [
+"rodina",
+"ostrye"
+],
+"posetiteli/q107": [
+"vremya",
+"rodina"
+],
+"posetiteli/q108": [
+"vera",
+"sebya",
+"ostrye"
 ]
 }
 }
