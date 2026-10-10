@@ -1,0 +1,129 @@
+/* Экран «Сегодня». Токены те же, что в voices/index.html; тёмная тема по data-theme (theme.js) или системная. */
+:root{
+  --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
+  --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f; --ok:#2f7a45;
+  --desk:#221a14; --desk-2:#3a2a1f; --htext:#f7f0e2; --htext-2:#d6c9b4; --hlabel:#b9ab96; --hmark:#f0765a;
+  --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --ok:#7cc48f; --desk:#0e0a08; --desk-2:#241a13;
+}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --ok:#7cc48f; --desk:#0e0a08; --desk-2:#241a13;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--page);color:var(--ink);font:17px/1.6 var(--f-serif);-webkit-text-size-adjust:100%}
+.inner{max-width:760px;margin-inline:auto;padding-inline:clamp(16px,4vw,36px)}
+
+/* ---- шапка ---- */
+header{background:var(--desk);color:var(--htext);padding:0;
+  background-image:radial-gradient(120% 90% at 78% 0%,var(--desk-2) 0%,var(--desk) 62%)}
+.head{padding-block:40px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+h1{margin:0;line-height:.98;font-weight:400}
+h1 .t{display:block;font:600 clamp(36px,10vw,64px)/1 var(--f-mono);letter-spacing:-.045em;text-transform:uppercase;
+  text-shadow:2.5px 1.5px 0 rgba(240,118,90,.55)}
+h1 .t i{font-style:normal;color:var(--hmark);text-shadow:none}
+.eyebrow{padding-bottom:4px;font:11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--hlabel);white-space:nowrap}
+
+main{padding-block:16px 28px}
+.soon{margin:20px 0;font:500 13px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.err{margin:24px 0}
+.err p{margin:0 0 14px;font:14px var(--f-mono);color:var(--ink-2)}
+
+/* ---- кнопки ---- */
+.btn{font:500 13.5px var(--f-mono);cursor:pointer;border:1px solid var(--ink);background:var(--surface);padding:11px 14px;color:var(--ink);border-radius:2px;
+  -webkit-tap-highlight-color:transparent}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,.ans-toggle:focus-visible,.myth:focus-visible,.lnk:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:disabled:hover{border-color:var(--ink);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#1b1010}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#1b1010}}
+.btn.done{border-color:var(--ok);color:var(--ok)}
+
+/* ---- дата и переход по дням ---- */
+.dayrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin-bottom:12px}
+.date{font:500 12.5px var(--f-mono);letter-spacing:.02em;color:var(--ink-2)}
+.daynav{display:flex;gap:6px;margin-left:auto}
+.dnav{padding:7px 10px;font-size:12px;color:var(--accent);border-color:var(--ring);background:none}
+
+/* ---- вопрос ---- */
+.q{position:relative;background:var(--surface);border:1px solid var(--ring);padding:20px clamp(18px,3vw,28px) 22px;
+  box-shadow:0 14px 26px -18px rgba(21,24,36,.32)}
+.q::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;background:linear-gradient(225deg,var(--page) 50%,var(--fold) 50%)}
+.q .meta{font:11.5px/1.5 var(--f-mono);letter-spacing:.06em;color:var(--muted);padding-right:14px}
+.q .meta b{font-weight:600;color:var(--mark);text-transform:uppercase;letter-spacing:.08em}
+.q h2{margin:10px 0 0;font:italic 400 clamp(23px,6.2vw,30px)/1.3 var(--f-serif)}
+
+/* ---- ответы ---- */
+.stage{margin-top:12px}
+.ans{background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);margin-top:10px}
+.ans-toggle{position:relative;display:block;width:100%;margin:0;padding:14px 44px 14px 16px;text-align:left;font:inherit;color:inherit;
+  background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ans-toggle .name{display:block;font:600 17px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase}
+.ans-toggle .who{display:block;margin-top:3px;font:11.5px/1.4 var(--f-mono);color:var(--muted)}
+.ans-toggle .lead{display:block;margin-top:9px;font-size:16.5px;line-height:1.55;color:var(--ink);
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden}
+.ans-toggle .lead em,.ans-body em{font-style:italic;color:var(--muted)}
+.ans-toggle .chev{position:absolute;right:16px;top:16px;font:400 15px/1 var(--f-mono);color:var(--accent)}
+.ans.open .lead{display:none}
+.ans.open .chev{transform:scaleY(-1)}
+.ans-body{padding:0 16px 16px}
+.ans-body p{margin:0 0 .8em;font-size:16.5px;line-height:1.62}
+.ans-links{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--ring)}
+.lnk{font:500 12.5px/1.4 var(--f-mono);color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor}
+.lnk:hover{color:var(--mark)}
+
+/* ---- действия ---- */
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.acts .btn{flex:1 1 auto}
+.pickrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.pickrow .plabel{font:12px var(--f-mono);color:var(--muted);width:100%}
+.pickrow .popt{flex:1 1 0}
+.disc{margin:16px 0 0;font:italic 13px/1.5 var(--f-serif);color:var(--muted)}
+
+/* ---- «Чей ответ?» ---- */
+.gcard{background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:16px 16px 18px;margin-top:10px}
+.ghead{font:11.5px/1.5 var(--f-mono);letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.ghead b{font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.08em}
+.gbody p{margin:0 0 .8em;font-size:16.5px;line-height:1.62}
+.gbody em{font-style:italic;color:var(--muted)}
+.gmore{margin:2px 0 0;font:12px var(--f-mono);color:var(--muted)}
+.gask{margin-top:16px}
+.glabel{font:600 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.gopts{display:flex;gap:8px}
+.gopt{flex:1 1 0;padding-inline:6px}
+.gopt:disabled{opacity:1;cursor:default}
+.gopt.right{border-color:var(--ok);color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.gopt.wrong{border-color:var(--mark);color:var(--mark);text-decoration:line-through}
+.gres{margin-top:12px}
+.gverdict{margin:0;padding:11px 14px;font:600 15px var(--f-mono);border-left:3px solid currentColor;background:var(--surface)}
+.gverdict.ok{color:var(--ok)}
+.gverdict.bad{color:var(--mark)}
+.gscore{margin:10px 0 14px;font:12.5px var(--f-mono);color:var(--ink-2)}
+.gverdict+.btn{margin-top:14px}
+.gscore+.btn{margin-top:0}
+
+/* ---- «На просвет сегодня» ---- */
+.tcard{margin-top:28px;background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:16px 18px 18px}
+.thead{font:11.5px/1.5 var(--f-mono);letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+.thead b{font-weight:600;color:var(--mark);text-transform:uppercase;letter-spacing:.08em}
+.myth{display:block;width:100%;margin:0;padding:0;text-align:left;font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mtext{display:block;font:italic 400 21px/1.35 var(--f-serif)}
+.mgo{display:block;margin-top:10px;font:500 13px var(--f-mono);color:var(--accent)}
+.mrev{margin-top:12px;padding-top:12px;border-top:1px solid var(--ring)}
+.verdict{display:inline-block;font:600 12px var(--f-mono);letter-spacing:.07em;text-transform:uppercase}
+.v-yes{color:var(--ok)}.v-no{color:var(--mark)}.v-part{color:var(--accent)}.v-none{color:var(--muted)}
+.mnum{margin:8px 0 0;font-size:16px;line-height:1.5;color:var(--ink-2)}
+.rtitle{margin:0;font:600 13px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.rval{margin-top:8px;font:700 clamp(30px,9vw,40px)/1.1 var(--f-serif);letter-spacing:-.01em}
+.rwhy{margin:6px 0 0;font:14px/1.5 var(--f-serif);color:var(--muted)}
+.tlink{display:inline-block;margin-top:16px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
