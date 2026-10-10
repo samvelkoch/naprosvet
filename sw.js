@@ -3,7 +3,7 @@
    Версия кэша = хеш содержимого предкэшируемых файлов: любая правка сайта даёт новую версию. */
 'use strict';
 
-var VERSION = '356e7c71b2';
+var VERSION = 'dccd76e409';
 var PRECACHE = [
   "./app.css",
   "./app.js",
@@ -25,6 +25,7 @@ var PRECACHE = [
   "./today/cards.json",
   "./today/index.html",
   "./today/links.json",
+  "./today/rshare.js",
   "./today/share.js",
   "./today/today.css",
   "./today/today.js",
