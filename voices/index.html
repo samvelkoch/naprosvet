@@ -6,7 +6,7 @@
 <meta name="description" content="Бродский, Чехов и Ромен Гари отвечают на одни и те же вопросы. Реконструкция голосов по текстам авторов.">
 <meta property="og:type" content="website"><meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="ГОЛОСА_">
-<meta property="og:description" content="Три писателя, триста вопросов. Тяните вопрос, отвечают все трое.">
+<meta property="og:description" content="Три писателя, четыреста восемь вопросов. Тяните вопрос, отвечают все трое.">
 <script src="../theme.js"></script>
 <link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,7 +151,7 @@ main{padding-block:28px 24px}
 @keyframes land{0%{background-color:rgba(184,57,31,.22)}100%{background-color:transparent}}
 .strip{will-change:transform}
 .strip div{height:var(--rh);display:flex;align-items:center;gap:14px;padding:0 18px 0 22px;white-space:nowrap;overflow:hidden;font:italic 17px/1 var(--f-serif);color:var(--ink-2)}
-.strip div b{flex:none;width:72px;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
+.strip div b{flex:none;width:86px;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
 .strip div span{overflow:hidden;text-overflow:ellipsis}
 .drum{padding-right:64px}
 .strip div.nb:hover{color:var(--accent)}
@@ -236,9 +236,9 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 <body>
 <div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a></div></div>
 <header><div class="inner"><div class="hero-grid"><div class="hero-text">
-  <div class="eyebrow">Бродский · Чехов · Гари · 300 вопросов</div>
+  <div class="eyebrow">Бродский · Чехов · Гари · 408 вопросов</div>
   <h1><span class="t">Голоса<i>_</i></span></h1>
-  <p class="lede">Три писателя, три анкеты по сто вопросов. Каждый ответил на все триста. Тяните вопрос, и отвечают все трое.</p>
+  <p class="lede">Три писателя, три анкеты по сто вопросов и ещё сто восемь вопросов от посетителей сайта. Каждый ответил на все. Тяните вопрос, и отвечают все трое.</p>
   <div class="note">
     <b>Это не цитаты.</b> Ответы написаны языковой моделью, которой мы дали «голос» автора: его письма, интервью, книги, биографию.
     Это реконструкция, исследовательская работа, а не спиритический сеанс.
@@ -261,6 +261,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       <button type="button" data-by="brodsky" aria-pressed="false">Бродский</button>
       <button type="button" data-by="chekhov" aria-pressed="false">Чехов</button>
       <button type="button" data-by="gary" aria-pressed="false">Гари</button>
+      <button type="button" data-by="posetiteli" aria-pressed="false">Посетители</button>
     </div>
     <span class="count" id="count"></span>
     <div class="right">
@@ -290,6 +291,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   <h2>Как сделаны «голоса»</h2>
   <p class="mlede">Языковая модель учится, предсказывая следующее слово в огромном массиве человеческих текстов. Чтобы делать это хорошо, ей приходится научиться изображать тех, кто эти тексты написал: их знания, манеру, характер. Исследователи Anthropic описывают это так: модель умеет воплощать множество персонажей, а привычный чат-ассистент лишь одна из её ролей (<a href="https://www.anthropic.com/research/persona-selection-model" target="_blank" rel="noopener">«The persona selection model»</a>, 2026). Выходит, языковая модель почти идеальный актёр: ей можно дать и другую маску, маску конкретного человека. Убедительность игры зависит от того, насколько глубоко подготовлена роль.</p>
   <p class="mlede">Наши «голоса» и есть такие роли, только подготовленные всерьёз. За каждым стоит исследование корпуса автора: около 2,4 миллиона слов Чехова, 630 тысяч слов Бродского, 580 тысяч слов Гари и о Гари. По ним собраны справочник фактов, разбор взглядов и речевых привычек, подробная инструкция для модели; потом «голос» проверяли разговорами и правили. Каждый «голос» «живёт» в одной точке жизни автора и не знает, что было потом. Вопросы опросников ему задавали дословно и по порядку.</p>
+  <p class="mlede">Четвёртую анкету составили посетители сайта: 108 вопросов, от собак на улице до войны и абортов. Её задавали каждому «голосу» так же, по одному вопросу и без правки ответов. Острые вопросы собраны в отдельную тему, их можно выбрать или обойти.</p>
   <p class="mlede">Слепого сравнения с настоящим автором не было ни у одного «голоса», поэтому читайте ответы как правдоподобную реконструкцию, а не как свидетельство.</p>
   <div class="mcards">
     <article class="mcard">
@@ -337,6 +339,8 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 (function () {
   var ORDER = ['brodsky', 'chekhov', 'gary'];
   var SHORT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
+  // кто спрашивает: три автора или посетители сайта (четвёртая анкета, сами они на неё не отвечают)
+  var ASKS = { brodsky: 'Спрашивает Бродский', chekhov: 'Спрашивает Чехов', gary: 'Спрашивает Гари', posetiteli: 'Спрашивают посетители сайта' };
   var GEN = { brodsky: 'Бродского', chekhov: 'Чехова', gary: 'Гари' };
   var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, январь 1900', gary: 'Париж, 1978–1980' };
   // знаков в секунду: у каждого свой темп
@@ -403,8 +407,8 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function fillP(p, pa) { pa.nodes = pa.segs.map(function (sg) { var n = el(sg.em ? 'em' : 'span'); p.appendChild(n); return n; }); }
   function qcard(q) {
     var card = el('section', 'q');
-    var meta = el('div', 'meta', 'Спрашивает ' + SHORT[q.by] + ' ');
-    meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
+    var meta = el('div', 'meta', ASKS[q.by] + ' ');
+    if (q.by !== 'posetiteli') meta.appendChild(el('em', null, '· ' + D.sections[q.by][q.s]));
     meta.appendChild(el('em', 'tags', ' · ' + q.t.map(function (t) { return TNAME[t]; }).join(', ').toLowerCase()));
     card.appendChild(meta);
     card.appendChild(el('h2', null, q.q));
@@ -586,7 +590,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     D.questions.forEach(function (q, i) {
       if (!match(q) || (needle && q.q.toLowerCase().indexOf(needle) < 0)) return;
       var key = q.by + '|' + q.s;
-      if (!groups[key]) { groups[key] = true; pl.appendChild(el('h4', null, 'Спрашивает ' + SHORT[q.by] + ' · ' + D.sections[q.by][q.s])); }
+      if (!groups[key]) { groups[key] = true; pl.appendChild(el('h4', null, q.by === 'posetiteli' ? ASKS[q.by] : ASKS[q.by] + ' · ' + D.sections[q.by][q.s])); }
       var b = el('button'); b.type = 'button';
       b.appendChild(el('small', null, q.id.split('/')[1].replace('q', '№')));
       b.appendChild(document.createTextNode(q.q));
@@ -617,7 +621,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 
   // барабан: лента вопросов едет вверх и замедляется, в центральной строке останавливается следующий вопрос колоды
   var drum = document.getElementById('drum'), strip = document.getElementById('strip'), win = [], spinning = false;
-  var INIT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
+  var INIT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари', posetiteli: 'Посетитель' };
   function pick() { var pool = deck.length ? deck : [0]; return pool[Math.floor(Math.random() * pool.length)]; }
   function row(i) {
     var d = el('div'), q = D.questions[i];

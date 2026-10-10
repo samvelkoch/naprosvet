@@ -138,5 +138,16 @@
     "title": "Напоследок"
    }
   ]
+ },
+ "posetiteli-108": {
+  "composer": "posetiteli",
+  "file": "posetiteli-108",
+  "sections": [
+   {
+    "id": "s01",
+    "num": "",
+    "title": "Вопросы посетителей сайта"
+   }
+  ]
  }
 }
