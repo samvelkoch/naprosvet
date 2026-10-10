@@ -1,0 +1,17 @@
+{
+  "detstvo": {"brodsky": "hronologia", "chekhov": "hronologia", "gary": "hronologia"},
+  "byt": {"brodsky": null, "chekhov": null, "gary": null},
+  "dengi": {"brodsky": null, "chekhov": "dengi", "gary": null},
+  "remeslo": {"brodsky": "stroka", "chekhov": "dlina", "gary": "fraza"},
+  "lyubov": {"brodsky": "personazhi", "chekhov": "lyudi", "gary": "krug"},
+  "rodina": {"brodsky": "mesta", "chekhov": "mesta", "gary": "mesta"},
+  "vremya": {"brodsky": "temy", "chekhov": null, "gary": null},
+  "vera": {"brodsky": "temy", "chekhov": "temy", "gary": "temy"},
+  "sebya": {"brodsky": null, "chekhov": null, "gary": null},
+  "pustyaki": {"brodsky": null, "chekhov": null, "gary": null},
+  "labels": {
+    "brodsky": {"hronologia": "I.3 Хронология", "stroka": "II.1 Строка", "personazhi": "V.1 Персонажи", "mesta": "V.2 Места", "temy": "III.6 Темы"},
+    "chekhov": {"hronologia": "I.3 Хронология", "dengi": "IV.6 Деньги", "dlina": "II.1 Длина и фраза", "lyudi": "VII.1 Круг Чехова", "mesta": "VII.3 Места", "temy": "VI.5 Темы"},
+    "gary": {"hronologia": "I.3 Хронология", "fraza": "II.1 Фраза", "krug": "V.2 Круг Гари", "mesta": "V.3 Места", "temy": "III.5 Темы"}
+  }
+}
