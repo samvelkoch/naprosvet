@@ -2,7 +2,7 @@
 
 В шаблон подставляются:
   * список предкэша: существующие файлы по маске (главная, манифест, theme.js, app.js, app.css,
-    иконки, today/*, shelf/*, voices/{index.html,data.json,portrait.webp}, три страницы авторов);
+    иконки, today/*, shelf/*, voices/{index.html,data.json}, три страницы авторов);
     *.py и build.py не берутся, видео портретов не предкэшируются;
   * версия: первые 10 символов sha1 от путей и содержимого всех файлов списка и самого шаблона.
 Любая правка сайта меняет версию, браузер видит новый sw.js и показывает плашку «Есть новая версия».
@@ -27,7 +27,7 @@ LIMIT_MB = 15
 FIXED = [
     "index.html", "manifest.webmanifest", "theme.js", "app.js", "app.css",
     "favicon.svg", "favicon.ico", "apple-touch-icon.png",
-    "voices/index.html", "voices/data.json", "voices/portrait.webp",
+    "voices/index.html", "voices/data.json",
     "brodsky/index.html", "chekhov/index.html", "gary/index.html",
 ]
 GLOBS = ["icons/*.png", "today/*", "shelf/*"]
