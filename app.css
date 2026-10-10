@@ -48,6 +48,20 @@ html.app-nav-on body{padding-bottom:calc(var(--app-nav-h,60px) + env(safe-area-i
 html.app-voices.app-standalone .bar{display:none}
 html.app-voices.app-standalone .tools{top:0}
 
+/* «Голоса_»: строка «Сохранить · Поделиться» под ответом, только там, где видна нижняя панель */
+.app-act{display:none}
+html.app-nav-on .app-act{
+  display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:2px;
+  border-top:1px dashed var(--ring,rgba(33,27,22,.15));
+  font:500 12px/1 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);color:var(--accent,#9a2f22);
+}
+.app-act button{
+  margin:0;padding:0;min-height:40px;cursor:pointer;font:inherit;color:inherit;background:none;border:0;border-radius:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.app-act button:focus-visible{outline:2px solid var(--mark,#b8391f);outline-offset:2px}
+@media (hover:hover){.app-act button:hover{text-decoration:underline;text-underline-offset:3px}}
+
 /* ---- кнопка «Установить приложение» на главной ---- */
 .app-install{
   display:inline-block;margin:20px 0 0;padding:11px 16px;cursor:pointer;

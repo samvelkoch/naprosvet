@@ -121,6 +121,104 @@
     }, { passive: true });
   }
 
+  /* ---- «Голоса_»: под каждым ответом строка «Сохранить · Поделиться» ---- */
+  var VOICE_AUTHORS = { 'Бродский': 'brodsky', 'Чехов': 'chekhov', 'Гари': 'gary' };
+  var KEY_SHELF = 'naprosvet-shelf';
+  var voicesData = null, voicesWait = null, shareWait = null;
+
+  function shelfRead() {
+    var list = [];
+    try { list = JSON.parse(lsGet(KEY_SHELF) || '[]'); } catch (e) { list = []; }
+    return list instanceof Array ? list : [];
+  }
+  function shelfHas(id, author) {
+    var list = shelfRead();
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === id && list[i].author === author) return true;
+    return false;
+  }
+  function shelfAdd(id, author) {
+    if (shelfHas(id, author)) return;
+    var list = shelfRead(), d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    list.push({ id: id, author: author, date: d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) });
+    lsSet(KEY_SHELF, JSON.stringify(list));
+  }
+  function hashId() {
+    try { return decodeURIComponent(location.hash.slice(1)); } catch (e) { return location.hash.slice(1); }
+  }
+  /* тексты берём из data.json, а не из textContent абзацев: пока ответ «печатается», в DOM лежит обрубок,
+     и ремарки *…* там уже сняты. Файл грузим один раз, при первом нажатии. */
+  function withVoices(cb) {
+    if (voicesData) { cb(voicesData); return; }
+    if (voicesWait) { voicesWait.push(cb); return; }
+    voicesWait = [cb];
+    fetch(BASE.href + 'voices/data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      var by = {};
+      for (var i = 0; i < d.questions.length; i++) by[d.questions[i].id] = d.questions[i];
+      voicesData = by;
+      var q = voicesWait; voicesWait = null;
+      for (var k = 0; k < q.length; k++) q[k](by);
+    }).then(null, function () { voicesWait = null; });
+  }
+  function withShare(cb) {
+    if (window.NaprosvetShare && window.NaprosvetShare.card) { cb(); return; }
+    if (shareWait) { shareWait.push(cb); return; }
+    shareWait = [cb];
+    var s = doc.createElement('script');
+    s.src = BASE.href + 'today/share.js';
+    s.onload = function () { var q = shareWait; shareWait = null; for (var k = 0; k < q.length; k++) q[k](); };
+    s.onerror = function () { shareWait = null; };
+    doc.head.appendChild(s);
+  }
+  function paintActSave(b, id, author) {
+    var saved = shelfHas(id, author);
+    b.textContent = saved ? 'Сохранено ✓' : 'Сохранить';
+    b.setAttribute('aria-pressed', saved ? 'true' : 'false');
+  }
+  function decorateAnswers(stage) {
+    if (/[?&]play\b/.test(location.search)) return;        // в «Чей ответ?» колонки без имён и в случайном порядке
+    var cols = stage.querySelectorAll('.answers article.col');
+    for (var i = 0; i < cols.length; i++) (function (col) {
+      if (col.querySelector('.app-act')) return;
+      var h = col.querySelector('.head h3'), author = h ? VOICE_AUTHORS[h.textContent.replace(/^\s+|\s+$/g, '')] : '';
+      if (!author) return;
+      var row = doc.createElement('div'), save = doc.createElement('button'), share = doc.createElement('button'), dot = doc.createElement('span');
+      row.className = 'app-act';
+      save.type = share.type = 'button';
+      save.className = 'a-save';
+      share.className = 'a-share';
+      share.textContent = 'Поделиться';
+      dot.textContent = '·';
+      dot.setAttribute('aria-hidden', 'true');
+      paintActSave(save, hashId(), author);
+      save.addEventListener('click', function () {
+        var id = hashId();
+        if (!id) return;
+        shelfAdd(id, author);
+        paintActSave(save, id, author);
+        goal('save');
+      });
+      share.addEventListener('click', function () {
+        var id = hashId();
+        if (!id) return;
+        withVoices(function (by) {
+          var q = by[id];
+          if (!q || !q.a || !q.a[author]) return;
+          withShare(function () { window.NaprosvetShare.card({ question: q.q, author: author, answer: q.a[author], id: id }); });
+        });
+      });
+      row.appendChild(save); row.appendChild(dot); row.appendChild(share);
+      col.appendChild(row);
+    })(cols[i]);
+  }
+  /* ответы рисуются заново на каждом вопросе: следим за прямыми детьми #stage (без subtree: печать по буквам нам не нужна) */
+  function initVoicesActions() {
+    var stage = doc.getElementById('stage');
+    if (!stage) return;
+    decorateAnswers(stage);
+    if (!window.MutationObserver) return;
+    new MutationObserver(function () { decorateAnswers(stage); }).observe(stage, { childList: true });
+  }
+
   /* ---- страницы авторов: оглавление, запоминание места, «продолжить» ---- */
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function hasCls(c) { return (' ' + root.className + ' ').indexOf(' ' + c + ' ') !== -1; }
@@ -422,6 +520,7 @@
     on(navMq, syncNav);
     on(standaloneMq, syncNav);
     if (isVoices) autoHide();
+    if (isVoices) initVoicesActions();
     addInstallButton();
     if (isAuthor) initAuthor();
     if (section === '') {
