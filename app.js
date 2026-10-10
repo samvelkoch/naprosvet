@@ -534,3 +534,60 @@
   }
   if (doc.body) init(); else doc.addEventListener('DOMContentLoaded', init);
 })();
+
+/* ---- офлайн: регистрация сервис-воркера и плашка «Есть новая версия» (самодостаточный блок, sw.js собирает sw/build.py) ---- */
+(function () {
+  var doc = document;
+  if (!('serviceWorker' in navigator)) return;
+  var host = location.hostname;
+  if (!(location.protocol === 'https:' || host === 'localhost' || host === '127.0.0.1' || host === '[::1]')) return;
+
+  var script = doc.currentScript;
+  if (!script) {
+    var all = doc.getElementsByTagName('script');
+    for (var i = all.length - 1; i >= 0; i--) { if (/(^|\/)app\.js(\?|#|$)/.test(all[i].src)) { script = all[i]; break; } }
+  }
+  var BASE = new URL('.', script ? script.src : location.href);
+
+  var box = null, reloading = false;
+
+  function showUpdate(worker) {
+    if (box) return;
+    box = doc.createElement('div');
+    box.className = 'app-update';
+    box.setAttribute('role', 'status');
+    box.innerHTML = '<span class="t">Есть новая версия</span><button type="button" class="do">Обновить</button>' +
+      '<button type="button" class="x" aria-label="Закрыть">×</button>';
+    box.querySelector('.do').addEventListener('click', function () {
+      reloading = true;
+      worker.postMessage({ type: 'SKIP_WAITING' });
+    });
+    box.querySelector('.x').addEventListener('click', function () {
+      if (box.parentNode) box.parentNode.removeChild(box);
+    });
+    doc.body.appendChild(box);
+  }
+
+  function watch(reg) {
+    var hasController = !!navigator.serviceWorker.controller;
+    /* новая версия могла доехать и дождаться раньше этого открытия страницы */
+    if (reg.waiting && hasController) showUpdate(reg.waiting);
+    reg.addEventListener('updatefound', function () {
+      var w = reg.installing;
+      if (!w) return;
+      w.addEventListener('statechange', function () {
+        if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(w);
+      });
+    });
+  }
+
+  /* перезагружаем только после нажатия «Обновить»: первая установка (clients.claim) страницу не трогает */
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloading) location.reload();
+  });
+
+  function register() {
+    navigator.serviceWorker.register(new URL('sw.js', BASE), { scope: BASE.pathname }).then(watch, function () {});
+  }
+  if (doc.readyState === 'complete') register(); else window.addEventListener('load', register);
+})();
