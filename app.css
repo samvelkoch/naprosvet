@@ -177,3 +177,21 @@ html.app-hint-on .app-resume{bottom:calc(var(--app-nav-h,60px) + env(safe-area-i
 }
 .app-resume-row:hover{text-decoration:underline;text-underline-offset:3px}
 .app-resume-row:focus-visible{outline:2px solid var(--mark,#b8391f);outline-offset:2px}
+
+/* плашка «Есть новая версия» над нижней панелью (рядом с «Продолжить с …», выше неё) */
+.app-update{
+  position:fixed;left:12px;right:12px;z-index:42;display:flex;align-items:stretch;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  background:var(--surface,#fcfaf5);color:var(--ink,#211b16);
+  border:1px solid var(--ring,rgba(33,27,22,.15));border-radius:3px;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);
+  font:12.5px/1.2 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);
+}
+@media (min-width:769px){.app-update{left:auto;max-width:340px}}
+html.app-nav-on .app-update{bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 10px)}
+html.app-nav-on.app-resume-on .app-update{bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 68px)}
+html.app-nav-on.app-hint-on .app-update{bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 94px)}
+html.app-nav-on.app-hint-on.app-resume-on .app-update{bottom:calc(var(--app-nav-h,60px) + env(safe-area-inset-bottom,0px) + 152px)}
+.app-update .t{flex:1;min-width:0;display:flex;align-items:center;padding:0 4px 0 14px;min-height:44px;color:var(--muted,#675d51)}
+.app-update .do{flex:none;margin:0;padding:0 14px;cursor:pointer;font:600 12.5px/1 var(--f-mono,monospace);color:var(--accent,#9a2f22);background:none;border:0;border-left:1px solid var(--ring,rgba(33,27,22,.15))}
+.app-update .x{flex:none;width:40px;margin:0;padding:0;cursor:pointer;font:300 22px/1 var(--f-mono,monospace);color:var(--muted,#675d51);background:none;border:0;border-left:1px solid var(--ring,rgba(33,27,22,.15))}
+.app-update button:focus-visible{outline:2px solid var(--accent,#9a2f22);outline-offset:-2px}
