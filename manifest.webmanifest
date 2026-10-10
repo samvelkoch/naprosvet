@@ -1,0 +1,16 @@
+{
+  "name": "На_просвет",
+  "short_name": "На_просвет",
+  "description": "Бродский, Чехов, Гари на просвет и «Голоса_»",
+  "lang": "ru",
+  "start_url": "./today/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e9e4da",
+  "theme_color": "#221a14",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
