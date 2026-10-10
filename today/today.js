@@ -3,7 +3,7 @@
 (function () {
   /* ---- настройки ---- */
   // дата старта: день 0. Пользователь может поменять (формат ГГГГ-ММ-ДД)
-  var START = '2026-10-13';
+  var START = '2026-10-10';
   var BACK_DAYS = 30;
   var YM_ID = 113309794;
 
@@ -130,7 +130,14 @@
         if (ss[i].em) { body.push(ss[i]); continue; }
         var cut = sentenceEnd(ss[i].t);
         if (cut < 0) { body.push(ss[i]); continue; }
-        body.push({ t: ss[i].t.slice(0, balanceQuote(ss[i].t, cut)) });
+        var end = balanceQuote(ss[i].t, cut);
+        // совсем короткую первую фразу («Да.», «Ем.») дотягиваем до конца второй
+        var sofar = lead.concat(body).map(function (x) { return x.t; }).join('') + ss[i].t.slice(0, end);
+        if (sofar.replace(/\s+/g, ' ').trim().length < 40) {
+          var rest = ss[i].t.slice(end), cut2 = sentenceEnd(rest);
+          end = cut2 >= 0 ? end + balanceQuote(rest, cut2) : ss[i].t.length;
+        }
+        body.push({ t: ss[i].t.slice(0, end) });
         break;
       }
       if (body.length && !body[0].em) body[0] = { t: body[0].t.replace(/^\s+/, '') };

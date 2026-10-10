@@ -57,7 +57,7 @@ MARKER_RE = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(m) for m in MARKERS)
 # Режиссёрские ремарки в начале ответа: *(долго смотрит на подпись)*
 LEAD_REMARKS_RE = re.compile(r"\A\s*(?:\*[^*]+\*\s*)+")
 # Конец фразы: . ! ? … или пустая строка; точка после одной заглавной буквы («А. Чехов») не конец.
-SENTENCE_SPLIT_RE = re.compile(r"(?<![А-ЯЁA-Z])(?<=[.!?…])[»\"')\]]*\s+|\n\s*\n")
+SENTENCE_SPLIT_RE = re.compile(r"(?<![А-ЯЁA-Z][.!?…])(?<=[.!?…])[»\"')\]]*\s+|\n\s*\n")
 
 
 def first_phrases(answer_text, n=2):
