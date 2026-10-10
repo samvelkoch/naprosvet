@@ -219,6 +219,96 @@
     new MutationObserver(function () { decorateAnswers(stage); }).observe(stage, { childList: true });
   }
 
+  /* ---- страницы авторов: «Поделиться» у графиков и текстовых выводов (карточку рисует today/rshare.js) ---- */
+  var rshareWait = null, rsTimer = 0;
+  function withRShare(cb) {
+    if (window.NaprosvetRShare && window.NaprosvetRShare.share) { cb(true); return; }
+    if (rshareWait) { rshareWait.push(cb); return; }
+    rshareWait = [cb];
+    var s = doc.createElement('script');
+    s.src = BASE.href + 'today/rshare.js';
+    s.onload = function () { var q = rshareWait; rshareWait = null; for (var k = 0; k < q.length; k++) q[k](true); };
+    s.onerror = function () { var q = rshareWait; rshareWait = null; for (var k = 0; k < q.length; k++) q[k](false); };
+    doc.head.appendChild(s);
+  }
+  function rsPaint(btn, state) {
+    btn.textContent = state === 'busy' ? 'Готовлю…' : state === 'fail' ? 'Не удалось' : 'Поделиться';
+    if (state === 'busy') btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy');
+    if (state === 'fail') setTimeout(function () { if (btn.textContent === 'Не удалось') rsPaint(btn, 'idle'); }, 2600);
+  }
+  function rsButton(target) {
+    var b = doc.createElement('button');
+    b.type = 'button';
+    b.className = 'app-rs';
+    b.setAttribute('data-rs', '');
+    b.setAttribute('aria-label', 'Поделиться карточкой');
+    rsPaint(b, 'idle');
+    b.addEventListener('click', function () {
+      if (b.getAttribute('aria-busy') === 'true') return;
+      rsPaint(b, 'busy');
+      withRShare(function (ok) {
+        if (!ok) { rsPaint(b, 'fail'); return; }
+        window.NaprosvetRShare.share(target).then(function () { rsPaint(b, 'idle'); }, function () { rsPaint(b, 'fail'); });
+      });
+    });
+    return b;
+  }
+  function rsRow(btn) {
+    var row = doc.createElement('div');
+    row.className = 'app-rs-row';
+    row.appendChild(btn);
+    return row;
+  }
+  /* график перерисовывается внутри .chart (при смене периода, темы, ширины): кнопка живёт снаружи, её только прячем без svg */
+  function rsSyncPanel(panel, btn) {
+    var has = !!panel.querySelector('.chart svg');
+    if (has) btn.removeAttribute('hidden'); else btn.setAttribute('hidden', '');
+  }
+  function rsScan() {
+    var i, list = doc.querySelectorAll('.panel');
+    for (i = 0; i < list.length; i++) (function (panel) {
+      /* графики дорисовываются порциями и позже load: следим за каждым .chart (только за прямыми детьми), в том числе пока он пуст */
+      if (window.MutationObserver && !panel.rsWatch) {
+        var charts = panel.querySelectorAll('.chart');
+        if (charts.length) {
+          panel.rsWatch = true;
+          for (var c = 0; c < charts.length; c++) new MutationObserver(function () { rsSoon(150); }).observe(charts[c], { childList: true });
+        }
+      }
+      var btn = panel.querySelector(':scope > .cap > .app-rs, :scope > .app-rs');
+      if (!btn) {
+        if (!panel.querySelector('.chart svg')) return;
+        btn = rsButton(panel);
+        var cap = panel.querySelector(':scope > .cap');
+        if (cap) cap.appendChild(btn); else { btn.className += ' app-rs-abs'; panel.appendChild(btn); }
+      }
+      rsSyncPanel(panel, btn);
+    })(list[i]);
+    list = doc.querySelectorAll('p.finding');
+    for (i = 0; i < list.length; i++) {
+      var p = list[i], nx = p.nextElementSibling, own = nx && nx.className === 'app-rs-row';
+      if (!clean(p.textContent)) { if (own) nx.setAttribute('hidden', ''); continue; }
+      if (own) { nx.removeAttribute('hidden'); continue; }
+      if (p.parentNode) p.parentNode.insertBefore(rsRow(rsButton(p)), p.nextSibling);
+    }
+    list = doc.querySelectorAll('#findings > div');
+    for (i = 0; i < list.length; i++) {
+      if (list[i].querySelector('.app-rs')) continue;
+      list[i].appendChild(rsRow(rsButton(list[i])));
+    }
+  }
+  function clean(t) { return String(t == null ? '' : t).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''); }
+  function rsSoon(ms) {
+    clearTimeout(rsTimer);
+    rsTimer = setTimeout(function () { try { rsScan(); } catch (e) {} }, ms);
+  }
+  function initResearchShare() {
+    rsSoon(0);
+    var later = function () { rsSoon(0); setTimeout(function () { rsSoon(0); }, 2000); };
+    if (doc.readyState === 'complete') later(); else window.addEventListener('load', later);
+    doc.addEventListener('click', function () { rsSoon(600); }, true);     // кнопки страницы строят панели заново
+  }
+
   /* ---- страницы авторов: оглавление, запоминание места, «продолжить» ---- */
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function hasCls(c) { return (' ' + root.className + ' ').indexOf(' ' + c + ' ') !== -1; }
@@ -523,6 +613,7 @@
     if (isVoices) initVoicesActions();
     addInstallButton();
     if (isAuthor) initAuthor();
+    if (isAuthor) initResearchShare();
     if (section === '') {
       paintHomeResume();
       doc.addEventListener('click', homeResumeGo, true);

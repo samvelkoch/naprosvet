@@ -183,6 +183,24 @@ html.app-hint-on .app-resume{bottom:calc(var(--app-nav-h,60px) + env(safe-area-i
 .app-resume button{flex:none;width:40px;margin:0;padding:0;cursor:pointer;font:300 22px/1 var(--f-mono,monospace);color:var(--muted,#675d51);background:none;border:0;border-left:1px solid var(--ring,rgba(33,27,22,.15))}
 .app-resume .go:focus-visible,.app-resume button:focus-visible{outline:2px solid var(--accent,#9a2f22);outline-offset:-2px}
 
+/* страницы авторов: «Поделиться» у графиков и выводов. Кнопки есть всегда, видны только там, где видна нижняя панель */
+.app-rs,.app-rs-row{display:none}
+html.app-nav-on .app-rs{
+  display:inline-flex;align-items:center;flex:none;margin:-9px 0 -9px auto;padding:9px 0 9px 12px;order:3;cursor:pointer;
+  font:500 11px/1 var(--f-mono,"IBM Plex Mono",ui-monospace,monospace);letter-spacing:.04em;color:var(--accent,#9a2f22);
+  background:none;border:0;border-radius:0;-webkit-tap-highlight-color:transparent;
+}
+html.app-nav-on .app-rs[hidden],html.app-nav-on .app-rs-row[hidden]{display:none}
+html.app-nav-on .app-rs[aria-busy="true"]{opacity:.55;cursor:progress}
+html.app-nav-on .app-rs.app-rs-abs{position:absolute;top:8px;right:26px;margin:0;padding:8px 0 8px 10px;z-index:2}
+html.app-nav-on .app-rs-row{display:flex;justify-content:flex-end}
+html.app-nav-on .app-rs-row .app-rs{margin:0;padding:6px 0 6px 12px}
+html.app-nav-on p.finding + .app-rs-row{max-width:46ch;margin:-12px 0 20px}
+html.app-nav-on #findings > div > .app-rs-row{justify-content:flex-start;margin-top:4px}
+html.app-nav-on #findings > div > .app-rs-row .app-rs{padding-left:0}
+.app-rs:focus-visible{outline:2px solid var(--mark,#b8391f);outline-offset:2px}
+@media (hover:hover){.app-rs:hover{text-decoration:underline;text-underline-offset:3px}}
+
 /* главная: строка под кнопкой «Открыть исследование →» */
 .app-resume-row{
   display:block;margin-top:10px;padding-top:10px;cursor:pointer;
