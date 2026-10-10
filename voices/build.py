@@ -8,12 +8,14 @@ src/themes.json — сквозные темы (1–2 на вопрос).
     python3 voices/build.py
 """
 import json
+import random
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SRC = HERE / "src"
 AUTHORS = ("brodsky", "chekhov", "gary")  # порядок колонок как на главной
+ORDER_SEED = 20261010  # фиксированная перестановка вопросов для «Вопроса дня» в приложении
 
 
 def load(path):
@@ -47,16 +49,23 @@ def main():
                 "q": r["question"],
                 "a": {a: rows[a][i]["answer"].strip() for a in AUTHORS},
             })
+    ids = [q["id"] for q in questions]
+    if len(set(ids)) != len(ids):
+        sys.exit("id вопросов не уникальны")
+    order = ids[:]
+    random.Random(ORDER_SEED).shuffle(order)
     data = {
         "authors": authors,
         # разделы по составителю опросника: questions[].by + questions[].s → название
         "sections": {v["composer"]: {s["id"]: f"{s['num']}. {s['title']}" for s in v["sections"]} for v in meta.values()},
         "themes": themes["themes"],
         "questions": questions,
+        # порядок «Вопроса дня»: перестановка всех id (seed ORDER_SEED); день N → order[N % len(order)]
+        "order": order,
     }
     out = HERE / "data.json"
     out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"{out.name}: {len(questions)} вопросов × {len(AUTHORS)} ответа, {out.stat().st_size // 1024} КБ")
+    print(f"{out.name}: {len(questions)} вопросов × {len(AUTHORS)} ответа, порядок дня {len(order)} id, {out.stat().st_size // 1024} КБ")
 
 
 if __name__ == "__main__":
