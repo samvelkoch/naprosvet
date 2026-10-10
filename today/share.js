@@ -304,7 +304,12 @@
   /* ---- «Текстом» ---- */
   function textOf(p) {
     p = p || {};
-    var ans = parseParas(p.answer).map(function (cs) { return cs.map(function (x) { return x.c; }).join(''); }).join('\n\n');
+    // ремарки *…* в тексте без курсива берём в скобки, если их там ещё нет
+    var src = String(p.answer || '').replace(/\*([^*]+)\*/g, function (m, t) {
+      t = t.replace(/^\s+|\s+$/g, '');
+      return /^[(\[].*[)\]]$/.test(t) ? t : '(' + t + ')';
+    });
+    var ans = parseParas(src).map(function (cs) { return cs.map(function (x) { return x.c; }).join(''); }).join('\n\n');
     var q = String(p.question || '').replace(/\s+/g, ' ').replace(/^\s|\s$/g, '');
     return q + '\n\n' + ans + '\n\n— ' + (NAMES[p.author] || '') + ' · реконструкция голоса, не цитата\n' + SITE + (p.id || '');
   }
