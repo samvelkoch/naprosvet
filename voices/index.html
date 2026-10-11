@@ -164,21 +164,12 @@ main{padding-block:28px 24px}
 .atabs{display:none}
 .tick{display:none}
 @media (max-width:700px){
-  .atabs{display:flex;position:sticky;top:var(--stick,0px);z-index:15;margin:14px -16px 0;padding:0 16px;background:var(--page)}
-  .atabs button{flex:1;min-width:0;font:600 13px/1 var(--f-mono);letter-spacing:.02em;text-transform:uppercase;background:none;border:0;padding:13px 4px 11px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent}
-  .atabs button[aria-selected="true"]{color:var(--ink)}
-  /* T1: точка перед именем */
-  html[data-at="1"] .atabs button::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:transparent}
-  html[data-at="1"] .atabs button[aria-selected="true"]::before{background:var(--accent)}
-  /* T2: имя в плашке */
-  html[data-at="2"] .atabs{padding-block:6px}
-  html[data-at="2"] .atabs button{padding:9px 4px}
-  html[data-at="2"] .atabs button[aria-selected="true"]{background:var(--accent);color:#fff}
-  :root[data-theme="dark"][data-at="2"] .atabs button[aria-selected="true"]{color:#1b1010}
-  /* T3: точка под именем */
-  html[data-at="3"] .atabs button{flex-direction:column;gap:6px;padding:12px 4px 8px}
-  html[data-at="3"] .atabs button::after{content:"";width:6px;height:6px;border-radius:50%;background:transparent}
-  html[data-at="3"] .atabs button[aria-selected="true"]::after{background:var(--accent)}
+  .atabs{display:flex;position:sticky;top:var(--stick,0px);z-index:15;margin:14px -16px 0;padding:6px 16px;background:var(--page)}
+  .atabs button{flex:1;min-width:0;font:600 13px/1 var(--f-mono);letter-spacing:.02em;text-transform:uppercase;background:none;border:0;padding:9px 4px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent}
+  /* активный автор — имя в цветной плашке, без линий */
+  .atabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+  :root[data-theme="dark"] .atabs button[aria-selected="true"]{color:#1b1010}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .atabs button[aria-selected="true"]{color:#1b1010}}
   .answers.sw{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;margin:12px -16px 0;padding:0 16px;scroll-padding-inline:16px;scrollbar-width:none;align-items:flex-start;overscroll-behavior-x:contain;transition:height .2s ease}
   .answers.sw::-webkit-scrollbar{display:none}
   .answers.sw>.col{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-height:0}
@@ -704,7 +695,6 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 
   // ---- телефон: карточки ответов листаются вбок, вкладки показывают, чей ответ открыт ----
   var narrow = window.matchMedia('(max-width: 700px)');
-  document.documentElement.dataset.at = (location.search.match(/[?&]at=([123])/) || [])[1] || '1';
   var rightBar = document.querySelector('.tools .right');
   function stickTop() {
     var bar = document.querySelector('body>header .bar, .bar'), h = 0;
