@@ -160,6 +160,36 @@ main{padding-block:28px 24px}
 @keyframes pull{0%{transform:scaleY(1)}30%{transform:scaleY(-1)}45%{transform:scaleY(-1)}100%{transform:scaleY(1)}}
 .drum.busy .lever{cursor:progress}
 @media (max-width:700px){.drum{--rh:40px;padding-right:48px}.drum::after{right:48px}.lever{width:48px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
+/* телефон: ответы карточками, смахиваются влево-вправо; вкладки авторов (вариант sw: a — сверху, b — с краем соседней карточки, c — в нижней панели) */
+.atabs,.adots{display:none}
+.tick{display:none}
+@media (max-width:700px){
+  .atabs{display:flex;position:sticky;top:var(--stick,0px);z-index:15;margin:14px -16px 0;padding:0 16px;background:var(--page);border-bottom:1px solid var(--ring)}
+  .atabs button{flex:1;min-width:0;font:600 13px/1 var(--f-mono);letter-spacing:.02em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:13px 4px 11px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent}
+  .atabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .answers.sw{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;margin:12px -16px 0;padding:0 16px;scroll-padding-inline:16px;scrollbar-width:none;align-items:flex-start;overscroll-behavior-x:contain;transition:height .2s ease}
+  .answers.sw::-webkit-scrollbar{display:none}
+  .answers.sw>.col{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-height:0}
+  .answers.sw>.col:last-child{margin-right:16px}
+  html[data-sw="b"] .atabs{display:none}
+  html[data-sw="b"] .adots{display:flex;justify-content:center;gap:16px;margin:12px 0 0;font:600 11.5px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  html[data-sw="b"] .adots span{display:flex;align-items:center;gap:6px}
+  html[data-sw="b"] .adots span::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ring)}
+  html[data-sw="b"] .adots span.on{color:var(--ink)}
+  html[data-sw="b"] .adots span.on::before{background:var(--accent)}
+  html[data-sw="b"] .answers.sw>.col{flex-basis:calc(100% - 34px)}
+  html[data-sw="c"] .atabs{position:static;order:-1;flex:0 0 100%;margin:-10px -16px 0;border-bottom:0;border-top:0}
+  html[data-sw="c"] main .atabs.inmain{display:none}
+  /* барабан крутится, а его не видно: строка-бегунок (dr=2 сверху, dr=3 в нижней панели) */
+  .tick{position:fixed;left:0;right:0;z-index:26;display:flex;align-items:center;gap:10px;height:42px;padding:0 16px;background:var(--surface);border-block:1px solid var(--ring);
+    box-shadow:0 8px 16px -12px rgba(21,24,36,.4);font:italic 15px/1 var(--f-serif);color:var(--ink-2);transform:translateY(-120%);opacity:0;transition:transform .2s,opacity .2s;pointer-events:none}
+  .tick b{flex:none;font:600 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
+  .tick span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .tick.on{transform:none;opacity:1}
+  .tick.top{top:var(--stick,0px);border-top:0;border-left:3px solid var(--accent)}
+  .tick.bot{position:static;order:-2;flex:0 0 100%;margin:-10px -16px 0;transform:none;opacity:1;display:none;border-top:0;box-shadow:none;border-left:3px solid var(--accent)}
+  .tick.bot.on{display:flex}
+}
 #stage.dim{opacity:.35;transition:opacity .2s}
 .seg.mode button:first-child{border-left:0}
 .seg.mode button[aria-pressed="true"]{background:var(--accent);color:#fff}
@@ -379,6 +409,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       cols.push({ a: a, ps: ps, paras: paras, pi: 0, ci: 0, acc: 0, wait: 240 + Math.random() * 500, done: false });
     });
     stage.appendChild(grid);
+    swipeify(grid, ORDER.map(function (a) { return SHORT[a]; }));
 
     count.textContent = 'вопрос ' + (pos + 1) + ' из ' + deck.length;
     controls();
@@ -468,6 +499,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       col.appendChild(body); grid.appendChild(col); cur.cols.push({ col: col, head: head, pk: pk });
     });
     stage.appendChild(grid);
+    cur.tabs = swipeify(grid, LET.map(function (l) { return 'Ответ ' + l; })).btns;
     count.textContent = 'вопрос ' + G.round + ' из ' + ROUNDS + ' · угадано ' + G.hit + ' из ' + (G.round - 1) * 3;
     controls();
   }
@@ -477,6 +509,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     var j = cur.guess.indexOf(b);
     if (j >= 0 && j !== k) cur.guess[j] = cur.guess[k];
     cur.guess[k] = cur.guess[k] === b ? null : b;
+    cur.tabs.forEach(function (t, i) { t.textContent = LET[i] + (cur.guess[i] ? ' · ' + SHORT[cur.guess[i]] : ''); });
     cur.cols.forEach(function (c, i) { c.pk.querySelectorAll('button').forEach(function (bt) { bt.setAttribute('aria-pressed', String(bt.dataset.a === cur.guess[i])); }); });
     controls();
   }
@@ -490,6 +523,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       c.head.innerHTML = '';
       c.head.appendChild(el('h3', null, SHORT[a]));
       c.head.appendChild(el('div', 'who', D.authors[a].years + ' · ' + WHERE[a]));
+      cur.tabs[k].textContent = (ok ? '✓ ' : '✗ ') + SHORT[a];
       c.head.appendChild(el('span', 'verdict', ok ? '✓ угадано' : '✗ ты решил: ' + SHORT[g]));
     });
     G.hit += hits;
@@ -520,7 +554,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       try { navigator.clipboard.writeText(text).then(function () { cp.textContent = 'Скопировано'; }, function () {}); } catch (e) {}
     });
     acts.appendChild(cp); box.appendChild(acts);
-    stage.innerHTML = ''; stage.appendChild(box);
+    stage.innerHTML = ''; stage.appendChild(box); unswipe();
     count.textContent = 'серия окончена';
     controls();
   }
@@ -568,7 +602,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   }
   function refilter() {
     buildDeck(); if (mode === 'play') newGame();
-    if (!deck.length) { stop(); stage.innerHTML = '<div class="status">Таких вопросов нет. Снимите один из фильтров.</div>'; count.textContent = ''; return; }
+    if (!deck.length) { stop(); stage.innerHTML = '<div class="status">Таких вопросов нет. Снимите один из фильтров.</div>'; unswipe(); count.textContent = ''; return; }
     next();
   }
 
@@ -639,7 +673,9 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     var h = strip.firstChild.offsetHeight, dist = (t - 2) * h;
     var anim = strip.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + -dist + 'px)' }],
       { duration: 3600 + Math.random() * 900, easing: 'cubic-bezier(.12,.62,.08,1)', fill: 'forwards' });
+    var unfollow = drumOff() ? follow(list, anim, h) : null;
     anim.onfinish = function () {
+      if (unfollow) unfollow();
       win = list.slice(t - 2, t + 3); fill(win); anim.cancel();
       void drum.offsetWidth; drum.classList.add('landed');
       spinning = false; drum.classList.remove('busy'); stage.classList.remove('dim'); done();
@@ -664,6 +700,78 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       void drum.offsetWidth; drum.classList.add('landed');
       spinning = false; render(i);
     };
+  }
+
+  // ---- телефон: карточки ответов листаются вбок, вкладки показывают, чей ответ открыт ----
+  var narrow = window.matchMedia('(max-width: 700px)');
+  var SW = (location.search.match(/[?&]sw=([abc])/) || [])[1] || 'a', DR = (location.search.match(/[?&]dr=([123])/) || [])[1] || '1';
+  document.documentElement.dataset.sw = SW;
+  var rightBar = document.querySelector('.tools .right');
+  function stickTop() {
+    var bar = document.querySelector('body>header .bar, .bar'), h = 0;
+    if (bar && getComputedStyle(bar).position === 'sticky' && bar.offsetHeight) h = bar.getBoundingClientRect().bottom;
+    document.documentElement.style.setProperty('--stick', Math.max(0, Math.round(h)) + 'px');
+    return Math.max(0, h);
+  }
+  var SWP = null;
+  function unswipe() { if (SWP && SWP.tabs.parentNode) SWP.tabs.parentNode.removeChild(SWP.tabs); SWP = null; }
+  function swipeify(grid, labels) {
+    unswipe();
+    var items = [].slice.call(grid.children), tabs = el('div', 'atabs'), dots = el('div', 'adots'), idx = 0, t = 0;
+    tabs.setAttribute('role', 'tablist');
+    grid.classList.add('sw');
+    var btns = labels.map(function (l, k) {
+      var b = el('button', null, l); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(k === 0));
+      b.addEventListener('click', function () { go(k); });
+      tabs.appendChild(b); dots.appendChild(el('span', k ? null : 'on', l)); return b;
+    });
+    if (SW === 'c' && rightBar) rightBar.insertBefore(tabs, rightBar.firstChild);
+    else { tabs.classList.add('inmain'); grid.parentNode.insertBefore(tabs, grid); }
+    grid.parentNode.insertBefore(dots, grid);
+    function step() { return items[0].offsetWidth + 12; }
+    function fit() { grid.style.height = narrow.matches ? items[idx].offsetHeight + 'px' : ''; }
+    function mark(k) {
+      if (k === idx) return; idx = k;
+      btns.forEach(function (b, j) { b.setAttribute('aria-selected', String(j === k)); });
+      [].forEach.call(dots.children, function (d, j) { d.className = j === k ? 'on' : ''; });
+    }
+    // карточка сменилась: высота по ней, и если начало карточки уехало вверх, возвращаемся к нему
+    function settle() {
+      fit();
+      var top = (SW === 'c' ? 0 : tabs.offsetHeight) + stickTop(), r = grid.getBoundingClientRect().top;
+      if (r < top) window.scrollBy({ top: r - top - 10, behavior: calm ? 'auto' : 'smooth' });
+    }
+    function go(k) { grid.scrollTo({ left: k * step(), behavior: calm ? 'auto' : 'smooth' }); }
+    grid.addEventListener('scroll', function () {
+      mark(Math.max(0, Math.min(items.length - 1, Math.round(grid.scrollLeft / step()))));
+      clearTimeout(t); t = setTimeout(settle, 110);
+    }, { passive: true });
+    if (window.ResizeObserver) { var ro = new ResizeObserver(function () { fit(); }); items.forEach(function (c) { ro.observe(c); }); }
+    fit();
+    SWP = { tabs: tabs, btns: btns, grid: grid };
+    return SWP;
+  }
+  narrow.addEventListener && narrow.addEventListener('change', function () { if (SWP) SWP.grid.style.height = ''; });
+
+  // ---- барабан ушёл из виду: dr=1 — подкрутить страницу к нему; dr=2/3 — бегунок, потом к барабану ----
+  var tick = el('div', 'tick ' + (DR === '3' ? 'bot' : 'top')), tickB = el('b', null, 'Барабан'), tickS = el('span');
+  tick.appendChild(tickB); tick.appendChild(tickS);
+  if (DR === '3' && rightBar) rightBar.insertBefore(tick, rightBar.firstChild); else document.body.appendChild(tick);
+  function drumOff() {
+    var r = drum.getBoundingClientRect(), bot = rightBar && narrow.matches ? rightBar.getBoundingClientRect().top : window.innerHeight;
+    return r.bottom < stickTop() + 40 || r.top > bot - 40;
+  }
+  function toDrum() { var r = drum.getBoundingClientRect(); window.scrollBy({ top: r.top - stickTop() - 12, behavior: calm ? 'auto' : 'smooth' }); }
+  function follow(list, anim, h) {
+    if (DR === '1' || !narrow.matches) return toDrum(), null;
+    tick.classList.add('on');
+    var f = 0, last = -1;
+    (function loop() {
+      var m = getComputedStyle(strip).transform, ty = m && m !== 'none' ? parseFloat(m.split(',')[5]) : 0, k = Math.round(-ty / h) + 2;
+      if (k !== last && list[k] != null) { last = k; var q = D.questions[list[k]]; tickB.textContent = INIT[q.by]; tickS.textContent = q.q; }
+      f = requestAnimationFrame(loop);
+    })();
+    return function () { cancelAnimationFrame(f); setTimeout(function () { tick.classList.remove('on'); toDrum(); }, 450); };
   }
   var lever = document.getElementById('lever');
   function pull() {
