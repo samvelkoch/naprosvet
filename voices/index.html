@@ -160,8 +160,8 @@ main{padding-block:28px 24px}
 @keyframes pull{0%{transform:scaleY(1)}30%{transform:scaleY(-1)}45%{transform:scaleY(-1)}100%{transform:scaleY(1)}}
 .drum.busy .lever{cursor:progress}
 @media (max-width:700px){.drum{--rh:40px;padding-right:48px}.drum::after{right:48px}.lever{width:48px}.strip div{font-size:15px;padding-left:16px;gap:10px}.strip div b{width:22px}}
-/* телефон: ответы карточками, смахиваются влево-вправо; вкладки авторов (вариант sw: a — сверху, b — с краем соседней карточки, c — в нижней панели) */
-.atabs,.adots{display:none}
+/* телефон: ответы карточками, смахиваются влево-вправо; вкладки авторов сверху и не уезжают при прокрутке */
+.atabs{display:none}
 .tick{display:none}
 @media (max-width:700px){
   .atabs{display:flex;position:sticky;top:var(--stick,0px);z-index:15;margin:14px -16px 0;padding:0 16px;background:var(--page);border-bottom:1px solid var(--ring)}
@@ -171,24 +171,12 @@ main{padding-block:28px 24px}
   .answers.sw::-webkit-scrollbar{display:none}
   .answers.sw>.col{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-height:0}
   .answers.sw>.col:last-child{margin-right:16px}
-  html[data-sw="b"] .atabs{display:none}
-  html[data-sw="b"] .adots{display:flex;justify-content:center;gap:16px;margin:12px 0 0;font:600 11.5px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  html[data-sw="b"] .adots span{display:flex;align-items:center;gap:6px}
-  html[data-sw="b"] .adots span::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ring)}
-  html[data-sw="b"] .adots span.on{color:var(--ink)}
-  html[data-sw="b"] .adots span.on::before{background:var(--accent)}
-  html[data-sw="b"] .answers.sw>.col{flex-basis:calc(100% - 34px)}
-  html[data-sw="c"] .atabs{position:static;order:-1;flex:0 0 100%;margin:-10px -16px 0;border-bottom:0;border-top:0}
-  html[data-sw="c"] main .atabs.inmain{display:none}
-  /* барабан крутится, а его не видно: строка-бегунок (dr=2 сверху, dr=3 в нижней панели) */
-  .tick{position:fixed;left:0;right:0;z-index:26;display:flex;align-items:center;gap:10px;height:42px;padding:0 16px;background:var(--surface);border-block:1px solid var(--ring);
+  /* барабан крутится, а его не видно: сверху строка-бегунок с мелькающими вопросами */
+  .tick{position:fixed;left:0;right:0;top:var(--stick,0px);z-index:26;border-left:3px solid var(--accent);display:flex;align-items:center;gap:10px;height:42px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--ring);
     box-shadow:0 8px 16px -12px rgba(21,24,36,.4);font:italic 15px/1 var(--f-serif);color:var(--ink-2);transform:translateY(-120%);opacity:0;transition:transform .2s,opacity .2s;pointer-events:none}
   .tick b{flex:none;font:600 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mark)}
   .tick span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
   .tick.on{transform:none;opacity:1}
-  .tick.top{top:var(--stick,0px);border-top:0;border-left:3px solid var(--accent)}
-  .tick.bot{position:static;order:-2;flex:0 0 100%;margin:-10px -16px 0;transform:none;opacity:1;display:none;border-top:0;box-shadow:none;border-left:3px solid var(--accent)}
-  .tick.bot.on{display:flex}
 }
 #stage.dim{opacity:.35;transition:opacity .2s}
 .seg.mode button:first-child{border-left:0}
@@ -673,7 +661,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     var h = strip.firstChild.offsetHeight, dist = (t - 2) * h;
     var anim = strip.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + -dist + 'px)' }],
       { duration: 3600 + Math.random() * 900, easing: 'cubic-bezier(.12,.62,.08,1)', fill: 'forwards' });
-    var unfollow = drumOff() ? follow(list, anim, h) : null;
+    var unfollow = drumOff() ? follow(list, h) : null;
     anim.onfinish = function () {
       if (unfollow) unfollow();
       win = list.slice(t - 2, t + 3); fill(win); anim.cancel();
@@ -704,8 +692,6 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 
   // ---- телефон: карточки ответов листаются вбок, вкладки показывают, чей ответ открыт ----
   var narrow = window.matchMedia('(max-width: 700px)');
-  var SW = (location.search.match(/[?&]sw=([abc])/) || [])[1] || 'a', DR = (location.search.match(/[?&]dr=([123])/) || [])[1] || '1';
-  document.documentElement.dataset.sw = SW;
   var rightBar = document.querySelector('.tools .right');
   function stickTop() {
     var bar = document.querySelector('body>header .bar, .bar'), h = 0;
@@ -714,31 +700,28 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     return Math.max(0, h);
   }
   var SWP = null;
-  function unswipe() { if (SWP && SWP.tabs.parentNode) SWP.tabs.parentNode.removeChild(SWP.tabs); SWP = null; }
+  function unswipe() { if (!SWP) return; if (SWP.tabs.parentNode) SWP.tabs.parentNode.removeChild(SWP.tabs); if (SWP.ro) SWP.ro.disconnect(); SWP = null; }
   function swipeify(grid, labels) {
     unswipe();
-    var items = [].slice.call(grid.children), tabs = el('div', 'atabs'), dots = el('div', 'adots'), idx = 0, t = 0;
+    var items = [].slice.call(grid.children), tabs = el('div', 'atabs'), idx = 0, t = 0;
     tabs.setAttribute('role', 'tablist');
     grid.classList.add('sw');
     var btns = labels.map(function (l, k) {
       var b = el('button', null, l); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(k === 0));
       b.addEventListener('click', function () { go(k); });
-      tabs.appendChild(b); dots.appendChild(el('span', k ? null : 'on', l)); return b;
+      tabs.appendChild(b); return b;
     });
-    if (SW === 'c' && rightBar) rightBar.insertBefore(tabs, rightBar.firstChild);
-    else { tabs.classList.add('inmain'); grid.parentNode.insertBefore(tabs, grid); }
-    grid.parentNode.insertBefore(dots, grid);
+    grid.parentNode.insertBefore(tabs, grid);
     function step() { return items[0].offsetWidth + 12; }
     function fit() { grid.style.height = narrow.matches ? items[idx].offsetHeight + 'px' : ''; }
     function mark(k) {
       if (k === idx) return; idx = k;
       btns.forEach(function (b, j) { b.setAttribute('aria-selected', String(j === k)); });
-      [].forEach.call(dots.children, function (d, j) { d.className = j === k ? 'on' : ''; });
     }
     // карточка сменилась: высота по ней, и если начало карточки уехало вверх, возвращаемся к нему
     function settle() {
       fit();
-      var top = (SW === 'c' ? 0 : tabs.offsetHeight) + stickTop(), r = grid.getBoundingClientRect().top;
+      var top = tabs.offsetHeight + stickTop(), r = grid.getBoundingClientRect().top;
       if (r < top) window.scrollBy({ top: r - top - 10, behavior: calm ? 'auto' : 'smooth' });
     }
     function go(k) { grid.scrollTo({ left: k * step(), behavior: calm ? 'auto' : 'smooth' }); }
@@ -746,24 +729,25 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       mark(Math.max(0, Math.min(items.length - 1, Math.round(grid.scrollLeft / step()))));
       clearTimeout(t); t = setTimeout(settle, 110);
     }, { passive: true });
-    if (window.ResizeObserver) { var ro = new ResizeObserver(function () { fit(); }); items.forEach(function (c) { ro.observe(c); }); }
+    var ro = window.ResizeObserver ? new ResizeObserver(function () { fit(); }) : null;
+    if (ro) items.forEach(function (c) { ro.observe(c); });
     fit();
-    SWP = { tabs: tabs, btns: btns, grid: grid };
+    SWP = { tabs: tabs, btns: btns, grid: grid, ro: ro };
     return SWP;
   }
   narrow.addEventListener && narrow.addEventListener('change', function () { if (SWP) SWP.grid.style.height = ''; });
 
-  // ---- барабан ушёл из виду: dr=1 — подкрутить страницу к нему; dr=2/3 — бегунок, потом к барабану ----
-  var tick = el('div', 'tick ' + (DR === '3' ? 'bot' : 'top')), tickB = el('b', null, 'Барабан'), tickS = el('span');
+  // ---- барабан ушёл из виду: на телефоне сверху бегунок с вопросами, после остановки страница едет к барабану; на компьютере сразу к барабану ----
+  var tick = el('div', 'tick'), tickB = el('b', null, 'Барабан'), tickS = el('span');
   tick.appendChild(tickB); tick.appendChild(tickS);
-  if (DR === '3' && rightBar) rightBar.insertBefore(tick, rightBar.firstChild); else document.body.appendChild(tick);
+  tick.setAttribute('aria-hidden', 'true'); document.body.appendChild(tick);
   function drumOff() {
     var r = drum.getBoundingClientRect(), bot = rightBar && narrow.matches ? rightBar.getBoundingClientRect().top : window.innerHeight;
     return r.bottom < stickTop() + 40 || r.top > bot - 40;
   }
   function toDrum() { var r = drum.getBoundingClientRect(); window.scrollBy({ top: r.top - stickTop() - 12, behavior: calm ? 'auto' : 'smooth' }); }
-  function follow(list, anim, h) {
-    if (DR === '1' || !narrow.matches) return toDrum(), null;
+  function follow(list, h) {
+    if (!narrow.matches) return toDrum(), null;
     tick.classList.add('on');
     var f = 0, last = -1;
     (function loop() {
