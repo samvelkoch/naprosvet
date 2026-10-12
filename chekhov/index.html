@@ -983,9 +983,15 @@ function seg(host, opts, val, on){
 const tip=$('#tip');
 function placeTip(x,y){ const r=tip.getBoundingClientRect(); let X=x+14, Y=y+14;
   if(X+r.width>innerWidth-8) X=x-r.width-14; if(Y+r.height>innerHeight-8) Y=y-r.height-14; tip.style.left=Math.max(4,X)+'px'; tip.style.top=Math.max(4,Y)+'px'; }
-function showTipHTML(html,x,y){ tip.innerHTML=html; tip.hidden=false; placeTip(x,y); }
+/* на телефоне касание уже нажало, поэтому «нажмите, чтобы…» убираем; саму подсказку можно нажать: она закроется,
+   а на карте слов прокрутит к близким словам под картой */
+let tipTouch=false;
+['pointerdown','pointermove'].forEach(ev=>document.addEventListener(ev,e=>{ tipTouch=e.pointerType!=='mouse'; },true));
+const touchTip=h=>h.replace(/<br>нажмите, чтобы увидеть близкие слова$/,'<br><u data-tip-go="#wm-read">близкие слова — под картой ↓</u>').replace(/<br>нажмите, чтобы[^<]*$/,'');
+function showTipHTML(html,x,y){ tip.innerHTML=tipTouch?touchTip(html):html; tip.style.pointerEvents=tipTouch?'auto':'none'; tip.hidden=false; placeTip(x,y); }
+tip.addEventListener('click',()=>{ const go=tip.querySelector('[data-tip-go]'); tip.hidden=true; const to=go&&document.querySelector(go.dataset.tipGo); if(to) to.scrollIntoView({behavior:'smooth',block:'center'}); });
 document.addEventListener('pointermove',e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); } else if(!e.target.closest || !e.target.closest('canvas')) tip.hidden=true; });
-document.addEventListener('pointerdown',e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t) showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); });
+document.addEventListener('pointerdown',e=>{ if(e.target.closest && e.target.closest('#tip')) return; const t=e.target.closest && e.target.closest('[data-tip]'); if(t) showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); else if(tipTouch && !(e.target.closest && e.target.closest('canvas'))) tip.hidden=true; });
 document.addEventListener('scroll',()=>{ tip.hidden=true; },{passive:true});
 
 /* ================= примитивы графиков ================= */
