@@ -5554,7 +5554,8 @@ const CVMODE={named:'Только цвета, названные словом: �
   all:'Плюс строки, окрашенные настроением без цветного предмета. Таких мало, около 3% разметки.'};
 function cvShares(tt){ const i=Math.min(Math.floor(tt-CVY0),CVY1-CVY0), f=tt-CVY0-i, a=CV.sm[cvMode][i], b=CV.sm[cvMode][Math.min(i+1,CVY1-CVY0)];
   const e=f*f*(3-2*f); return a.map((v,k)=>v+(b[k]-v)*e); }
-function cvFit(c){ const w=Math.max(260,c.clientWidth), d=devicePixelRatio||1, h=+c.getAttribute('height');
+/* высота в CSS-пикселях хранится в data-h: атрибут height меняется вместе с размером буфера; плотность ограничена 2 ради скорости */
+function cvFit(c){ if(!c.dataset.h) c.dataset.h=c.getAttribute('height'); const w=Math.max(260,c.clientWidth), d=Math.min(devicePixelRatio||1,2), h=+c.dataset.h;
   if(c.width!==Math.round(w*d)||c.height!==Math.round(h*d)){ c.width=Math.round(w*d); c.height=Math.round(h*d); c.style.height=h+'px'; }
   const x=c.getContext('2d'); x.setTransform(d,0,0,d,0,0); return [x,w,h]; }
 const cvLight=h=>{ const n=parseInt(h.slice(1),16); return (.3*(n>>16)+.59*((n>>8)&255)+.11*(n&255))>205; };
