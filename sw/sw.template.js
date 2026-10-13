@@ -55,7 +55,7 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
 
   if (FONT_HOSTS.indexOf(url.hostname) >= 0) { e.respondWith(fontFetch(req)); return; }
-  /* всё чужое (mc.yandex.ru и прочее) и всё вне папки сайта не трогаем */
+  /* всё чужое (mc.yandex.ru, googletagmanager.com, google-analytics.com и прочее) и всё вне папки сайта не трогаем */
   if (url.origin !== self.location.origin || url.pathname.indexOf(SCOPE_PATH) !== 0) return;
 
   var path = url.pathname.slice(SCOPE_PATH.length);

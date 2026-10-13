@@ -3,7 +3,7 @@
    Версия кэша = хеш содержимого предкэшируемых файлов: любая правка сайта даёт новую версию. */
 'use strict';
 
-var VERSION = '3dbdc902d0';
+var VERSION = '1d85afdb8c';
 var PRECACHE = [
   "./app.css",
   "./app.js",
@@ -82,7 +82,7 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
 
   if (FONT_HOSTS.indexOf(url.hostname) >= 0) { e.respondWith(fontFetch(req)); return; }
-  /* всё чужое (mc.yandex.ru и прочее) и всё вне папки сайта не трогаем */
+  /* всё чужое (mc.yandex.ru, googletagmanager.com, google-analytics.com и прочее) и всё вне папки сайта не трогаем */
   if (url.origin !== self.location.origin || url.pathname.indexOf(SCOPE_PATH) !== 0) return;
 
   var path = url.pathname.slice(SCOPE_PATH.length);
