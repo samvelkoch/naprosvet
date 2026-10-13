@@ -472,7 +472,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 
 /* правки 2026-10: подзаголовок шапки, справки */
 .hero-sub{font-family:var(--f-body); font-size:clamp(24px,3.2vw,34px); line-height:1.2; font-weight:600; color:var(--htext); margin:14px 0 18px}
-.hero-sub span{font-weight:400; color:var(--htext-2)}
+@media (max-width:640px){.hero-sub{font-size:19px; margin:10px 0 14px}}
 details.ref{margin:14px 0 18px; border:1px dashed var(--rule)}
 details.ref>summary{list-style:none; cursor:pointer; padding:11px 14px; font:500 13.5px/1.35 var(--f-mono); letter-spacing:.03em; color:var(--ink-2); display:flex; gap:10px; align-items:center}
 details.ref>summary::-webkit-details-marker{display:none}
@@ -492,7 +492,7 @@ details.ref .ref-body>p:first-child{margin-top:4px}
       <div class="hero-text">
         <div class="eyebrow">Стихи и проза, 1957–1996</div>
         <h1><span class="typed">Бродский</span><span class="hand">на<i>_</i>просвет</span></h1>
-        <p class="hero-sub" data-pravki-2026-10>Глубокий анализ корпуса текстов.<br><span>Стиль и язык в цифрах.</span></p>
+        <p class="hero-sub" data-pravki-2026-10>Глубокий анализ корпуса текстов</p>
         <p class="lede" id="lede"></p>
         <div class="tools">
           <label for="hl-input">Подсветить слово на страницах</label>
