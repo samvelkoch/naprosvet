@@ -469,16 +469,30 @@ blockquote b{font-style:normal; color:var(--mark)}
 .bio-t{font-family:var(--f-display); font-weight:700; font-size:21px; line-height:1.2; margin:0 0 8px}
 .bio p{font-size:16px; line-height:1.55; margin:0 0 8px}
 .bio .bio-src{font-family:var(--f-mono); font-size:11.5px; color:var(--muted); margin:10px 0 0}
+
+/* правки 2026-10: подзаголовок шапки, справки */
+.hero-sub{font-family:var(--f-body); font-size:clamp(24px,3.2vw,34px); line-height:1.2; font-weight:600; color:var(--htext); margin:14px 0 18px}
+@media (max-width:640px){.hero-sub{font-size:19px; margin:10px 0 14px}}
+details.ref{margin:14px 0 18px; border:1px dashed var(--rule)}
+details.ref>summary{list-style:none; cursor:pointer; padding:11px 14px; font:500 13.5px/1.35 var(--f-mono); letter-spacing:.03em; color:var(--ink-2); display:flex; gap:10px; align-items:center}
+details.ref>summary::-webkit-details-marker{display:none}
+details.ref>summary:hover{color:var(--ink)}
+details.ref>summary .q{flex:none; width:22px; height:22px; border:1px solid var(--accent); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700}
+details.ref>summary .ch{margin-left:auto; color:var(--muted); transition:transform .2s}
+details.ref[open]>summary .ch{transform:rotate(90deg)}
+details.ref .ref-body{padding:0 14px 4px}
+details.ref .ref-body>p:first-child{margin-top:4px}
 </style>
 
 <div id="tip" role="tooltip" hidden></div>
-<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-stih" aria-current="false"><small>II</small>Стих</button><button type="button" data-part="part-slova" aria-current="false"><small>III</small>Слова</button><button type="button" data-part="part-stil" aria-current="false"><small>IV</small>Стиль</button><button type="button" data-part="part-mir" aria-current="false"><small>V</small>Мир Бродского</button><button type="button" data-part="part-venecia" aria-current="false"><small>VI</small>Венеция</button><button type="button" data-part="part-proza" aria-current="false"><small>VII</small>Проза</button></nav></div></div>
+<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-stih" aria-current="false"><small>II</small>Поэтика</button><button type="button" data-part="part-slova" aria-current="false"><small>III</small>Слова</button><button type="button" data-part="part-stil" aria-current="false"><small>IV</small>Стиль</button><button type="button" data-part="part-mir" aria-current="false"><small>V</small>Мир Бродского</button><button type="button" data-part="part-venecia" aria-current="false"><small>VI</small>Венеция</button><button type="button" data-part="part-proza" aria-current="false"><small>VII</small>Проза</button></nav></div></div>
 <header class="hero" id="top">
   <div class="inner">
     <div class="hero-grid">
       <div class="hero-text">
-        <div class="eyebrow">Стихи и проза, 1957–1996 · частотный и стилевой анализ</div>
+        <div class="eyebrow">Стихи и проза, 1957–1996</div>
         <h1><span class="typed">Бродский</span><span class="hand">на<i>_</i>просвет</span></h1>
+        <p class="hero-sub" data-pravki-2026-10>Глубокий анализ корпуса текстов</p>
         <p class="lede" id="lede"></p>
         <div class="tools">
           <label for="hl-input">Подсветить слово на страницах</label>
@@ -566,7 +580,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 })();
 </script>
 <div class="inner"><div class="layout">
-<nav class="rail" aria-label="Разделы"><div class="g">I · Обзор</div><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a><div class="g">II · Стих</div><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a><div class="g">III · Слова</div><a href="#slovar"><span>III.1</span>Частые слова</a><a href="#poisk"><span>III.2</span>Словоискатель</a><a href="#karta"><span>III.3</span>Карта словаря</a><a href="#epohi"><span>III.4</span>Слова эпох</a><a href="#epitety"><span>III.5</span>Эпитеты, сравнения, формулы</a><a href="#temy"><span>III.6</span>Темы</a><div class="g">IV · Стиль</div><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a><div class="g">V · Мир Бродского</div><a href="#personazhi"><span>V.1</span>Персонажи</a><a href="#mesta"><span>V.2</span>Места</a><a href="#transport"><span>V.3</span>Средства передвижения</a><a href="#eda"><span>V.4</span>Еда</a><a href="#napitki"><span>V.5</span>Напитки</a><div class="g">VI · Венеция</div><a href="#venecia"><span>VI.1</span>Венеция</a><div class="g">VII · Проза</div><a href="#proza"><span>VII.1</span>Проза</a><a href="#english"><span>VII.2</span>По-английски</a><a href="#rekordy"><span>VII.3</span>Рекорды</a><a href="#metod"><span>VII.4</span>Методика</a></nav>
+<nav class="rail" aria-label="Разделы"><div class="g">I · Обзор</div><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a><div class="g">II · Поэтика</div><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a><div class="g">III · Слова</div><a href="#slovar"><span>III.1</span>Частые слова</a><a href="#poisk"><span>III.2</span>Словоискатель</a><a href="#karta"><span>III.3</span>Карта словаря</a><a href="#epohi"><span>III.4</span>Слова эпох</a><a href="#epitety"><span>III.5</span>Эпитеты, сравнения, формулы</a><a href="#temy"><span>III.6</span>Темы</a><div class="g">IV · Стиль</div><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a><a href="#poety"><span>IV.6</span>Среди поэтов XX века</a><div class="g">V · Мир Бродского</div><a href="#personazhi"><span>V.1</span>Персонажи</a><a href="#mesta"><span>V.2</span>Места</a><a href="#transport"><span>V.3</span>Средства передвижения</a><a href="#eda"><span>V.4</span>Еда</a><a href="#napitki"><span>V.5</span>Напитки</a><div class="g">VI · Венеция</div><a href="#venecia"><span>VI.1</span>Венеция</a><div class="g">VII · Проза</div><a href="#proza"><span>VII.1</span>Проза</a><a href="#english"><span>VII.2</span>По-английски</a><a href="#rekordy"><span>VII.3</span>Рекорды</a><a href="#metod"><span>VII.4</span>Методика</a></nav>
 <div class="content">
 <div class="part" id="part-obzor">
 <div class="part-head"><div class="n">Часть I</div><h1>Обзор</h1><p class="lead">Что вошло в корпус, как он распределён по годам и что о Бродском принято говорить.</p><div class="ch-links"><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a></div></div>
@@ -610,9 +624,9 @@ blockquote b{font-style:normal; color:var(--mark)}
 </div>
 
 <div class="part" id="part-stih">
-<div class="part-head"><div class="n">Часть II</div><h1>Стих</h1><p class="lead">Как устроена строка: длина, размер, рифма, строфа и звук. С примерами из самих стихов.</p><div class="ch-links"><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a></div></div>
+<div class="part-head"><div class="n">Часть II</div><h1>Поэтика</h1><p class="lead">Как устроена строка: длина, размер, рифма, строфа и звук. С примерами из самих стихов.</p><div class="ch-links"><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a></div></div>
 <section id="stroka">
-  <div class="kick"><b>II.1</b><span>Стих</span></div>
+  <div class="kick"><b>II.1</b><span>Поэтика</span></div>
   <h2>Строка</h2>
   <p class="finding" id="f-line"></p>
   <p>Длина строки измерена в слогах, то есть в гласных. Для русского стиха это естественная мера: пятистопный ямб даёт 10–11 слогов, дольник Бродского уходит за 14.</p>
@@ -627,10 +641,12 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="razmer">
-  <div class="kick"><b>II.2</b><span>Стих</span></div>
+  <div class="kick"><b>II.2</b><span>Поэтика</span></div>
   <h2>Размер</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое размер стиха</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Русский стих держится на ударениях. Если ударные слоги идут через равные промежутки, это классический размер: ямб, хорей, дактиль, амфибрахий, анапест. Если промежутки гуляют, но в заданных пределах, — дольник или тактовик. Если порядка нет совсем — свободный стих. Ниже каждый размер показан на строке самого Бродского: ударные слоги выделены, под строкой — её ритм.</p>
   <div class="gloss" id="meter-gloss"></div>
+  </div></details>
   <p class="finding" id="f-meter"></p>
   <div class="panel"><div class="cap"><span class="t">Какими размерами написаны стихи</span><span class="u">% строк в каждом периоде</span></div>
     <div class="legend" id="meter-legend"></div>
@@ -640,10 +656,12 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="rifma">
-  <div class="kick"><b>II.3</b><span>Стих</span></div>
+  <div class="kick"><b>II.3</b><span>Поэтика</span></div>
   <h2>Рифма <span class="tag">интерактив</span></h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое рифма и какой она бывает</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Рифма — совпадение звуков в концах строк, начиная с последнего ударного гласного. Совпадает всё — рифма точная; совпадает почти всё — неточная; совпадает только ударный гласный и что-то рядом — созвучие. Примеры ниже взяты из стихов Бродского.</p>
   <div class="gloss" id="rhyme-gloss"></div>
+  </div></details>
   <div class="panel rhymebox"><div class="cap"><span class="t">Словарь рифм Бродского</span><span class="u" id="rd-size"></span></div>
     <p style="margin:0 0 8px">Напишите слово так, как оно стоит в конце строки («ночь», «меня», «времени») — и увидите, с чем Бродский его рифмовал.</p>
     <div class="ctrl"><input type="search" id="rd-input" placeholder="например, ночь" autocomplete="off" spellcheck="false" aria-label="Слово для словаря рифм"><div class="chips" id="rd-sug"></div></div>
@@ -672,8 +690,11 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="strofa">
-  <div class="kick"><b>II.4</b><span>Стих</span></div>
+  <div class="kick"><b>II.4</b><span>Поэтика</span></div>
   <h2>Строфа, фраза, перенос</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: перенос и фраза через строфу</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
+  <div class="gloss" id="enj-gloss"></div>
+  </div></details>
   <p class="finding" id="f-enj"></p>
   <div class="panel"><div class="cap"><span class="t">Строфы по числу строк</span><span class="u">% строф данного размера; темнее — чаще</span></div>
     <div class="chart" id="c-stanza"></div></div>
@@ -685,7 +706,6 @@ blockquote b{font-style:normal; color:var(--mark)}
     <div class="panel"><div class="cap"><span class="t">Строки без знака в конце</span><span class="u">% строк; грубый индикатор переноса</span></div>
       <div class="chart" id="c-open"></div></div>
   </div>
-  <div class="gloss" id="enj-gloss"></div>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Сколько строк занимает фраза</span><span class="u">число предложений</span></div>
       <div class="chart" id="c-shist"></div></div>
@@ -697,9 +717,11 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="zvuk">
-  <div class="kick"><b>II.5</b><span>Стих</span></div>
+  <div class="kick"><b>II.5</b><span>Поэтика</span></div>
   <h2>Звук</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое аллитерация и как её искали</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Аллитерация — повтор одного и того же согласного в начале нескольких разных слов строки («Все строки спят. Спит ямбов строгий свод»). Чтобы понять, нарочно ли это, строки сравниваются со случайными: те же слова того же периода, перемешанные и собранные в строки той же длины.</p>
+  </div></details>
   <p class="finding" id="f-sound"></p>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Строки, где три слова и больше начинаются с одного звука</span><span class="u">% строк; пунктир — случайные строки</span></div>
@@ -712,7 +734,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="atlas">
-  <div class="kick"><b>II.6</b><span>Стих</span></div>
+  <div class="kick"><b>II.6</b><span>Поэтика</span></div>
   <h2>Атлас стихотворений <span class="tag">интерактив</span></h2>
   <p>Каждая точка — стихотворение. По горизонтали год, по вертикали — выбранная мера. Линия — медиана по году (годы, где пять и больше стихотворений). Нажмите на точку или найдите стихотворение по названию; полые точки — стихотворения без даты, поставленные в конец своего периода.</p>
   <div class="ctrl">
@@ -784,7 +806,9 @@ blockquote b{font-style:normal; color:var(--mark)}
 <section id="epitety">
   <div class="kick"><b>III.5</b><span>Слова</span></div>
   <h2>Эпитеты, сравнения, формулы</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: эпитет, сравнение, родительная формула</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Эпитет — прилагательное прямо перед существительным, согласованное с ним («белый свет»); устойчивые обороты вроде «по крайней мере» исключены. Сравнение — оборот со «словно», «будто», «как». Родительная формула — два существительных, где второе стоит в родительном падеже: «часть речи», «край темноты».</p>
+  </div></details>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Частые эпитеты</span><span class="u">сочетаний в стихах</span></div>
       <div class="ctrl"><div id="seg-ep"></div></div>
@@ -810,7 +834,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 </div>
 
 <div class="part" id="part-stil">
-<div class="part-head"><div class="n">Часть IV</div><h1>Стиль</h1><p class="lead">Грамматика, знаки препинания, имена, цвета и годы, где стиль менялся резче всего.</p><div class="ch-links"><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a></div></div>
+<div class="part-head"><div class="n">Часть IV</div><h1>Стиль</h1><p class="lead">Грамматика, знаки препинания, имена, цвета и годы, где стиль менялся резче всего.</p><div class="ch-links"><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a><a href="#poety"><span>IV.6</span>Среди поэтов XX века</a></div></div>
 <section id="grammatika">
   <div class="kick"><b>IV.1</b><span>Стиль</span></div>
   <h2>Грамматика</h2>
@@ -890,6 +914,19 @@ blockquote b{font-style:normal; color:var(--mark)}
     <p id="t-clusters" style="font-size:15px"></p>
     <div class="chart" id="c-clusters"></div></div>
 </section>
+
+<section id="poety">
+  <div class="kick"><b>IV.6</b><span>Стиль</span></div>
+  <h2>Среди поэтов XX века</h2>
+  <p class="finding">Среди 34 поэтов XX века Бродский выделяется не тире, а строкой. Чаще всех, кроме Маяковского, он обрывает строку на предлоге или союзе и чаще почти всех оставляет её без знака в конце. Точек у него больше, чем у всех, кроме Самойлова, а восклицательных знаков и прилагательных меньше почти всех. По тире он в середине.</p>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: с кем и как сравниваем</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
+  <p>Источник — открытый «Поэтический корпус русского языка» И. Гусева: 16,7 тыс. стихотворений 195 поэтов, собранных с сайтов поэзии. Взяты 34 поэта XX века, у каждого в корпусе больше 10 тыс. слов: Анненский, Антокольский, Ахмадулина, Ахматова, Багрицкий, Бальмонт, Блок, Брюсов, Бунин, В. Фёдоров, Ваншенкин, Вознесенский, Волошин, Высоцкий, Вяч. Иванов, Гумилёв, Долматовский, Евтушенко, Есенин, Заболоцкий, Мандельштам, Мартынов, Маяковский, Окуджава, Пастернак, Самойлов, Саша Чёрный, Северянин, Сельвинский, Слуцкий, Тарковский, Тушнова, Ходасевич, Цветаева. Поэты XVIII–XIX веков не взяты: у них другие нормы пунктуации и другой стих. Детские поэты и песенники 1930-х тоже не взяты.</p>
+  <p>Бродский здесь — его 93 стихотворения из того же корпуса (1958–1976), а не 561 из остальной страницы: так у всех одна типографика и один подсчёт. Поэтому числа здесь отличаются от разделов выше: тире, например, 16 на 1000 слов, а не 20. Поздних стихов Бродского в этом корпусе нет. Длина строки от типографики не зависит, поэтому для неё отдельно отмечен весь корпус Бродского 1957–1996 (полый кружок).</p>
+  </div></details>
+  <div class="panel"><div class="cap"><span class="t">Бродский и 34 поэта XX века</span><span class="u">точка — поэт; красная — Бродский; подписаны крайние</span></div>
+    <div class="chart" id="c-poety"></div></div>
+</section>
+
 </div>
 
 <div class="part" id="part-mir">
@@ -1048,6 +1085,7 @@ addEventListener('resize',function(){if(cur)place(cur)});addEventListener('scrol
 <div class="endnote"><span>Бродский на просвет · 561 стихотворение и 72 прозаических текста</span><a href="#top">К началу ↑</a></div>
 </div></div></div>
 
+<script type="application/json" id="data-poety">{"source": "Поэтический корпус русского языка (И. Гусев)", "measures": [{"k": "syl", "label": "Слогов в строке", "unit": "в среднем", "rank": 8, "of": 35}, {"k": "prep", "label": "Строка рвётся на предлоге, союзе", "unit": "% строк", "rank": 2, "of": 35}, {"k": "open", "label": "Строка без знака в конце", "unit": "% строк", "rank": 3, "of": 35}, {"k": "dot", "label": "Точки", "unit": "на 1000 слов", "rank": 2, "of": 35}, {"k": "lem", "label": "Разных слов (лемм)", "unit": "на первые 10 000 слов", "rank": 5, "of": 35}, {"k": "excl", "label": "Восклицательные знаки", "unit": "на 1000 слов", "rank": 32, "of": 35}, {"k": "adj", "label": "Прилагательные", "unit": "% слов", "rank": 33, "of": 35}, {"k": "dash", "label": "Тире", "unit": "на 1000 слов", "rank": 19, "of": 35}], "poets": [{"name": "Есенин", "full": "Сергей Есенин", "brodsky": false, "words": 19615, "poems": 183, "years": [1910, 1925], "v": {"syl": 8.34, "prep": 1.13, "open": 23.9, "dot": 85.14, "lem": 2877, "excl": 9.79, "adj": 14.34, "dash": 6.78}}, {"name": "Северянин", "full": "Игорь Северянин", "brodsky": false, "words": 14838, "poems": 170, "years": [1907, 1935], "v": {"syl": 9.64, "prep": 1.09, "open": 18.61, "dot": 46.97, "lem": 3441, "excl": 34.44, "adj": 13.82, "dash": 24.13}}, {"name": "Самойлов", "full": "Давид Самойлов", "brodsky": false, "words": 14083, "poems": 167, "years": [1958, 1975], "v": {"syl": 8.52, "prep": 1.26, "open": 22.45, "dot": 96.22, "lem": 3316, "excl": 17.25, "adj": 11.81, "dash": 13.85}}, {"name": "Мартынов", "full": "Леонид Мартынов", "brodsky": false, "words": 14852, "poems": 152, "years": [1920, 1974], "v": {"syl": 8.07, "prep": 2.96, "open": 28.9, "dot": 48.88, "lem": 3266, "excl": 21.61, "adj": 12.19, "dash": 18.04}}, {"name": "Высоцкий", "full": "Владимир Высоцкий", "brodsky": false, "words": 103932, "poems": 539, "years": [1960, 1980], "v": {"syl": 9.02, "prep": 2.42, "open": 14.28, "dot": 46.74, "lem": 3290, "excl": 31.73, "adj": 9.48, "dash": 32.7}}, {"name": "Вознесенский", "full": "Андрей Вознесенский", "brodsky": false, "words": 16140, "poems": 120, "years": [1957, 1977], "v": {"syl": 7.9, "prep": 1.67, "open": 19.87, "dot": 82.84, "lem": 3815, "excl": 28.56, "adj": 11.64, "dash": 32.09}}, {"name": "Ахматова", "full": "Анна Ахматова", "brodsky": false, "words": 20383, "poems": 277, "years": [1909, 1964], "v": {"syl": 8.95, "prep": 0.74, "open": 24.66, "dot": 69.71, "lem": 2890, "excl": 8.24, "adj": 15.97, "dash": 10.01}}, {"name": "Заболоцкий", "full": "Николай Заболоцкий", "brodsky": false, "words": 21616, "poems": 133, "years": [1926, 1958], "v": {"syl": 9.26, "prep": 0.56, "open": 24.46, "dot": 59.68, "lem": 3351, "excl": 10.13, "adj": 13.67, "dash": 5.6}}, {"name": "Брюсов", "full": "Валерий Брюсов", "brodsky": false, "words": 22436, "poems": 211, "years": [1893, 1924], "v": {"syl": 9.12, "prep": 1.36, "open": 19.39, "dot": 44.35, "lem": 3028, "excl": 28.44, "adj": 14.87, "dash": 19.97}}, {"name": "Сельвинский", "full": "Илья Сельвинский", "brodsky": false, "words": 12128, "poems": 81, "years": [1920, 1966], "v": {"syl": 8.62, "prep": 2.3, "open": 22.95, "dot": 63.82, "lem": 3453, "excl": 21.6, "adj": 12.66, "dash": 14.92}}, {"name": "Бунин", "full": "Иван Бунин", "brodsky": false, "words": 10205, "poems": 127, "years": [1886, 1922], "v": {"syl": 9.75, "prep": 0.48, "open": 27.3, "dot": 51.64, "lem": 2904, "excl": 15.68, "adj": 16.25, "dash": 19.99}}, {"name": "Окуджава", "full": "Булат Окуджава", "brodsky": false, "words": 11200, "poems": 101, "years": [1958, 1976], "v": {"syl": 8.81, "prep": 1.57, "open": 18.66, "dot": 64.11, "lem": 2877, "excl": 10.36, "adj": 12.72, "dash": 16.79}}, {"name": "Ахмадулина", "full": "Белла Ахмадулина", "brodsky": false, "words": 19204, "poems": 108, "years": [1950, 1988], "v": {"syl": 9.74, "prep": 1.39, "open": 22.81, "dot": 78.89, "lem": 3116, "excl": 14.37, "adj": 12.55, "dash": 18.8}}, {"name": "Гумилёв", "full": "Николай Гумилев", "brodsky": false, "words": 24830, "poems": 190, "years": [1902, 1921], "v": {"syl": 9.49, "prep": 0.66, "open": 24.76, "dot": 53.28, "lem": 3108, "excl": 6.16, "adj": 16.18, "dash": 7.09}}, {"name": "Бродский", "full": "Иосиф Бродский", "brodsky": true, "words": 18831, "poems": 93, "years": [1958, 1976], "v": {"syl": 9.38, "prep": 3.35, "open": 29.98, "dot": 95.91, "lem": 3674, "excl": 6.27, "adj": 10.5, "dash": 16.14}}, {"name": "Блок", "full": "Александр Блок", "brodsky": false, "words": 25813, "poems": 286, "years": [1898, 1993], "v": {"syl": 8.63, "prep": 0.64, "open": 22.62, "dot": 60.82, "lem": 2948, "excl": 21.04, "adj": 16.49, "dash": 23.98}}, {"name": "Маяковский", "full": "Владимир Маяковский", "brodsky": false, "words": 22332, "poems": 107, "years": [1912, 1929], "v": {"syl": 5.37, "prep": 4.9, "open": 34.69, "dot": 82.8, "lem": 3889, "excl": 29.96, "adj": 11.26, "dash": 24.36}}, {"name": "Саша Чёрный", "full": "Саша Черный", "brodsky": false, "words": 18439, "poems": 121, "years": [1905, 1932], "v": {"syl": 8.79, "prep": 0.95, "open": 20.67, "dot": 55.43, "lem": 3775, "excl": 22.83, "adj": 12.73, "dash": 21.42}}, {"name": "Вяч. Иванов", "full": "Вячеслав Иванов", "brodsky": false, "words": 14325, "poems": 164, "years": [1890, 1944], "v": {"syl": 8.8, "prep": 0.31, "open": 27.19, "dot": 57.52, "lem": 3426, "excl": 16.75, "adj": 17.4, "dash": 31.41}}, {"name": "Тарковский", "full": "Арсений Тарковский", "brodsky": false, "words": 17595, "poems": 180, "years": [1932, 1976], "v": {"syl": 9.0, "prep": 1.15, "open": 29.9, "dot": 52.91, "lem": 3118, "excl": 3.86, "adj": 13.71, "dash": 12.16}}, {"name": "Цветаева", "full": "Марина Цветаева", "brodsky": false, "words": 14470, "poems": 197, "years": [1906, 1941], "v": {"syl": 8.03, "prep": 2.29, "open": 24.32, "dot": 64.62, "lem": 3163, "excl": 46.37, "adj": 15.11, "dash": 67.31}}, {"name": "Анненский", "full": "Иннокентий Анненский", "brodsky": false, "words": 13636, "poems": 167, "years": [1874, 1909], "v": {"syl": 8.78, "prep": 1.65, "open": 26.29, "dot": 64.24, "lem": 2879, "excl": 7.19, "adj": 13.52, "dash": 11.37}}, {"name": "Бальмонт", "full": "Константин Бальмонт", "brodsky": false, "words": 16810, "poems": 169, "years": [1893, 1932], "v": {"syl": 9.65, "prep": 0.6, "open": 13.72, "dot": 79.24, "lem": 2612, "excl": 10.77, "adj": 15.16, "dash": 20.46}}, {"name": "Тушнова", "full": "Вероника Тушнова", "brodsky": false, "words": 12165, "poems": 124, "years": [1942, 1965], "v": {"syl": 7.96, "prep": 2.27, "open": 20.24, "dot": 65.1, "lem": 3024, "excl": 10.69, "adj": 13.18, "dash": 14.55}}, {"name": "Ваншенкин", "full": "Константин Ваншенкин", "brodsky": false, "words": 12639, "poems": 111, "years": [1947, 1977], "v": {"syl": 9.07, "prep": 1.0, "open": 21.12, "dot": 75.96, "lem": 3031, "excl": 6.01, "adj": 12.49, "dash": 8.7}}, {"name": "В. Фёдоров", "full": "Василий Федоров", "brodsky": false, "words": 10283, "poems": 108, "years": [1948, 1966], "v": {"syl": 5.63, "prep": 2.18, "open": 30.47, "dot": 74.1, "lem": 2854, "excl": 10.99, "adj": 13.27, "dash": 9.53}}, {"name": "Евтушенко", "full": "Евгений Евтушенко", "brodsky": false, "words": 25351, "poems": 132, "years": [1950, 1996], "v": {"syl": 7.58, "prep": 2.23, "open": 19.32, "dot": 74.4, "lem": 3214, "excl": 11.75, "adj": 11.41, "dash": 17.99}}, {"name": "Ходасевич", "full": "Владислав Ходасевич", "brodsky": false, "words": 13295, "poems": 177, "years": [1904, 1938], "v": {"syl": 9.05, "prep": 1.19, "open": 28.88, "dot": 76.72, "lem": 3157, "excl": 13.24, "adj": 15.59, "dash": 14.22}}, {"name": "Долматовский", "full": "Евгений Долматовский", "brodsky": false, "words": 10876, "poems": 84, "years": [1934, 1967], "v": {"syl": 9.07, "prep": 1.7, "open": 20.53, "dot": 75.95, "lem": 3373, "excl": 9.29, "adj": 13.57, "dash": 17.47}}, {"name": "Пастернак", "full": "Борис Пастернак", "brodsky": false, "words": 20191, "poems": 142, "years": [1911, 1959], "v": {"syl": 8.87, "prep": 0.96, "open": 28.49, "dot": 81.42, "lem": 3938, "excl": 6.83, "adj": 9.96, "dash": 12.08}}, {"name": "Антокольский", "full": "Павел Антокольский", "brodsky": false, "words": 15641, "poems": 108, "years": [1916, 1977], "v": {"syl": 9.51, "prep": 1.51, "open": 22.61, "dot": 85.29, "lem": 3555, "excl": 15.6, "adj": 13.95, "dash": 13.87}}, {"name": "Слуцкий", "full": "Борис Слуцкий", "brodsky": false, "words": 10733, "poems": 112, "years": [1950, 1969], "v": {"syl": 8.29, "prep": 1.65, "open": 24.16, "dot": 83.76, "lem": 3423, "excl": 10.9, "adj": 12.34, "dash": 16.49}}, {"name": "Волошин", "full": "Максимилиан Волошин", "brodsky": false, "words": 13426, "poems": 107, "years": [1901, 1926], "v": {"syl": 9.34, "prep": 1.02, "open": 26.47, "dot": 56.09, "lem": 2847, "excl": 6.93, "adj": 15.47, "dash": 12.36}}, {"name": "Багрицкий", "full": "Эдуард Багрицкий", "brodsky": false, "words": 13931, "poems": 57, "years": [1914, 1932], "v": {"syl": 8.51, "prep": 0.79, "open": 25.65, "dot": 53.19, "lem": 3517, "excl": 20.6, "adj": 13.39, "dash": 10.77}}, {"name": "Мандельштам", "full": "Осип Мандельштам", "brodsky": false, "words": 10390, "poems": 121, "years": [1906, 1937], "v": {"syl": 10.06, "prep": 0.73, "open": 22.94, "dot": 54.96, "lem": 3473, "excl": 10.78, "adj": 16.85, "dash": 20.12}}]}</script>
 <script type="application/json" id="data-stats">{
  "overview": {
   "poems": 561,
@@ -5089,7 +5127,7 @@ function placeTip(x,y){ const r=tip.getBoundingClientRect(); let X=x+14, Y=y+14;
 let tipTouch=false;
 ['pointerdown','pointermove'].forEach(ev=>document.addEventListener(ev,e=>{ tipTouch=e.pointerType!=='mouse'; },true));
 const touchTip=h=>h.replace(/<br>нажмите, чтобы увидеть близкие слова$/,'<br><u data-tip-go="#wm-read">близкие слова — под картой ↓</u>').replace(/<br>нажмите, чтобы[^<]*$/,'');
-function showTipHTML(html,x,y){ tip.innerHTML=tipTouch?touchTip(html):html; tip.style.pointerEvents=tipTouch?'auto':'none'; tip.hidden=false; placeTip(x,y); }
+function showTipHTML(html,x,y){ if(tipTouch){ tip.hidden=true; return; } tip.innerHTML=tipTouch?touchTip(html):html; tip.style.pointerEvents=tipTouch?'auto':'none'; tip.hidden=false; placeTip(x,y); }
 tip.addEventListener('click',()=>{ const go=tip.querySelector('[data-tip-go]'); tip.hidden=true; const to=go&&document.querySelector(go.dataset.tipGo); if(to) to.scrollIntoView({behavior:'smooth',block:'center'}); });
 document.addEventListener('pointermove',e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); } else if(!e.target.closest || !e.target.closest('canvas')) tip.hidden=true; });
 document.addEventListener('pointerdown',e=>{ if(e.target.closest && e.target.closest('#tip')) return; const t=e.target.closest && e.target.closest('[data-tip]'); if(t) showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); else if(tipTouch && !(e.target.closest && e.target.closest('canvas'))) tip.hidden=true; });
@@ -5515,9 +5553,33 @@ chart(()=>{ const box=$('#c-pron'); const keys=['я','ты','мы','вы','он'
 });
 table($('#c-pron'),['Период','я','ты','мы','вы','он','она','они'],D.pronouns.map(r=>[r.p,r['я'],r['ты'],r['мы'],r['вы'],r['он'],r['она'],r['они']]));
 
+
+/* ================= среди поэтов XX века ================= */
+(function(){ const PX=JSON.parse(document.getElementById('data-poety').textContent);
+  const BR=PX.poets.find(p=>p.brodsky), OTH=PX.poets.filter(p=>!p.brodsky);
+  const ln=PS.filter(p=>p.mean&&p.n); const fullSyl=ln.reduce((a,p)=>a+p.mean*p.n,0)/ln.reduce((a,p)=>a+p.n,0);
+  const fmtk=(k,v)=>k==='lem'?fmt(Math.round(v)):fmt1(v);
+  chart(()=>{ const box=$('#c-poety'); const rowH=102; const h=PX.measures.length*rowH+8; const [s,w]=svg(box,h); const L=12,R=12;
+    PX.measures.forEach((m,i)=>{ const y0=i*rowH; const vals=PX.poets.map(p=>p.v[m.k]).concat(m.k==='syl'?[fullSyl]:[]);
+      let lo=Math.min(...vals), hi=Math.max(...vals); const pad=(hi-lo)*0.04; lo-=pad; hi+=pad; const X=v=>L+(w-L-R)*(v-lo)/(hi-lo);
+      txt(s,L,y0+18,m.label,{style:'font-family:var(--f-body);font-size:14.5px;fill:var(--ink)'});
+      const u=txt(s,L,y0+34,m.unit+' · ',{style:'font-family:var(--f-mono);font-size:11px;fill:var(--muted)'});
+      el('tspan',{style:'fill:var(--accent);font-weight:600'},u).textContent=`${m.rank}-е место из ${m.of}`;
+      const cy=y0+68; el('line',{x1:L,x2:w-R,y1:cy,y2:cy,stroke:css('--grid')},s);
+      const srt=OTH.slice().sort((a,b)=>a.v[m.k]-b.v[m.k]);
+      srt.forEach(p=>{ el('circle',{cx:X(p.v[m.k]),cy,r:4.5,fill:css('--muted'),'fill-opacity':.45,'data-tip':`${esc(p.full)}: ${fmtk(m.k,p.v[m.k])}`},s); });
+      [srt[0],srt[srt.length-1]].forEach((p,j)=>txt(s,X(p.v[m.k]),cy+22,p.name,{'text-anchor':j?'end':'start',style:'font-family:var(--f-mono);font-size:10.5px;fill:var(--muted)'}));
+      if(m.k==='syl'){ el('circle',{cx:X(fullSyl),cy,r:6.5,fill:'none',stroke:css('--accent'),'stroke-width':2,'data-tip':`Весь корпус Бродского, 1957–1996: ${fmt1(fullSyl)}`},s); }
+      const bx=X(BR.v[m.k]); el('circle',{cx:bx,cy,r:7,fill:css('--accent'),'data-tip':`Бродский (93 стихотворения из того же корпуса): ${fmtk(m.k,BR.v[m.k])}`},s);
+      const anc=bx<w*0.25?'start':bx>w*0.75?'end':'middle';
+      txt(s,bx,cy-12,`Бродский ${fmtk(m.k,BR.v[m.k])}`,{'text-anchor':anc,style:'font-family:var(--f-mono);font-size:11px;font-weight:600;fill:var(--accent)'});
+    }); });
+  table($('#c-poety'),['Мера','Бродский','Медиана 34 поэтов','Место'],PX.measures.map(m=>{ const v=OTH.map(p=>p.v[m.k]).sort((a,b)=>a-b); const md=(v[16]+v[17])/2; return [m.label+', '+m.unit, fmtk(m.k,BR.v[m.k]), fmtk(m.k,md), `${m.rank} из ${m.of}`]; }));
+})();
+
 /* ================= пунктуация ================= */
 const PU=D.punct; const marks=Object.keys(PU.poetry);
-$('#t-punct').innerHTML=`Тире у Бродского — рабочий инструмент и в стихах, и в прозе: ${fmt1(PU.poetry['тире'])} и ${fmt1(PU.prose['тире'])} на 1000 слов. Скобок в прозе в ${fmt1(PU.prose['скобки']/PU.poetry['скобки'])} ${plural(PU.prose['скобки']/PU.poetry['скобки'],RUF.raz,1)} больше, восклицаний — в ${fmt1(PU.poetry['восклицание']/PU.prose['восклицание'])} ${plural(PU.poetry['восклицание']/PU.prose['восклицание'],RUF.raz,1)} меньше, чем в стихах.`;
+$('#t-punct').innerHTML=`Тире у Бродского встречается одинаково часто в стихах и в прозе: ${fmt1(PU.poetry['тире'])} и ${fmt1(PU.prose['тире'])} на 1000 слов. Для поэта XX века это обычная частота (<a href="#poety">IV.6</a>). Скобок в прозе в ${fmt1(PU.prose['скобки']/PU.poetry['скобки'])} ${plural(PU.prose['скобки']/PU.poetry['скобки'],RUF.raz,1)} больше, восклицаний — в ${fmt1(PU.poetry['восклицание']/PU.prose['восклицание'])} ${plural(PU.poetry['восклицание']/PU.prose['восклицание'],RUF.raz,1)} меньше, чем в стихах.`;
 chart(()=>{ const box=$('#c-punct'); const rowH=34, labelW=128; const h=marks.length*rowH+24; const [s,w]=svg(box,h);
   const max=niceMax(Math.max(...marks.flatMap(m=>[PU.poetry[m],PU.prose[m]]))); const x0=labelW, x1=w-46; const sc=v=>x0+(x1-x0)*v/max;
   const ax=el('g',{class:'ax'},s); ticks(max,4).forEach(t=>{ el('line',{x1:sc(t),x2:sc(t),y1:0,y2:h-20,stroke:css('--grid')},ax); txt(ax,sc(t),h-6,fmt(t),{'text-anchor':'middle'}); });
