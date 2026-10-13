@@ -1774,51 +1774,89 @@ const NT = {per:-1, cl:-1, sel:null, hov:null, N:null};
 const ntCount = n => NT.per>=0 ? n.per[NT.per] : n.n;
 const clCol = c => c<0 ? css('--neutral-bar') : css('--g'+(c+1));
 (function(){ const top=NN.slice().sort((a,b)=>b.n-a.n); const E=NE.slice().sort((a,b)=>b[2]-a[2])[0]; const big=NC.slice().sort((a,b)=>b.n-a.n)[0];
-  $('#t-net').textContent = `Люди, которых Чехов называет в письмах по фамилии. В сеть входят ${pn(NN.length, ['имя', 'имени', 'имён'])}. Размер кружка — в скольких письмах назван человек; линия — два имени названы в одном абзаце письма; цвет — круг имён, которые чаще встречаются вместе. Выберите период или круг, найдите человека по имени — справа откроется карточка.`;
+  $('#t-net').textContent = `Люди, которых Чехов называет в письмах по фамилии. В сеть входят ${pn(NN.length, ['имя', 'имени', 'имён'])}. Имена стоят по кругу, цвет — круг имён, которые чаще встречаются вместе. Лента между двумя именами значит, что они названы в одном абзаце письма; чем шире лента, тем чаще. Длина дуги — сколько у имени таких общих абзацев. Выберите период или круг, найдите человека по имени — справа откроется карточка.`;
   $('#f-lyudi').textContent = `Чаще всех в письмах назван ${top[0].name} — в ${pn(top[0].n, ['письме', 'письмах', 'письмах'])}; за ним ${top.slice(1,6).map(r=>`${r.name} (${r.n})`).join(', ')}. Имена собираются в ${pn(NC.length, ['круг', 'круга', 'кругов'])}; самый большой — ${big.names.join(', ')} и ещё ${pn(big.n-big.names.length, ['имя', 'имени', 'имён'])}. Ближе всего друг к другу стоят ${NN[E[0]].name} и ${NN[E[1]].name}: они названы вместе в ${pn(E[2], ['абзаце', 'абзацах', 'абзацах'])}.`; })();
 periodBtns($('#pp-per'),NT.per,i=>{ NT.per=i; ntApply(); });
 (function(){ const g=$('#pp-clusters'); const mk=(i,l)=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.setAttribute('aria-pressed',String(i===NT.cl));
   b.innerHTML=(i>=0?`<i style="background:var(--g${i+1})"></i>`:'')+esc(l); b.addEventListener('click',()=>{ NT.cl=(NT.cl===i&&i>=0)?-1:i; ntApply(); }); g.appendChild(b); };
   mk(-1,'все круги'); NC.forEach((c,i)=>mk(i,c.names.join(' · ')+' ('+c.n+')')); })();
+/* хордовая диаграмма связей: имена по кругу (сгруппированы по кругам имён), ленты — общие абзацы/строфы.
+   chordNet(box, nodes, edges, {pick(i|null), hover(i|null)}) → {apply({foc, sel, on(i), tip(i)})} */
+function chordNet(box, NOD, EDG, o){
+  const Wd=box.clientWidth||800, mob=innerWidth<600, h=mob?Wd+60:Math.round(Math.min(Wd,760)); const [s,w]=svg(box,h);
+  const fs=mob?10.5:11.5, th=mob?8:11, cx=w/2, cy=h/2, R=Math.min(w,h-(mob?60:0))/2-(mob?54:92), N=NOD.length, TAU=2*Math.PI;
+  const P=(a,r)=>[cx+r*Math.cos(a),cy+r*Math.sin(a)], f1=v=>v.toFixed(1);
+  // связи сети + у каждого имени его ближайшие соседи (nb): иначе у редких имён остаётся одна лента
+  const EM=new Map(), key=(i,j)=>i<j?i+'_'+j:j+'_'+i; EDG.forEach(([i,j,wt])=>EM.set(key(i,j),[Math.min(i,j),Math.max(i,j),wt]));
+  NOD.forEach((n,i)=>(n.nb||[]).forEach(([j,wt])=>{ if(j!==i&&!EM.has(key(i,j))) EM.set(key(i,j),[Math.min(i,j),Math.max(i,j),wt]); }));
+  const E2=[...EM.values()];
+  const adj=NOD.map(()=>[]); E2.forEach(([i,j,wt])=>{ adj[i].push([j,wt]); adj[j].push([i,wt]); });
+  const str=adj.map(a=>a.reduce((t,[,wt])=>t+wt,0)), wOf=i=>Math.max(str[i],1);
+  const cls=[...new Set(NOD.map(n=>n.cl))].sort((a,b)=>(a<0)-(b<0)||a-b);
+  const order=[]; cls.forEach(c=>NOD.map((_,i)=>i).filter(i=>NOD[i].cl===c).sort((a,b)=>wOf(b)-wOf(a)||NOD[b].n-NOD[a].n).forEach(i=>order.push(i)));
+  const gap=cls.length>1?0.03:0, span=TAU-gap*cls.length, tot=order.reduce((t,i)=>t+wOf(i),0);
+  const a0=[], a1=[], ang=[]; let a=-Math.PI/2, prev=null;
+  order.forEach(i=>{ if(prev!==null&&NOD[i].cl!==prev) a+=gap; prev=NOD[i].cl; const d=span*wOf(i)/tot; a0[i]=a; a1[i]=a+d; ang[i]=a+d/2; a+=d; });
+  const dA=(x,y)=>Math.atan2(Math.sin(x-y),Math.cos(x-y));
+  const gR=el('g',{},s), gA=el('g',{},s), gL=el('g',{},s);
+  // ленты: у каждого имени свой отрезок дуги на каждую связь, по порядку соседей вокруг круга
+  const slot={}; NOD.forEach((_,i)=>{ let c=a0[i]; const k=(a1[i]-a0[i])/wOf(i);
+    adj[i].slice().sort((p,q)=>dA(ang[q[0]],ang[i])-dA(ang[p[0]],ang[i])).forEach(([j,wt])=>{ slot[i+'_'+j]=[c,c+wt*k]; c+=wt*k; }); });
+  const Ri=R-1, arcTo=(x,y)=>`A${f1(Ri)},${f1(Ri)} 0 0 1 ${f1(x)},${f1(y)}`;
+  const ribs=E2.map(([i,j,wt])=>{ const [p0,p1]=slot[i+'_'+j], [q0,q1]=slot[j+'_'+i];
+    const A0=P(p0,Ri),A1=P(p1,Ri),B0=P(q0,Ri),B1=P(q1,Ri);
+    const d=`M${f1(A0[0])},${f1(A0[1])}${arcTo(...A1)}Q${f1(cx)},${f1(cy)} ${f1(B0[0])},${f1(B0[1])}${arcTo(...B1)}Q${f1(cx)},${f1(cy)} ${f1(A0[0])},${f1(A0[1])}Z`;
+    return {i,j,wt,p:el('path',{d},gR)}; });
+  const arcs=NOD.map((n,i)=>{ const b=Math.max(a1[i]-.0025,a0[i]+.002), big=b-a0[i]>Math.PI?1:0;
+    const [x0,y0]=P(a0[i],R),[x1,y1]=P(b,R),[x2,y2]=P(b,R+th),[x3,y3]=P(a0[i],R+th);
+    const p=el('path',{d:`M${f1(x0)},${f1(y0)}A${f1(R)},${f1(R)} 0 ${big} 1 ${f1(x1)},${f1(y1)}L${f1(x2)},${f1(y2)}A${f1(R+th)},${f1(R+th)} 0 ${big} 0 ${f1(x3)},${f1(y3)}Z`,
+      class:'clickable',tabindex:0,role:'button','aria-label':n.name},gA);
+    p.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); o.pick(i); } });
+    p.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') o.hover(i); }); p.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') o.hover(null); });
+    return p; });
+  // нажатие: по дуге или рядом с кругом — ближайшее имя по углу; в середине круга — снять выбор
+  s.addEventListener('click',e=>{ const bb=s.getBoundingClientRect(), k=w/bb.width, x=(e.clientX-bb.left)*k-cx, y=(e.clientY-bb.top)*k-cy, r=Math.hypot(x,y);
+    if(r<R*.72){ o.pick(null); return; } const t=Math.atan2(y,x); let best=null, bd=9;
+    order.forEach(i=>{ const d=Math.max(0,Math.abs(dA(t,ang[i]))-(a1[i]-a0[i])/2); if(d<bd){ bd=d; best=i; } });
+    o.pick(best); });
+  const col=c=>c<0?css('--neutral-bar'):css('--g'+(c+1));
+  const LBL='font-family:var(--f-body);pointer-events:none;paint-order:stroke;stroke-width:3px;stroke:'+css('--surface')+`;font-size:${fs}px`;
+  function apply({foc,sel,on,tip}){
+    const nb=new Set(); if(foc!=null){ nb.add(foc); adj[foc].forEach(([j])=>nb.add(j)); }
+    ribs.forEach(r=>{ const both=on(r.i)&&on(r.j), isF=foc!=null&&(r.i===foc||r.j===foc);
+      const c=isF?NOD[r.i===foc?r.j:r.i].cl:(NOD[r.i].n>=NOD[r.j].n?NOD[r.i].cl:NOD[r.j].cl);
+      r.p.setAttribute('fill',col(c)); r.p.style.opacity=!both?.03:(foc==null?.42:(isF?.85:.04)); if(isF) gR.appendChild(r.p); });
+    arcs.forEach((p,i)=>{ p.setAttribute('fill',col(NOD[i].cl)); p.style.opacity=!on(i)?.15:(foc!=null&&!nb.has(i)?.3:1);
+      p.setAttribute('stroke',i===sel?css('--ink'):'none'); p.setAttribute('stroke-width',1.5); p.setAttribute('data-tip',tip(i)); });
+    // подписи: сначала выбранное имя и его соседи, потом самые связанные; на телефоне при выборе — только соседи
+    gL.innerHTML=''; const shown=[], minGap=(fs+1)/(R+th);
+    const pri=i=>(i===foc?2e9:0)+(nb.has(i)?1e9:0)+wOf(i);
+    order.slice().sort((x,y)=>pri(y)-pri(x)).forEach(i=>{ if(!on(i)&&i!==foc) return; if(foc!=null&&mob&&!nb.has(i)) return;
+      if(shown.some(t=>Math.abs(dA(t,ang[i]))<minGap)) return; shown.push(ang[i]);
+      const t=ang[i], left=Math.cos(t)<0, [x,y]=P(t,R+th+5);
+      const dx=Math.cos(t), dy=Math.sin(t), room=Math.min(dx>.01?(w-x)/dx:dx<-.01?x/-dx:1e9, dy>.01?(h-y)/dy:dy<-.01?y/-dy:1e9)-4;
+      let nm=NOD[i].name; const maxc=Math.floor(room/(fs*.56)); if(nm.length>maxc) nm=maxc>3?nm.slice(0,maxc-1)+'…':'';
+      if(!nm) return; const deg=t*180/Math.PI;
+      const tx=txt(gL,f1(x),f1(y),nm,{'text-anchor':left?'end':'start','dominant-baseline':'middle',transform:`rotate(${f1(left?deg+180:deg)} ${f1(x)} ${f1(y)})`,style:LBL});
+      tx.style.fill=css('--ink'); tx.style.fontWeight=i===foc?'700':'400'; tx.style.opacity=foc!=null&&!nb.has(i)?.35:1; });
+  }
+  return {apply};
+}
 function drawNet(){
-  const box=$('#c-net'); const Wd=box.clientWidth||800; const h=Math.round(Math.min(780,Math.max(480,Wd*0.76))); const [s,w]=svg(box,h);
-  const padX=Wd<600?24:56, padY=36; const xs=NN.map(n=>n.x), ys=NN.map(n=>n.y); const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
-  const X=x=>padX+(w-2*padX)*(x-x0)/(x1-x0), Y=y=>padY+(h-2*padY)*(y-y0)/(y1-y0);
-  const gE=el('g',{},s), gN=el('g',{},s), gL=el('g',{},s);
-  const edges=NE.map(([i,j,wt])=>({i,j,wt,l:el('line',{x1:X(NN[i].x),y1:Y(NN[i].y),x2:X(NN[j].x),y2:Y(NN[j].y),'stroke-linecap':'round'},gE)}));
-  const nodes=NN.map((n,i)=>{ const c=el('circle',{cx:X(n.x),cy:Y(n.y),r:5,class:'clickable',tabindex:0,role:'button','aria-label':n.name},gN);
-    const t=txt(gL,X(n.x),Y(n.y)-9,n.name,{'text-anchor':'middle',style:'font-family:var(--f-body);font-size:12px;pointer-events:none;paint-order:stroke;stroke:'+css('--surface')+';stroke-width:3px'});
-    const pick=()=>{ NT.sel=(NT.sel===i)?null:i; ntApply(); if(NT.sel!=null&&matchMedia('(max-width:999px)').matches) nearScroll($('#pp-card')); };
-    c.addEventListener('click',pick); c.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(); } });
-    c.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse'){ NT.hov=i; ntApply(); } }); c.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse'){ NT.hov=null; ntApply(); } });
-    return {n,c,t,X:X(n.x),Y:Y(n.y)}; });
-  NT.N={edges,nodes,w,h}; ntApply();
+  NT.N=chordNet($('#c-net'),NN,NE,{pick:i=>{ NT.sel=(i==null||NT.sel===i)?null:i; ntApply(); if(NT.sel!=null&&matchMedia('(max-width:999px)').matches) nearScroll($('#pp-card')); },hover:i=>{ NT.hov=i; ntApply(); }});
+  ntApply();
 }
 function ntApply(){
   document.querySelectorAll('#pp-per button').forEach((b,j)=>b.setAttribute('aria-pressed',String(j-1===NT.per)));
   document.querySelectorAll('#pp-clusters button').forEach((b,j)=>b.setAttribute('aria-pressed',String(j-1===NT.cl)));
-  if(NT.N){ const {edges,nodes}=NT.N; const foc=NT.hov!=null?NT.hov:NT.sel;
-    const nb=new Set(); if(foc!=null){ nb.add(foc); NE.forEach(([i,j])=>{ if(i===foc) nb.add(j); if(j===foc) nb.add(i); }); }
-    const cnt=nodes.map(o=>ntCount(o.n)), mx=Math.max(...cnt,1);
-    const placed=[]; const fit=b=>!placed.some(q=>b.x<q.x+q.w&&b.x+b.w>q.x&&b.y<q.y+q.h&&b.y+b.h>q.y);
-    const order=nodes.map((_,i)=>i).sort((a,b)=>((b===foc||nb.has(b))?1e6:0)+cnt[b]-(((a===foc||nb.has(a))?1e6:0)+cnt[a]));
-    nodes.forEach((o,i)=>{ const on=cnt[i]>0&&(NT.cl<0||o.n.cl===NT.cl); const dim=!on||(foc!=null&&!nb.has(i));
-      const r=on?3.5+10*Math.sqrt(cnt[i]/mx):3; o.r=r;
-      o.c.setAttribute('r',r.toFixed(1)); o.c.setAttribute('fill',clCol(o.n.cl)); o.c.setAttribute('stroke-width',i===NT.sel?3:1.5);
-      o.c.style.opacity=on?(dim?.18:.92):.1; o.c.style.stroke=i===foc?css('--ink'):css('--surface');
-      o.c.setAttribute('data-tip',`<b>${esc(o.n.name)}</b><br>${NT.per>=0?PER[NT.per]+': ':''}в ${pn(cnt[i], ['письме', 'письмах', 'письмах'])}${NT.per>=0?'':', '+pn(o.n.np, ['абзац', 'абзаца', 'абзацев'])}<br>нажмите, чтобы открыть карточку`); });
-    order.forEach(i=>{ const o=nodes[i]; const on=cnt[i]>0&&(NT.cl<0||o.n.cl===NT.cl); const forced=i===foc||nb.has(i);
-      const fs=12, bw=o.n.name.length*fs*0.56+6, bx={x:o.X-bw/2,y:o.Y-o.r-fs-4,w:bw,h:fs+3}; const show=on&&(forced||(cnt[i]>=2&&fit(bx)));
-      if(show) placed.push(bx); o.t.setAttribute('y',(o.Y-o.r-4).toFixed(1)); o.t.style.opacity=show?((foc!=null&&!forced)?.25:1):0; o.t.style.fontWeight=i===foc?'700':'400'; });
-    edges.forEach(e=>{ const bothOn=cnt[e.i]>0&&cnt[e.j]>0&&(NT.cl<0||(NN[e.i].cl===NT.cl&&NN[e.j].cl===NT.cl)); const isF=foc!=null&&(e.i===foc||e.j===foc);
-      e.l.setAttribute('stroke',isF?css('--mark'):css('--axis')); e.l.setAttribute('stroke-width',isF?(1.2+.5*Math.sqrt(e.wt)).toFixed(1):(.5+.35*Math.sqrt(e.wt)).toFixed(1));
-      e.l.style.opacity=!bothOn?0:(foc!=null?(isF?.9:.05):.5); }); }
+  if(NT.N){ const foc=NT.hov!=null?NT.hov:NT.sel;
+    NT.N.apply({foc,sel:NT.sel,on:i=>ntCount(NN[i])>0&&(NT.cl<0||NN[i].cl===NT.cl),tip:i=>`<b>${esc(NN[i].name)}</b><br>${NT.per>=0?PER[NT.per]+': ':''}в ${pn(ntCount(NN[i]), ['письме', 'письмах', 'письмах'])}${NT.per>=0?'':', '+pn(NN[i].np, ['абзац', 'абзаца', 'абзацев'])}<br>нажмите, чтобы открыть карточку`}); }
   ntCard();
 }
 function ntCard(){
   const host=$('#pp-card'); const n=NT.sel!=null?NN[NT.sel]:null;
   if(!n){ const top=NN.slice().sort((a,b)=>b.n-a.n).slice(0,8);
-    host.innerHTML=`<div class="eyebrow">Карточка</div><div class="ttl">Выберите имя</div><p class="hint">Нажмите на кружок в сети или найдите человека по имени. Размер кружка — в скольких письмах он назван; цвет — круг имён, которые чаще встречаются вместе; линии — имена из одного абзаца. Например:</p><div class="chips">${top.map(x=>`<button type="button" class="chip" data-nm="${esc(x.name)}">${esc(x.name)}</button>`).join('')}</div>`;
+    host.innerHTML=`<div class="eyebrow">Карточка</div><div class="ttl">Выберите имя</div><p class="hint">Нажмите на имя на круге или найдите человека по имени. Цвет — круг имён, которые чаще встречаются вместе; ленты — имена из одного абзаца, чем шире, тем чаще. Например:</p><div class="chips">${top.map(x=>`<button type="button" class="chip" data-nm="${esc(x.name)}">${esc(x.name)}</button>`).join('')}</div>`;
     host.querySelectorAll('[data-nm]').forEach(b=>b.addEventListener('click',()=>ntSelectByName(b.dataset.nm))); return; }
   const nbs=(n.nb||[]).map(([j,w])=>({label:`${NN[j].name} · ${w}`,fn:()=>{ NT.sel=j; ntApply(); }}));
   const yrs=n.y0===n.y1?String(n.y0):`${n.y0}–${n.y1}`;
