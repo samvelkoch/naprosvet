@@ -375,6 +375,7 @@
       }
       html += '</div></div>';
     }
+    if (!isStandalone()) html += '<button type="button" class="inst"><span aria-hidden="true">📲</span>Поставить на экран телефона<i aria-hidden="true">›</i></button>';
     return html;
   }
   function tocEnsure() {
@@ -391,8 +392,9 @@
     toc.querySelector('.x').addEventListener('click', closeToc);
     toc.querySelector('.list').addEventListener('click', function (e) {
       var el = e.target;
-      while (el && el !== this && !(el.tagName === 'A' || (el.tagName === 'BUTTON' && el.className === 'p'))) el = el.parentNode;
+      while (el && el !== this && !(el.tagName === 'A' || (el.tagName === 'BUTTON' && (el.className === 'p' || el.className === 'inst')))) el = el.parentNode;
       if (!el || el === this) return;
+      if (el.className === 'inst') { closeToc(true); openInstall('toc'); return; }
       if (el.tagName === 'A') { closeToc(true); return; }   // переход по #id делает сама ссылка
       var grp = el.parentNode, gs = this.querySelectorAll('.grp');
       var wasOpen = / open(\s|$)/.test(' ' + grp.className);
@@ -564,24 +566,103 @@
   /* на будущее («Полка» тоже умеет ставить) */
   window.NaprosvetApp = { canInstall: function () { return !!deferred; }, install: installApp, resume: resume };
 
-  /* подсказка для iPhone/iPad: Safari не умеет beforeinstallprompt */
-  function iosHint() {
+  /* ---- «Поставить на экран»: плашка над нижней панелью, лист с инструкцией, пункт в «Оглавлении» ----
+     Плашка: только на телефоне и не в установленном приложении. Появляется через пару секунд, держится, пока её не закроют
+     (в тот же день — на всех страницах). Закрыли — вернётся ещё один раз, через три дня посещений. Нажали «Как» — больше не появится.
+     Лист открывается и из «Оглавления», так что поставить можно в любой момент. */
+  var KEY_INST = 'naprosvet-install';
+  function visitDays() { try { var l = JSON.parse(lsGet('naprosvet-days') || '[]'); return l instanceof Array ? l.length : 0; } catch (e) { return 0; } }
+  function instState() {
+    var st = null;
+    try { st = JSON.parse(lsGet(KEY_INST) || 'null'); } catch (e) { st = null; }
+    if (!st || typeof st !== 'object') st = { n: 0, d: 0, x: false, done: false };
+    if (lsGet('naprosvet-ios-hint') === '1' && !st.n) { st.n = 1; st.d = visitDays(); st.x = true; }  // старая подсказка для iPhone уже закрыта
+    return st;
+  }
+  function instSave(st) { lsSet(KEY_INST, JSON.stringify(st)); }
+  function platform() {
     var ua = navigator.userAgent || '';
-    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|Instagram|FBAN|FBAV|Telegram/.test(ua);
-    if (!ios || !safari || isStandalone() || lsGet('naprosvet-ios-hint') === '1') return;
-    var box = doc.createElement('div');
-    box.className = 'app-ios-hint';
-    box.setAttribute('role', 'note');
-    box.innerHTML = '<p>Чтобы поставить на экран: <b>Поделиться</b> → <b>На экран «Домой»</b></p>' +
-      '<button type="button" aria-label="Закрыть подсказку">×</button>';
-    box.querySelector('button').addEventListener('click', function () {
-      lsSet('naprosvet-ios-hint', '1');
-      if (box.parentNode) box.parentNode.removeChild(box);
-      delCls('app-hint-on');
-    });
-    doc.body.appendChild(box);
-    addCls('app-hint-on');
+    if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    return 'android';
+  }
+  var instSheet = null, instOpen = false;
+  function instBody(os) {
+    if (os === 'ios') {
+      var safari = /Safari/.test(navigator.userAgent || '') && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|Instagram|FBAN|FBAV|Telegram/.test(navigator.userAgent || '');
+      return '<ol>' + (safari ? '' : '<li>Откройте эту страницу в <b>Safari</b></li>') +
+        '<li>Нажмите <span class="k">Поделиться <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V2M5 5l3-3 3 3M3 8v6h10V8"/></svg></span> внизу экрана</li>' +
+        '<li>Выберите <span class="k">На экран «Домой»</span></li><li>Нажмите <span class="k">Добавить</span></li></ol>';
+    }
+    return (deferred ? '<button type="button" class="do">Установить</button><p class="or">или вручную:</p>' : '') +
+      '<ol><li>Откройте эту страницу в <b>Chrome</b></li><li>Нажмите <span class="k">⋮</span> справа вверху</li>' +
+      '<li>Выберите <span class="k">Установить приложение</span> или <span class="k">Добавить на гл. экран</span></li></ol>';
+  }
+  function instPaint(os) {
+    var tabs = instSheet.querySelectorAll('.os button');
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute('aria-pressed', tabs[i].getAttribute('data-os') === os ? 'true' : 'false');
+    var b = instSheet.querySelector('.how');
+    b.innerHTML = instBody(os);
+    var go = b.querySelector('.do');
+    if (go) go.addEventListener('click', function () { closeInstall(); installApp(); });
+  }
+  function openInstall(from) {
+    if (instOpen) return;
+    if (!instSheet) {
+      instSheet = doc.createElement('div');
+      instSheet.className = 'app-inst';
+      instSheet.setAttribute('role', 'dialog');
+      instSheet.setAttribute('aria-modal', 'true');
+      instSheet.setAttribute('aria-labelledby', 'app-inst-h');
+      instSheet.innerHTML = '<div class="scrim"></div><div class="sheet"><div class="hd"><h2 id="app-inst-h">Приложение «На_просвет»</h2>' +
+        '<button type="button" class="x" aria-label="Закрыть">×</button></div><div class="bd">' +
+        '<p class="why">Тот же сайт, но с иконкой на экране телефона, без адресной строки и с «Вопросом дня». Магазин приложений не нужен.</p>' +
+        '<div class="os"><button type="button" data-os="ios">iPhone</button><button type="button" data-os="android">Android</button></div>' +
+        '<div class="how"></div></div></div>';
+      instSheet.querySelector('.scrim').addEventListener('click', closeInstall);
+      instSheet.querySelector('.x').addEventListener('click', closeInstall);
+      var tabs = instSheet.querySelectorAll('.os button');
+      for (var i = 0; i < tabs.length; i++) tabs[i].addEventListener('click', function () { instPaint(this.getAttribute('data-os')); });
+      doc.body.appendChild(instSheet);
+    }
+    instPaint(platform());
+    instSheet.hidden = false;
+    instOpen = true;
+    addCls('app-toc-open');
+    (window.requestAnimationFrame || window.setTimeout)(function () { instSheet.className = 'app-inst on'; }, 16);
+    goal('install_sheet');
+    try { if (window.ym) window.ym(YM_ID, 'params', { install_from: from || '' }); } catch (e) {}
+    try { instSheet.querySelector('.x').focus({ preventScroll: true }); } catch (e) {}
+  }
+  function closeInstall() {
+    if (!instOpen) return;
+    instOpen = false;
+    delCls('app-toc-open');
+    instSheet.className = 'app-inst';
+    setTimeout(function () { if (!instOpen) instSheet.hidden = true; }, 240);
+  }
+  doc.addEventListener('keydown', function (e) { if (instOpen && (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27)) closeInstall(); });
+  window.NaprosvetInstall = openInstall;
+
+  function installHint() {
+    if (isStandalone() || !navMq.matches) return;
+    var st = instState(), days = visitDays();
+    if (st.done) return;
+    var show = st.n === 0 || (!st.x && st.d === days) || (st.n === 1 && st.x && days - st.d >= 3);
+    if (!show) return;
+    setTimeout(function () {
+      if (isStandalone() || tocOpen || instOpen) return;
+      if (!st.n || st.x) { st.n += 1; st.d = days; st.x = false; instSave(st); }
+      var box = doc.createElement('div');
+      box.className = 'app-ios-hint app-inst-hint';
+      box.setAttribute('role', 'note');
+      box.innerHTML = '<p><b>На_просвет</b> можно поставить на экран телефона, как приложение</p>' +
+        '<button type="button" class="how-btn">Как</button><button type="button" class="x" aria-label="Закрыть подсказку">×</button>';
+      var gone = function () { if (box.parentNode) box.parentNode.removeChild(box); delCls('app-hint-on'); };
+      box.querySelector('.how-btn').addEventListener('click', function () { st.done = true; instSave(st); gone(); openInstall('hint'); });
+      box.querySelector('.x').addEventListener('click', function () { st.x = true; instSave(st); gone(); });
+      doc.body.appendChild(box);
+      addCls('app-hint-on');
+    }, 2500);
   }
 
   /* ---- дисклеймер первого запуска в приложении ---- */
@@ -620,7 +701,7 @@
       doc.addEventListener('keydown', homeResumeGo, true);
       window.addEventListener('pageshow', function (e) { if (e.persisted) paintHomeResume(); });
     }
-    iosHint();
+    installHint();
     welcome();
   }
   if (doc.body) init(); else doc.addEventListener('DOMContentLoaded', init);

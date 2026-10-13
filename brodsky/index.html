@@ -469,16 +469,29 @@ blockquote b{font-style:normal; color:var(--mark)}
 .bio-t{font-family:var(--f-display); font-weight:700; font-size:21px; line-height:1.2; margin:0 0 8px}
 .bio p{font-size:16px; line-height:1.55; margin:0 0 8px}
 .bio .bio-src{font-family:var(--f-mono); font-size:11.5px; color:var(--muted); margin:10px 0 0}
+
+/* правки 2026-10: подзаголовок шапки, справки */
+.hero-sub{font-family:var(--f-body); font-size:clamp(24px,3.2vw,34px); line-height:1.2; font-weight:600; color:var(--htext); margin:14px 0 18px}
+details.ref{margin:14px 0 18px; border:1px dashed var(--rule)}
+details.ref>summary{list-style:none; cursor:pointer; padding:11px 14px; font:500 13.5px/1.35 var(--f-mono); letter-spacing:.03em; color:var(--ink-2); display:flex; gap:10px; align-items:center}
+details.ref>summary::-webkit-details-marker{display:none}
+details.ref>summary:hover{color:var(--ink)}
+details.ref>summary .q{flex:none; width:22px; height:22px; border:1px solid var(--accent); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700}
+details.ref>summary .ch{margin-left:auto; color:var(--muted); transition:transform .2s}
+details.ref[open]>summary .ch{transform:rotate(90deg)}
+details.ref .ref-body{padding:0 14px 4px}
+details.ref .ref-body>p:first-child{margin-top:4px}
 </style>
 
 <div id="tip" role="tooltip" hidden></div>
-<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-stih" aria-current="false"><small>II</small>Стих</button><button type="button" data-part="part-slova" aria-current="false"><small>III</small>Слова</button><button type="button" data-part="part-stil" aria-current="false"><small>IV</small>Стиль</button><button type="button" data-part="part-mir" aria-current="false"><small>V</small>Мир Бродского</button><button type="button" data-part="part-venecia" aria-current="false"><small>VI</small>Венеция</button><button type="button" data-part="part-proza" aria-current="false"><small>VII</small>Проза</button></nav></div></div>
+<div class="bar"><div class="inner"><a class="brand home" href="../" title="На главную"><span class="ar" aria-hidden="true">←</span><span class="nm">На<i>_</i>просвет</span></a><nav class="tabs" aria-label="Части"><button type="button" data-part="part-obzor" aria-current="true"><small>I</small>Обзор</button><button type="button" data-part="part-stih" aria-current="false"><small>II</small>Стихосложение</button><button type="button" data-part="part-slova" aria-current="false"><small>III</small>Слова</button><button type="button" data-part="part-stil" aria-current="false"><small>IV</small>Стиль</button><button type="button" data-part="part-mir" aria-current="false"><small>V</small>Мир Бродского</button><button type="button" data-part="part-venecia" aria-current="false"><small>VI</small>Венеция</button><button type="button" data-part="part-proza" aria-current="false"><small>VII</small>Проза</button></nav></div></div>
 <header class="hero" id="top">
   <div class="inner">
     <div class="hero-grid">
       <div class="hero-text">
-        <div class="eyebrow">Стихи и проза, 1957–1996 · частотный и стилевой анализ</div>
+        <div class="eyebrow">Стихи и проза, 1957–1996</div>
         <h1><span class="typed">Бродский</span><span class="hand">на<i>_</i>просвет</span></h1>
+        <p class="hero-sub" data-pravki-2026-10>Стиль и язык в цифрах</p>
         <p class="lede" id="lede"></p>
         <div class="tools">
           <label for="hl-input">Подсветить слово на страницах</label>
@@ -566,7 +579,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 })();
 </script>
 <div class="inner"><div class="layout">
-<nav class="rail" aria-label="Разделы"><div class="g">I · Обзор</div><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a><div class="g">II · Стих</div><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a><div class="g">III · Слова</div><a href="#slovar"><span>III.1</span>Частые слова</a><a href="#poisk"><span>III.2</span>Словоискатель</a><a href="#karta"><span>III.3</span>Карта словаря</a><a href="#epohi"><span>III.4</span>Слова эпох</a><a href="#epitety"><span>III.5</span>Эпитеты, сравнения, формулы</a><a href="#temy"><span>III.6</span>Темы</a><div class="g">IV · Стиль</div><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a><div class="g">V · Мир Бродского</div><a href="#personazhi"><span>V.1</span>Персонажи</a><a href="#mesta"><span>V.2</span>Места</a><a href="#transport"><span>V.3</span>Средства передвижения</a><a href="#eda"><span>V.4</span>Еда</a><a href="#napitki"><span>V.5</span>Напитки</a><div class="g">VI · Венеция</div><a href="#venecia"><span>VI.1</span>Венеция</a><div class="g">VII · Проза</div><a href="#proza"><span>VII.1</span>Проза</a><a href="#english"><span>VII.2</span>По-английски</a><a href="#rekordy"><span>VII.3</span>Рекорды</a><a href="#metod"><span>VII.4</span>Методика</a></nav>
+<nav class="rail" aria-label="Разделы"><div class="g">I · Обзор</div><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a><div class="g">II · Стихосложение</div><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a><div class="g">III · Слова</div><a href="#slovar"><span>III.1</span>Частые слова</a><a href="#poisk"><span>III.2</span>Словоискатель</a><a href="#karta"><span>III.3</span>Карта словаря</a><a href="#epohi"><span>III.4</span>Слова эпох</a><a href="#epitety"><span>III.5</span>Эпитеты, сравнения, формулы</a><a href="#temy"><span>III.6</span>Темы</a><div class="g">IV · Стиль</div><a href="#grammatika"><span>IV.1</span>Грамматика</a><a href="#punktuacia"><span>IV.2</span>Пунктуация и рифма</a><a href="#imena"><span>IV.3</span>Мир имён</a><a href="#cveta"><span>IV.4</span>Цвета</a><a href="#perelomy"><span>IV.5</span>Где ломается стиль</a><div class="g">V · Мир Бродского</div><a href="#personazhi"><span>V.1</span>Персонажи</a><a href="#mesta"><span>V.2</span>Места</a><a href="#transport"><span>V.3</span>Средства передвижения</a><a href="#eda"><span>V.4</span>Еда</a><a href="#napitki"><span>V.5</span>Напитки</a><div class="g">VI · Венеция</div><a href="#venecia"><span>VI.1</span>Венеция</a><div class="g">VII · Проза</div><a href="#proza"><span>VII.1</span>Проза</a><a href="#english"><span>VII.2</span>По-английски</a><a href="#rekordy"><span>VII.3</span>Рекорды</a><a href="#metod"><span>VII.4</span>Методика</a></nav>
 <div class="content">
 <div class="part" id="part-obzor">
 <div class="part-head"><div class="n">Часть I</div><h1>Обзор</h1><p class="lead">Что вошло в корпус, как он распределён по годам и что о Бродском принято говорить.</p><div class="ch-links"><a href="#glavnoe"><span>I.1</span>Главное коротко</a><a href="#mify"><span>I.2</span>Мифы и факты</a><a href="#hronologia"><span>I.3</span>Хронология</a></div></div>
@@ -610,9 +623,9 @@ blockquote b{font-style:normal; color:var(--mark)}
 </div>
 
 <div class="part" id="part-stih">
-<div class="part-head"><div class="n">Часть II</div><h1>Стих</h1><p class="lead">Как устроена строка: длина, размер, рифма, строфа и звук. С примерами из самих стихов.</p><div class="ch-links"><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a></div></div>
+<div class="part-head"><div class="n">Часть II</div><h1>Стихосложение</h1><p class="lead">Как устроена строка: длина, размер, рифма, строфа и звук. С примерами из самих стихов.</p><div class="ch-links"><a href="#stroka"><span>II.1</span>Строка</a><a href="#razmer"><span>II.2</span>Размер</a><a href="#rifma"><span>II.3</span>Рифма</a><a href="#strofa"><span>II.4</span>Строфа, фраза, перенос</a><a href="#zvuk"><span>II.5</span>Звук</a><a href="#atlas"><span>II.6</span>Атлас стихотворений</a></div></div>
 <section id="stroka">
-  <div class="kick"><b>II.1</b><span>Стих</span></div>
+  <div class="kick"><b>II.1</b><span>Стихосложение</span></div>
   <h2>Строка</h2>
   <p class="finding" id="f-line"></p>
   <p>Длина строки измерена в слогах, то есть в гласных. Для русского стиха это естественная мера: пятистопный ямб даёт 10–11 слогов, дольник Бродского уходит за 14.</p>
@@ -627,10 +640,12 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="razmer">
-  <div class="kick"><b>II.2</b><span>Стих</span></div>
+  <div class="kick"><b>II.2</b><span>Стихосложение</span></div>
   <h2>Размер</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое размер стиха</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Русский стих держится на ударениях. Если ударные слоги идут через равные промежутки, это классический размер: ямб, хорей, дактиль, амфибрахий, анапест. Если промежутки гуляют, но в заданных пределах, — дольник или тактовик. Если порядка нет совсем — свободный стих. Ниже каждый размер показан на строке самого Бродского: ударные слоги выделены, под строкой — её ритм.</p>
   <div class="gloss" id="meter-gloss"></div>
+  </div></details>
   <p class="finding" id="f-meter"></p>
   <div class="panel"><div class="cap"><span class="t">Какими размерами написаны стихи</span><span class="u">% строк в каждом периоде</span></div>
     <div class="legend" id="meter-legend"></div>
@@ -640,10 +655,12 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="rifma">
-  <div class="kick"><b>II.3</b><span>Стих</span></div>
+  <div class="kick"><b>II.3</b><span>Стихосложение</span></div>
   <h2>Рифма <span class="tag">интерактив</span></h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое рифма и какой она бывает</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Рифма — совпадение звуков в концах строк, начиная с последнего ударного гласного. Совпадает всё — рифма точная; совпадает почти всё — неточная; совпадает только ударный гласный и что-то рядом — созвучие. Примеры ниже взяты из стихов Бродского.</p>
   <div class="gloss" id="rhyme-gloss"></div>
+  </div></details>
   <div class="panel rhymebox"><div class="cap"><span class="t">Словарь рифм Бродского</span><span class="u" id="rd-size"></span></div>
     <p style="margin:0 0 8px">Напишите слово так, как оно стоит в конце строки («ночь», «меня», «времени») — и увидите, с чем Бродский его рифмовал.</p>
     <div class="ctrl"><input type="search" id="rd-input" placeholder="например, ночь" autocomplete="off" spellcheck="false" aria-label="Слово для словаря рифм"><div class="chips" id="rd-sug"></div></div>
@@ -672,8 +689,11 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="strofa">
-  <div class="kick"><b>II.4</b><span>Стих</span></div>
+  <div class="kick"><b>II.4</b><span>Стихосложение</span></div>
   <h2>Строфа, фраза, перенос</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: перенос и фраза через строфу</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
+  <div class="gloss" id="enj-gloss"></div>
+  </div></details>
   <p class="finding" id="f-enj"></p>
   <div class="panel"><div class="cap"><span class="t">Строфы по числу строк</span><span class="u">% строф данного размера; темнее — чаще</span></div>
     <div class="chart" id="c-stanza"></div></div>
@@ -685,7 +705,6 @@ blockquote b{font-style:normal; color:var(--mark)}
     <div class="panel"><div class="cap"><span class="t">Строки без знака в конце</span><span class="u">% строк; грубый индикатор переноса</span></div>
       <div class="chart" id="c-open"></div></div>
   </div>
-  <div class="gloss" id="enj-gloss"></div>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Сколько строк занимает фраза</span><span class="u">число предложений</span></div>
       <div class="chart" id="c-shist"></div></div>
@@ -697,9 +716,11 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="zvuk">
-  <div class="kick"><b>II.5</b><span>Стих</span></div>
+  <div class="kick"><b>II.5</b><span>Стихосложение</span></div>
   <h2>Звук</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: что такое аллитерация и как её искали</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Аллитерация — повтор одного и того же согласного в начале нескольких разных слов строки («Все строки спят. Спит ямбов строгий свод»). Чтобы понять, нарочно ли это, строки сравниваются со случайными: те же слова того же периода, перемешанные и собранные в строки той же длины.</p>
+  </div></details>
   <p class="finding" id="f-sound"></p>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Строки, где три слова и больше начинаются с одного звука</span><span class="u">% строк; пунктир — случайные строки</span></div>
@@ -712,7 +733,7 @@ blockquote b{font-style:normal; color:var(--mark)}
 </section>
 
 <section id="atlas">
-  <div class="kick"><b>II.6</b><span>Стих</span></div>
+  <div class="kick"><b>II.6</b><span>Стихосложение</span></div>
   <h2>Атлас стихотворений <span class="tag">интерактив</span></h2>
   <p>Каждая точка — стихотворение. По горизонтали год, по вертикали — выбранная мера. Линия — медиана по году (годы, где пять и больше стихотворений). Нажмите на точку или найдите стихотворение по названию; полые точки — стихотворения без даты, поставленные в конец своего периода.</p>
   <div class="ctrl">
@@ -784,7 +805,9 @@ blockquote b{font-style:normal; color:var(--mark)}
 <section id="epitety">
   <div class="kick"><b>III.5</b><span>Слова</span></div>
   <h2>Эпитеты, сравнения, формулы</h2>
+  <details class="ref"><summary><span class="q" aria-hidden="true">?</span><span>Справка: эпитет, сравнение, родительная формула</span><span class="ch" aria-hidden="true">▸</span></summary><div class="ref-body">
   <p>Эпитет — прилагательное прямо перед существительным, согласованное с ним («белый свет»); устойчивые обороты вроде «по крайней мере» исключены. Сравнение — оборот со «словно», «будто», «как». Родительная формула — два существительных, где второе стоит в родительном падеже: «часть речи», «край темноты».</p>
+  </div></details>
   <div class="grid2">
     <div class="panel"><div class="cap"><span class="t">Частые эпитеты</span><span class="u">сочетаний в стихах</span></div>
       <div class="ctrl"><div id="seg-ep"></div></div>
@@ -5089,7 +5112,7 @@ function placeTip(x,y){ const r=tip.getBoundingClientRect(); let X=x+14, Y=y+14;
 let tipTouch=false;
 ['pointerdown','pointermove'].forEach(ev=>document.addEventListener(ev,e=>{ tipTouch=e.pointerType!=='mouse'; },true));
 const touchTip=h=>h.replace(/<br>нажмите, чтобы увидеть близкие слова$/,'<br><u data-tip-go="#wm-read">близкие слова — под картой ↓</u>').replace(/<br>нажмите, чтобы[^<]*$/,'');
-function showTipHTML(html,x,y){ tip.innerHTML=tipTouch?touchTip(html):html; tip.style.pointerEvents=tipTouch?'auto':'none'; tip.hidden=false; placeTip(x,y); }
+function showTipHTML(html,x,y){ if(tipTouch){ tip.hidden=true; return; } tip.innerHTML=tipTouch?touchTip(html):html; tip.style.pointerEvents=tipTouch?'auto':'none'; tip.hidden=false; placeTip(x,y); }
 tip.addEventListener('click',()=>{ const go=tip.querySelector('[data-tip-go]'); tip.hidden=true; const to=go&&document.querySelector(go.dataset.tipGo); if(to) to.scrollIntoView({behavior:'smooth',block:'center'}); });
 document.addEventListener('pointermove',e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); } else if(!e.target.closest || !e.target.closest('canvas')) tip.hidden=true; });
 document.addEventListener('pointerdown',e=>{ if(e.target.closest && e.target.closest('#tip')) return; const t=e.target.closest && e.target.closest('[data-tip]'); if(t) showTipHTML(t.getAttribute('data-tip'),e.clientX,e.clientY); else if(tipTouch && !(e.target.closest && e.target.closest('canvas'))) tip.hidden=true; });
