@@ -198,7 +198,7 @@
 
   /* ================= SVG графика: клон со вшитыми вычисленными стилями ================= */
   var INH = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
-    'fill-opacity', 'stroke-opacity', 'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing', 'text-anchor', 'visibility'];
+    'fill-opacity', 'stroke-opacity', 'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing', 'text-anchor', 'visibility', 'paint-order'];
   var NONINH = ['opacity', 'display', 'dominant-baseline'];
   var DROP_ATTR = INH.concat(NONINH, ['class', 'style', 'tabindex', 'role', 'focusable']);
 
