@@ -12,7 +12,7 @@
     python3 sw/build.py           # пересобрать sw.js
     python3 sw/build.py --check   # только проверить, что sw.js актуален (код возврата 1, если нет)
 
-Скрипт печатает число файлов и размер предкэша, а при размере больше 15 МБ падает.
+Скрипт печатает число файлов и размер предкэша, а при размере больше 20 МБ падает (сырых байт; по сети с gzip примерно втрое меньше).
 """
 import hashlib
 import json
@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "sw" / "sw.template.js"
 OUT = ROOT / "sw.js"
-LIMIT_MB = 15
+LIMIT_MB = 20
 
 FIXED = [
     "index.html", "manifest.webmanifest", "theme.js", "app.js", "app.css",
