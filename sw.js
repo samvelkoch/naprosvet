@@ -3,7 +3,7 @@
    Версия кэша = хеш содержимого предкэшируемых файлов: любая правка сайта даёт новую версию. */
 'use strict';
 
-var VERSION = 'a9ed90a7bf';
+var VERSION = '1472a3ea0c';
 var PRECACHE = [
   "./app.css",
   "./app.js",
