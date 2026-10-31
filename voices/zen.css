@@ -19,8 +19,8 @@ html.zen-on body{overflow:hidden}
 .zf.drag{cursor:grabbing}
 #zen.ans .zf{opacity:.12;pointer-events:none}
 .zq{position:absolute;left:0;top:0;transform-origin:0 0;white-space:pre;font-family:var(--f-serif);font-weight:400;line-height:1.25;
-  color:var(--htext);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .5s ease;-webkit-font-smoothing:antialiased}
-.zq.intro{transition-duration:.8s}
+  color:var(--htext);opacity:0;visibility:hidden;pointer-events:none;-webkit-font-smoothing:antialiased}
+.zq.intro{transition:opacity .8s ease}
 
 /* три иконки справа сверху */
 .zt{position:absolute;z-index:4;top:calc(env(safe-area-inset-top,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);display:flex;gap:0;transition:opacity .35s}
@@ -53,20 +53,36 @@ html.zen-on body{overflow:hidden}
 .zp button:focus-visible{outline:1px solid var(--hmark);outline-offset:-3px}
 
 /* экран ответов */
-.za{position:absolute;inset:0;z-index:3;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;touch-action:pan-y;
+.za{position:absolute;inset:0;z-index:3;overflow:hidden;overscroll-behavior:none;touch-action:pan-y;
   visibility:hidden;-webkit-user-select:text;user-select:text}
 .za.on{visibility:visible}
 .za:focus{outline:none}
-.zw{max-width:680px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 72px) max(16px,env(safe-area-inset-left))}
-.zk{position:relative;background:var(--surface);border:1px solid var(--ring);padding:22px clamp(18px,3vw,32px) 24px;cursor:pointer;
+/* один экран: вопрос сверху, под ним блоки авторов делят остаток поровну и не растут, текст прокручивается внутри блока */
+.zw{box-sizing:border-box;height:100%;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 14px) max(12px,env(safe-area-inset-left))}
+.zk{flex:none;position:relative;background:var(--surface);border:1px solid var(--ring);padding:16px clamp(16px,3vw,28px) 18px;cursor:pointer;
   box-shadow:0 14px 26px -18px rgba(0,0,0,.5)}
 .zk::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;background:linear-gradient(225deg,var(--zen-bg) 50%,var(--fold) 50%)}
-.zk h2{margin:0;font:italic 400 clamp(23px,5vw,30px)/1.3 var(--f-serif);color:var(--ink);opacity:0}
+.zk h2{margin:0;font:italic 400 clamp(20px,5vw,28px)/1.28 var(--f-serif);color:var(--ink);opacity:0}
 .zk.show h2{opacity:1;transition:opacity .2s}
-.zc{margin-top:14px;background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:18px 20px 22px}
-.zc h3{margin:0;font:600 19px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase;color:var(--ink)}
-.zc .who{margin:4px 0 12px;font:11.5px/1.5 var(--f-mono);color:var(--muted)}
-.zc .body p{margin:0 0 .8em;font-size:16.5px;line-height:1.62;color:var(--ink)}
+.zc{flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:10px 16px 0 18px}
+.zc .hd{flex:none;display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:6px}
+.zc h3{flex:none;margin:0;font:600 16px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase;color:var(--ink)}
+.zc .who{flex:1;min-width:0;font:11px/1.3 var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zx{flex:none;width:34px;height:30px;margin:-4px -10px -4px 0;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.zx:hover{color:var(--accent)}
+.zx[hidden]{display:none}
+.zx:focus-visible{outline:1px solid var(--mark);outline-offset:-3px}
+.zx .i,.zc.big .zx .o{display:none}
+.zc.big .zx .i{display:inline}
+.zc .body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:0 6px 14px 0}
+.zc.more .body{-webkit-mask-image:linear-gradient(#000 calc(100% - 30px),transparent);mask-image:linear-gradient(#000 calc(100% - 30px),transparent)}
+.zw.exp .zc{flex:none}
+.zw.exp .zc .body{display:none}
+.zw.exp .zc.big{flex:1 1 0}
+.zw.exp .zc.big .body{display:block}
+.zw.exp .zc:not(.big){padding-bottom:4px}
+.zc .body p{margin:0 0 .75em;font-size:16px;line-height:1.56;color:var(--ink)}
 .zc .body p:last-child{margin-bottom:0}
 .zc .body em{color:var(--muted)}
 .zc .body p.later{display:none}
