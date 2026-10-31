@@ -29,6 +29,9 @@ html.zen-on body{overflow:hidden}
 .zt button:hover,.zt button[aria-expanded="true"]{opacity:.85}
 .zt button:focus-visible{outline:1px solid var(--hmark);outline-offset:-6px}
 .zt svg{display:block}
+/* мягкая тень под иконками: текст поля уходит под неё, иконки читаются */
+.zt::before{content:"";position:absolute;z-index:-1;inset:-30px -30px -34px -46px;pointer-events:none;
+  background:radial-gradient(closest-side,var(--zen-bg) 35%,rgba(18,13,10,0) 100%)}
 .zt .dot{position:absolute;top:10px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--hmark);display:none}
 .zt button[data-on] .dot{display:block}
 #zen.moving .zt button{opacity:.15}
