@@ -27,7 +27,7 @@
   var active = false, enteredPush = false, pushedAns = false, ansOpen = false, closing = false;
 
   // ---- мир ----
-  var n = 0, X, Y, WD, HD, SZ, BASE, PH1, PH2, SP1, SP2, AM, PH3, SP3, OPS, LO, VIS, ACT, RD, LINES = [], NODES = [], IDX = {};
+  var n = 0, X, Y, WD, HD, SX, SY, SW, SH, QI, SL, CYC, SZ, BASE, PH1, PH2, SP1, SP2, AM, PH3, SP3, OPS, LO, VIS, ACT, RD, LINES = [], NODES = [], IDX = {};
   var WW = 0, WH = 0, maxBW = 0, maxBH = 0;
   var camX = 0, camY = 0, zoom = 1, vw = 0, vh = 0, minZ = Z_MIN;
   var vx = 0, vy = 0;                   // скорость камеры, мир/с
@@ -42,13 +42,9 @@
   // ---------------------------------------------------------------- раскладка на торе
   function ovl1(a, aw, b, bw, L) { var d = ((b - a) % L + L) % L; return d < aw || (L - d) < bw; }
 
-  function buildWorld() {
-    var cv = document.createElement('canvas').getContext('2d');
-    var FF = (getComputedStyle(document.documentElement).getPropertyValue('--f-serif') || '').trim() || 'Georgia, serif';
-    cv.font = '400 100px ' + FF;
-    var wc = {}, sp = cv.measureText(' ').width;
-    function ww(w) { var k = '$' + w, v = wc[k]; if (v === undefined) v = wc[k] = cv.measureText(w).width; return v; }
-    function wrap(text, size, maxW) {
+  var cv = null, wc = {}, sp = 0;
+  function ww(w) { var k = '$' + w, v = wc[k]; if (v === undefined) v = wc[k] = cv.measureText(w).width; return v; }
+  function wrap(text, size, maxW) {
       var k = size / 100, words = text.replace(/\s+/g, ' ').trim().split(' '), lines = [], cur = '', curW = 0, best = 0;
       for (var i = 0; i < words.length; i++) {
         var w = ww(words[i]) * k;
@@ -58,22 +54,33 @@
       }
       lines.push(cur); if (curW > best) best = curW;
       return { lines: lines, w: best };
-    }
+  }
+  // ярус размера: 70% мелкие, 22% средние, 8% крупные; ширина строки в em у каждого яруса своя
+  function pickSize(len) {
+    var r = Math.random(), tier = r < 0.70 ? 0 : r < 0.92 ? 1 : 2;
+    if (tier === 2 && len > 120) tier = 1;      // длинные вопросы крупными не бывают
+    return { size: tier === 0 ? 14 + Math.random() * 3 : tier === 1 ? 20 + Math.random() * 5 : 30 + Math.random() * 12,
+             em: tier === 0 ? 14 + Math.random() * 8 : tier === 1 ? 12 + Math.random() * 6 : 9 + Math.random() * 5 };
+  }
+
+  function buildWorld() {
+    cv = document.createElement('canvas').getContext('2d');
+    var FF = (getComputedStyle(document.documentElement).getPropertyValue('--f-serif') || '').trim() || 'Georgia, serif';
+    cv.font = '400 100px ' + FF; wc = {}; sp = cv.measureText(' ').width;
 
     var qs = D.questions; n = qs.length;
     X = new Float64Array(n); Y = new Float64Array(n); WD = new Float64Array(n); HD = new Float64Array(n);
+    SX = new Float64Array(n); SY = new Float64Array(n); SW = new Float64Array(n); SH = new Float64Array(n);
+    QI = new Int32Array(n); SL = new Int32Array(n); CYC = new Float64Array(n);
     SZ = new Float32Array(n); BASE = new Float32Array(n); PH1 = new Float32Array(n); PH2 = new Float32Array(n);
     SP1 = new Float32Array(n); SP2 = new Float32Array(n); AM = new Float32Array(n); PH3 = new Float32Array(n); SP3 = new Float32Array(n);
     OPS = new Float32Array(n); LO = new Float32Array(n); VIS = new Uint8Array(n); ACT = new Uint8Array(n); RD = new Uint8Array(n);
     LINES = []; IDX = {}; maxBW = 0; maxBH = 0;
-    var AW = new Float64Array(n), AH = new Float64Array(n), sumA = 0, i, r, tier, size, em;
+    var AW = new Float64Array(n), AH = new Float64Array(n), sumA = 0, i, size;
     for (i = 0; i < n; i++) {
-      var q = qs[i]; IDX[q.id] = i;
-      r = Math.random(); tier = r < 0.70 ? 0 : r < 0.92 ? 1 : 2;
-      if (tier === 2 && q.q.length > 120) tier = 1;      // длинные вопросы крупными не бывают
-      size = tier === 0 ? 14 + Math.random() * 3 : tier === 1 ? 20 + Math.random() * 5 : 30 + Math.random() * 12;
-      em = tier === 0 ? 14 + Math.random() * 8 : tier === 1 ? 12 + Math.random() * 6 : 9 + Math.random() * 5;
-      var m = wrap(q.q, size, em * size);
+      var q = qs[i]; IDX[q.id] = i; QI[i] = i; SL[i] = i;
+      var pk = pickSize(q.q.length); size = pk.size;
+      var m = wrap(q.q, size, pk.em * size);
       SZ[i] = size; BASE[i] = 0.45 + Math.random() * 0.5; LINES.push(m.lines);
       WD[i] = Math.ceil(m.w) + 2; HD[i] = Math.ceil(m.lines.length * size * 1.25);
       AW[i] = WD[i] + GAP; AH[i] = HD[i] + GAP; sumA += AW[i] * AH[i];
@@ -122,9 +129,40 @@
     var W = Math.sqrt(1.6 * sumA), H = W, tries = 0;
     while (!tryPlace(W, H) && tries < 60) { W *= 1.06; H *= 1.06; tries++; }
     WW = W; WH = H;
-    for (i = 0; i < n; i++) { X[i] = RX[i] + PAD; Y[i] = RY[i] + PAD; }
+    for (i = 0; i < n; i++) { X[i] = SX[i] = RX[i] + PAD; Y[i] = SY[i] = RY[i] + PAD; SW[i] = WD[i]; SH[i] = HD[i]; }
     var rep = check();
     try { console.info('[zen] раскладка: вопросов ' + n + ', мир ' + Math.round(WW) + '×' + Math.round(WH) + ', пересечений ' + rep.overlaps + ', зазор < ' + GAP + 'px: ' + rep.tight + ', попыток роста ' + tries); } catch (e) {}
+  }
+
+  // вопрос q на месте s: размер берём случайный и уменьшаем, пока текст не войдёт в бокс места
+  function fitIn(q, s) {
+    var t = D.questions[q].q, pk = pickSize(t.length), size = Math.floor(pk.size), m, h;
+    for (; size >= 12; size--) {
+      m = wrap(t, size, Math.min(SW[s], pk.em * size));
+      h = Math.ceil(m.lines.length * size * 1.25);
+      if (m.w + 2 <= SW[s] && h <= SH[s]) return { size: size, lines: m.lines, w: Math.ceil(m.w) + 2, h: h };
+    }
+    return null;
+  }
+  function putIn(s, q, f) {
+    QI[s] = q; SL[q] = s; SZ[s] = f.size; LINES[s] = f.lines; WD[s] = f.w; HD[s] = f.h;
+    X[s] = SX[s] + (SW[s] - f.w) / 2; Y[s] = SY[s] + (SH[s] - f.h) / 2;
+    BASE[s] = 0.45 + Math.random() * 0.5;
+    ACT[s] = matches(q); RD[s] = readIds[D.questions[q].id] ? 1 : 0; OPS[s] = opacityOf(s);
+    var nd = NODES[s]; nd.textContent = f.lines.join('\n'); nd.style.fontSize = f.size + 'px';
+  }
+  // растворившийся вопрос меняется местами с вопросом с невидимого места: всплывает другой, своим размером
+  function swapSlot(i) {
+    for (var k = 0; k < 16; k++) {
+      var j = Math.floor(Math.random() * n);
+      if (j === i || VIS[j] || j === openIdx) continue;
+      var qa = QI[i], qb = QI[j];
+      if (theme && !matches(qb) && k < 12) continue;
+      var fa = fitIn(qb, i), fb = fitIn(qa, j);
+      if (!fa || !fb) continue;
+      putIn(i, qb, fa); putIn(j, qa, fb);
+      return;
+    }
   }
 
   // попарная проверка на торе: overlaps = боксы пересекаются, tight = зазор меньше GAP
@@ -147,13 +185,16 @@
   // дыхание: вопрос медленно разгорается и почти гаснет, у каждого свой ритм
   function breath(i, t) {
     if (calm) return 1;
-    var b = 0.5 + 0.5 * Math.sin(t * SP3[i] + PH3[i]); b = b * b * (3 - 2 * b);
-    return 0.1 + 0.9 * b;
+    var b = 0.5 + 0.5 * Math.sin(t * SP3[i] + PH3[i]); b = Math.sqrt(b);   // долго горит, коротко гаснет до нуля
+    return b;
   }
+  // номер вдоха: меняется ровно в момент, когда вопрос погас полностью
+  function cycleOf(i, t) { return Math.floor((t * SP3[i] + PH3[i] + 1.5708) / 6.2832); }
   function setOp(i) { OPS[i] = opacityOf(i); LO[i] = OPS[i] * breath(i, performance.now()); NODES[i].style.opacity = LO[i].toFixed(3); forceDraw = true; }
   function setFocus(i) { var o = FOC; if (o === i) return; FOC = i; if (o >= 0) setOp(o); if (i >= 0) setOp(i); }
+  function matches(q) { return !theme || D.questions[q].t.indexOf(theme) >= 0 ? 1 : 0; }
   function applyTheme() {
-    for (var i = 0; i < n; i++) { ACT[i] = !theme || D.questions[i].t.indexOf(theme) >= 0 ? 1 : 0; setOp(i); }
+    for (var i = 0; i < n; i++) { ACT[i] = matches(QI[i]); setOp(i); }
     if (FOC >= 0 && !ACT[FOC]) FOC = -1;
   }
 
@@ -168,7 +209,7 @@
       NODES.push(nd); frag.appendChild(nd);
     }
     field.appendChild(frag);
-    for (i = 0; i < n; i++) RD[i] = readIds[D.questions[i].id] ? 1 : 0;
+    for (i = 0; i < n; i++) RD[i] = readIds[D.questions[QI[i]].id] ? 1 : 0;
     applyTheme();
   }
 
@@ -203,7 +244,8 @@
       if (v) {
         sway(i, now);
         nd = NODES[i];
-        if (VIS[i] !== 1) { nd.style.visibility = 'visible'; VIS[i] = 1; }
+        if (VIS[i] !== 1) { nd.style.visibility = 'visible'; VIS[i] = 1; CYC[i] = cycleOf(i, now); }
+        else if (!calm && live && i !== openIdx) { var cy = cycleOf(i, now); if (cy !== CYC[i]) { CYC[i] = cy; swapSlot(i); } }
         nd.style.transform = 'translate3d(' + px.toFixed(2) + 'px,' + py.toFixed(2) + 'px,0) scale(' + zs + ')';
         if (live) { o = OPS[i] * breath(i, now); if (Math.abs(o - LO[i]) > 0.004) { LO[i] = o; nd.style.opacity = o.toFixed(3); } }
       } else if (VIS[i] !== 0) { NODES[i].style.visibility = 'hidden'; VIS[i] = 0; }
@@ -259,7 +301,7 @@
   function hitTest(x, y, cx0, cy0) {
     var best = -1, bd = 1e9, pad = 10, i, w, h, dx, dy, d;
     for (i = 0; i < n; i++) {
-      if (!ACT[i]) continue;
+      if (!ACT[i] || LO[i] < 0.08) continue;     // почти растворившийся вопрос не ловится
       place(i, cx0, cy0, zoom); sway(i, performance.now());
       w = WD[i] * zoom; h = HD[i] * zoom;
       if (x < px - pad || x > px + w + pad || y < py - pad || y > py + h + pad) continue;
@@ -448,7 +490,7 @@
   var cols = [], typeRaf = 0, flyEl = null, flyAnim = null, closeAnims = [], titleCard = null, titleH2 = null;
 
   function buildAnswer(i) {
-    var q = D.questions[i];
+    var q = D.questions[QI[i]];
     zwrap.innerHTML = ''; cols = [];
     titleCard = el('section', 'zk'); titleH2 = el('h2', null, q.q); titleCard.appendChild(titleH2); zwrap.appendChild(titleCard);
     zwrap.classList.remove('exp');
@@ -515,7 +557,7 @@
   function openQ(i, fly) {
     if (ansOpen && !closing) return;
     if (closing) finishClose();
-    history.pushState({ zen: 2 }, '', zenUrl(D.questions[i].id)); pushedAns = true;
+    history.pushState({ zen: 2 }, '', zenUrl(D.questions[QI[i]].id)); pushedAns = true;
     showAnswer(i, fly);
   }
 
@@ -529,7 +571,7 @@
     ansOpen = true; closing = false; curQ = i; openedAt = now;
     stopLoop(); closePop(); setFocus(-1); setMoving(false); touching = false; np = 0; ptrs = {}; tap = null; vx = vy = 0; snap = null;
     goal('zen_q');
-    readIds[D.questions[i].id] = 1; RD[i] = 1;
+    readIds[D.questions[QI[i]].id] = 1; RD[i] = 1;
     save(K_READ, Object.keys(readIds));
     openIdx = i; setOp(i);
     buildAnswer(i);
@@ -647,7 +689,7 @@
   // ---------------------------------------------------------------- вход и выход
   function inUrl() { return /[?&]zen\b/.test(location.search); }
   function zenUrl(id) { return location.pathname + '?zen' + (id ? '#' + id : ''); }
-  function idFromHash() { var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {} return h && IDX[h] != null ? IDX[h] : -1; }
+  function idFromHash() { var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {} return h && IDX[h] != null ? SL[IDX[h]] : -1; }
 
   function fontsReady() {
     var p = Promise.resolve();
@@ -700,7 +742,7 @@
       for (var i = 0; i < n; i++) VIS[i] = 2;
       forceDraw = true;
       if (how === 'boot') {
-        if (id >= 0) { history.replaceState({ zen: 1 }, '', zenUrl()); history.pushState({ zen: 2 }, '', zenUrl(D.questions[id].id)); pushedAns = true; }
+        if (id >= 0) { history.replaceState({ zen: 1 }, '', zenUrl()); history.pushState({ zen: 2 }, '', zenUrl(D.questions[QI[id]].id)); pushedAns = true; }
         else history.replaceState({ zen: 1 }, '', zenUrl());
         enteredPush = false;
       } else if (how === 'pop' && id >= 0) pushedAns = true;
