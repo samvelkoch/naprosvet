@@ -167,7 +167,9 @@ html.zen-on body{overflow:hidden}
 .zs-light{background:#120d0a}
 .zl-wm,.zl-glow,.zl-ink,.zl-fib,.zl-grain{position:absolute;inset:0;pointer-events:none}
 .zl-w,.zl-k{position:absolute;margin:0;white-space:pre;text-align:left;font-family:var(--f-serif);font-weight:400;line-height:1.25;pointer-events:none;-webkit-font-smoothing:antialiased}
-.zl-w{color:#e8d6b8;opacity:.07;transition:opacity .9s ease}
+/* водяной знак: заблюрен и почти сливается с бумагой; яркость и сдвиг ведёт скрипт, проявленный слой (.zl-k) резкий */
+.zl-w{color:#e8d6b8;opacity:.2;will-change:transform,opacity}
+.zl-k{will-change:transform}
 .zl-k{color:#2a1d14}
 .zl-ink{-webkit-mask-image:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0));mask-image:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0))}
 .zl-fib{inset:-35%;transform:rotate(-13deg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .5' numOctaves='3' stitchTiles='stitch' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 .82 0 0 0 0 .72 0 0 0 0 .56 2.4 0 0 0 -.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");opacity:.022}
@@ -176,5 +178,4 @@ html.zen-on body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .zq,.zs,.zt,.zt button,.zp{transition-duration:.01s!important}
   .zt button.shake,.zp button.shake{animation:none}
-  .zl-w{transition:none}
 }
