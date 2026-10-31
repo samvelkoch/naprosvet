@@ -53,19 +53,23 @@ html.zen-on body{overflow:hidden}
 .zp button:focus-visible{outline:1px solid var(--hmark);outline-offset:-3px}
 
 /* экран ответов */
-.za{position:absolute;inset:0;z-index:3;overflow:hidden;overscroll-behavior:none;touch-action:pan-y;
+.za{position:absolute;inset:0;z-index:3;overflow:hidden;background:rgba(10,7,5,.5);overscroll-behavior:none;touch-action:pan-y;
   visibility:hidden;-webkit-user-select:text;user-select:text}
 .za.on{visibility:visible}
 .za:focus{outline:none}
+/* цвета экрана ответов: бумага сайта (светлая или тёмная тема), блок вопроса заметно темнее блоков с ответами */
+#zen{--za-card:var(--surface);--za-q:#e0d4bf;--za-qink:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:var(--ink)}}
+:root[data-theme="dark"] #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:var(--ink)}
 /* один экран: вопрос сверху, под ним блоки авторов делят остаток поровну и не растут, текст прокручивается внутри блока */
 .zw{box-sizing:border-box;height:100%;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
   padding:calc(env(safe-area-inset-top,0px) + 14px) max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 14px) max(12px,env(safe-area-inset-left))}
-.zk{flex:none;position:relative;background:var(--surface);border:1px solid var(--ring);padding:16px clamp(16px,3vw,28px) 18px;cursor:pointer;
+.zk{flex:none;position:relative;background:var(--za-q);border:1px solid var(--ring);padding:16px clamp(16px,3vw,28px) 18px;cursor:pointer;
   box-shadow:0 14px 26px -18px rgba(0,0,0,.5)}
 .zk::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;background:linear-gradient(225deg,var(--zen-bg) 50%,var(--fold) 50%)}
-.zk h2{margin:0;font:italic 400 clamp(20px,5vw,28px)/1.28 var(--f-serif);color:var(--ink);opacity:0}
+.zk h2{margin:0;font:italic 400 clamp(20px,5vw,28px)/1.28 var(--f-serif);color:var(--za-qink);opacity:0}
 .zk.show h2{opacity:1;transition:opacity .2s}
-.zc{flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:10px 16px 0 18px}
+.zc{flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--za-card);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:10px 16px 0 18px}
 .zc .hd{flex:none;display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:6px}
 .zc h3{flex:none;margin:0;font:600 16px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase;color:var(--ink)}
 .zc .who{flex:1;min-width:0;font:11px/1.3 var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
