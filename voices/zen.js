@@ -539,7 +539,7 @@
       cols.push(c);
     });
   }
-  function fade(c) { var b = c.body; c.card.classList.toggle('more', b.scrollHeight - b.scrollTop - b.clientHeight > 4); }
+  function fade(c) { var b = c.body; c.card.classList.toggle('more', b.scrollHeight - b.scrollTop - b.clientHeight > 4); c.card.classList.toggle('top', b.scrollTop > 2); }
   // один блок на весь экран, остальные сворачиваются до строки с именем; повторное касание возвращает поровну
   function expand(c) {
     var on = !c.card.classList.contains('big');
