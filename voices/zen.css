@@ -2,6 +2,8 @@
 .zenbtn{flex:none;width:38px;height:38px;display:inline-grid;place-items:center;padding:0;border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);cursor:pointer}
 .zenbtn:hover{color:var(--accent);border-color:var(--accent)}
 .zenbtn:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+/* телефон: энсо в одной строке с «Читать / Чей ответ?», а не отдельной строкой */
+@media (max-width:700px){.tools .seg.mode{width:auto;flex:1 1 0;min-width:0}.zenbtn{width:46px;height:auto;align-self:stretch}}
 
 /* ?zen: пока zen.js не открыл слой, страница под ним скрыта */
 html.zen-boot{background:#120d0a}
