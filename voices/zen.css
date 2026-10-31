@@ -60,9 +60,9 @@ html.zen-on body{overflow:hidden}
 .za.on{visibility:visible}
 .za:focus{outline:none}
 /* цвета экрана ответов: бумага сайта (светлая или тёмная тема), блок вопроса заметно темнее блоков с ответами */
-#zen{--za-card:var(--surface);--za-q:#221a14;--za-qink:#f7f0e2}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:#f0e8d8}}
-:root[data-theme="dark"] #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:#f0e8d8}
+#zen{--za-card:var(--surface);--za-q:var(--zen-bg);--za-qink:#f7f0e2}   /* блок вопроса — цвета пространства с вопросами */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #zen{--za-card:#2a221c;--za-q:var(--zen-bg);--za-qink:#f0e8d8}}
+:root[data-theme="dark"] #zen{--za-card:#2a221c;--za-q:var(--zen-bg);--za-qink:#f0e8d8}
 /* один экран: вопрос сверху, под ним блоки авторов делят остаток поровну и не растут, текст прокручивается внутри блока */
 .zw{box-sizing:border-box;height:100%;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
   padding:calc(env(safe-area-inset-top,0px) + 14px) max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 14px) max(12px,env(safe-area-inset-left))}
