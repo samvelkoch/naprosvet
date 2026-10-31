@@ -834,8 +834,8 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     stage.innerHTML = '<div class="status">Барабан крутится…</div>';
     var first = fromHash();
     buildDeck(first);
-    if (first != null) { pos = 0; park(first); render(first); }
-    else if (window.zenActive) { var z0 = pick(); buildDeck(z0); pos = 0; park(z0); render(z0); } // под Zen барабан не крутим
+    if (first != null) { pos = 0; park(first); render(first); if (window.zenActive) finish(); }
+    else if (window.zenActive) { var z0 = pick(); buildDeck(z0); pos = 0; park(z0); render(z0); finish(); } // под Zen барабан не крутим и не печатаем
     else { park(pick()); next(); }
   }).catch(function () {
     stage.innerHTML = '<div class="status">Не получилось загрузить ответы. Обновите страницу.</div>';

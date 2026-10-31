@@ -635,7 +635,7 @@
   }
   function prepare() {
     if (prep) return prep;
-    T = window.VoicesType;
+    T = window.VoicesType; ORDER = T.ORDER; SHORT = T.SHORT; WHERE = T.WHERE;   // подписи авторов общие со страницей
     prep = Promise.all([
       fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }),
       fontsReady()
