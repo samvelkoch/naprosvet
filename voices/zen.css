@@ -113,13 +113,14 @@ html.zen-on body{overflow:hidden}
 .zd-r .f{font-size:26px;line-height:1.28;opacity:0}
 .zd-m{position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;box-sizing:border-box;padding:0;font:400 26px/1.28 var(--f-serif);text-align:center}
 .zd-t{position:absolute;top:50%;width:12px;height:1px;background:var(--hmark);opacity:.75;pointer-events:none}
-.zd-t.l{left:6px}.zd-t.r{right:6px}
-.zd-l,.zd-s{position:absolute;inset:0;pointer-events:none}
-.zd-s{overflow:visible}
-.zd-s .rod{stroke:var(--hmark);stroke-opacity:.6;stroke-width:2;stroke-linecap:round}
-.zd-s .piv{fill:none;stroke:var(--hmark);stroke-opacity:.6;stroke-width:1.5}
-.zd-s .ball{fill:var(--hmark)}
-.zd-h{position:absolute;width:68px;pointer-events:auto;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.zd-t.l{left:6px}
+/* колёсико: насечки рисует canvas, риска на уровне центральной строки */
+.zd-h{position:absolute;pointer-events:auto;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.zd-h.on{cursor:grabbing}
+.zd-h canvas{position:absolute;pointer-events:none;opacity:.9;transition:opacity .3s ease}
+.zd-h.on canvas{opacity:1}
+.zd-wm{position:absolute;height:1px;background:var(--hmark);opacity:.85;pointer-events:none}
+.zd-sa{position:absolute;right:0;top:0;width:env(safe-area-inset-right,0px);height:0;visibility:hidden;pointer-events:none}
 
 /* режим «На просвет»: лист бумаги и лампа за ним. Слои: водяные знаки, свечение (canvas), проступивший текст под маской, волокна, зерно */
 .zs-light{background:#120d0a}
