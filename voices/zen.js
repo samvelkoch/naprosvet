@@ -532,7 +532,7 @@
       hd.appendChild(el('h3', null, SHORT[a]));
       hd.appendChild(el('span', 'who', D.authors[a].years + ' · ' + WHERE[a]));
       var bx = el('button', 'zx'); bx.type = 'button'; bx.innerHTML = EXP; bx.setAttribute('aria-label', 'Развернуть ответ'); bx.setAttribute('aria-expanded', 'false');
-      bx.hidden = single || readMode === 'rsvp'; hd.appendChild(bx);
+      bx.hidden = single; hd.appendChild(bx);
       card.appendChild(hd);
       var paras = T.answer(q.a[a]);
       var ps = paras.map(function (pa) { var p = el('p', 'later'); T.fillP(p, pa); body.appendChild(p); return p; });
@@ -554,7 +554,7 @@
     cols.forEach(function (x) { x.card.classList.remove('big'); x.bx.setAttribute('aria-expanded', 'false'); x.bx.setAttribute('aria-label', 'Развернуть ответ'); });
     zwrap.classList.toggle('exp', on);
     if (on) { c.card.classList.add('big'); c.bx.setAttribute('aria-expanded', 'true'); c.bx.setAttribute('aria-label', 'Свернуть ответ'); }
-    cols.forEach(function (x) { if (x.follow) x.body.scrollTop = x.body.scrollHeight; fade(x); });
+    cols.forEach(function (x) { if (x.follow) x.body.scrollTop = x.body.scrollHeight; fade(x); if (x.rs) rvShow(x); });   // у окон RSVP меняется кегль: слово перерисовывается, чтение не прерывается
   }
   function finishTyping() {
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
@@ -576,11 +576,11 @@
   }
 
   // ---------------------------------------------------------------- чтение по словам (RSVP, как Spritz)
-  // В каждом блоке автора своё окно: слово в фиксированной точке, опорная буква (ORP) на одной вертикали. Читает один блок, остальные на паузе.
-  var WPM_MIN = 150, WPM_MAX = 800, WPM_STEP = 10, WPM_DEF = 250, RV_FS = 22.4, RV_PARA = 350, RV_NEXT = 600;
+  // В каждом блоке автора своё окно со своим таймером: слово в фиксированной точке, опорная буква (ORP) на одной вертикали. Окна читают независимо, можно запустить хоть все.
+  var WPM_MIN = 150, WPM_MAX = 1000, WPM_STEP = 10, WPM_DEF = 250, RV_FS = 22.4, RV_BIG = 1.3, RV_PARA = 350, RV_NEXT = 600;   // RV_BIG: во сколько раз слово крупнее в развёрнутом блоке (в css те же числа)
   var LCH = 'A-Za-z0-9À-ɏЀ-ӿ';       // буквы и цифры; всё остальное по краям слова — пунктуация и кавычки
   var RE_LEAD = new RegExp('^[^' + LCH + ']+'), RE_TAIL = new RegExp('[^' + LCH + ']+$'), RE_ANY = new RegExp('[' + LCH + ']');
-  var readMode = 'type', wpm = WPM_DEF, sliderT = 0, rvTimer = 0, rvKickT = 0, rvAct = null, rvLast = null, rvCv = null, ctl = null;
+  var readMode = 'type', wpm = WPM_DEF, sliderT = 0, rvKickT = 0, rvLast = null, rvCv = null, ctl = null;
   var ICO_TXT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5h16M4 10h16M4 14.5h16M4 19h9"/></svg>';
   var ICO_RSVP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v4.5M12 16v4.5"/><path d="M3.5 12h5.5M15 12h5.5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>';
   // иконка скорости: линия с ползунком, положение ползунка показывает текущее значение
@@ -627,7 +627,7 @@
   }
   function rvPrep(c) {
     var d = rvDom(c);
-    c.rs = { words: rvWords(c.paras), i: 0, state: 'idle', began: false, due: 0 };
+    c.rs = { words: rvWords(c.paras), i: 0, state: 'idle', began: false, due: 0, from: 0, tm: 0 };
     rvShow(c); return c.rs;
   }
   function rvShow(c) {
@@ -637,80 +637,85 @@
     d.wd.style.fontStyle = w.it ? 'italic' : '';
     var fs = '';
     if (w.len > 9) {     // очень длинное слово уменьшаем, чтобы оно не вылезло из окна; опорная буква остаётся на оси
+      var fz = RV_FS * (c.card.classList.contains('big') ? RV_BIG : 1);
       if (!rvCv) rvCv = document.createElement('canvas').getContext('2d');
       if (!d.ff) d.ff = getComputedStyle(d.rw).fontFamily;
-      rvCv.font = (w.it ? 'italic ' : '') + '400 ' + RV_FS + 'px ' + d.ff;
+      rvCv.font = (w.it ? 'italic ' : '') + '400 ' + fz + 'px ' + d.ff;
       var ow = rvCv.measureText(w.orp).width / 2, half = d.rw.clientWidth / 2 - 6;
       var ext = Math.max(rvCv.measureText(w.pre).width + ow, rvCv.measureText(w.post).width + ow);
-      if (half > 20 && ext > half) fs = (RV_FS * half / ext).toFixed(2) + 'px';
+      if (half > 20 && ext > half) fs = (fz * half / ext).toFixed(2) + 'px';
     }
     d.wd.style.fontSize = fs;
     d.fill.style.transform = 'scaleX(' + (r.began ? (r.i + 1) / n : 0).toFixed(4) + ')';
   }
   function rvMark() { cols.forEach(function (c) { if (c.rs) { c.card.classList.toggle('live', c.rs.state === 'run'); c.card.classList.toggle('fin', c.rs.state === 'done'); } }); }
 
+  // у каждого окна своё расписание: момент смены слова считается от плана (due), а не от «сейчас», поэтому окна не сбивают друг друга и не копят дрейф
+  function rvPlaying() { return cols.filter(function (c) { return c.rs && c.rs.state === 'run'; }); }
   function rvSchedule(c, from) {
     var r = c.rs, due = from + rvDelay(r.words[r.i]);
-    r.due = due; r.from = from; clearTimeout(rvTimer);
-    rvTimer = setTimeout(function () { rvTimer = 0; rvStep(c); }, Math.max(0, due - performance.now()));
+    r.due = due; r.from = from; clearTimeout(r.tm);
+    r.tm = setTimeout(function () { r.tm = 0; rvStep(c); }, Math.max(0, due - performance.now()));
   }
   function rvStep(c) {
-    if (rvAct !== c || !ansOpen) return;
-    var r = c.rs, base = r.due;
+    var r = c.rs;
+    if (!r || r.state !== 'run' || !ansOpen) return;
+    var base = r.due;
     if (r.i + 1 >= r.words.length) { rvFinish(c); return; }
     r.i++; rvShow(c);
     var t = performance.now();
     rvSchedule(c, t - base > 80 ? t : base);      // опоздали заметно (поток был занят): не догоняем, идём от сейчас
   }
   function rvFinish(c) {
-    var r = c.rs; r.state = 'done'; rvAct = null; rvLast = c; rvMark();
-    clearTimeout(rvTimer);
-    rvTimer = setTimeout(function () { rvTimer = 0; rvNext(c); }, RV_NEXT);
+    var r = c.rs; r.state = 'done'; rvLast = c; rvMark();
+    clearTimeout(r.tm);
+    r.tm = setTimeout(function () { r.tm = 0; rvNext(c); }, RV_NEXT);
   }
-  // следующий непрочитанный блок по порядку, после последнего — с начала
+  // следующий непрочитанный блок по порядку, после последнего — с начала; только если сейчас ничего не играет
   function rvNext(c) {
-    if (!ansOpen || closing || readMode !== 'rsvp') return;
+    if (!ansOpen || closing || readMode !== 'rsvp' || rvPlaying().length) return;
     var k = cols.indexOf(c);
     for (var j = 1; j <= cols.length; j++) { var x = cols[(k + j) % cols.length]; if (x.rs && x.rs.state !== 'done') { rvStart(x); return; } }
   }
   function rvStart(c) {
-    clearTimeout(rvTimer); rvTimer = 0; clearTimeout(rvKickT); rvKickT = 0;
+    clearTimeout(rvKickT); rvKickT = 0;
     if (!c.rs) return;
-    if (rvAct && rvAct !== c) rvPause(rvAct);
-    var r = c.rs;
+    var r = c.rs; clearTimeout(r.tm); r.tm = 0;
     if (r.state === 'done') r.i = 0;
-    r.state = 'run'; r.began = true; rvAct = c; rvLast = c;
+    r.state = 'run'; r.began = true; rvLast = c;
     rvShow(c); rvMark();
     rvSchedule(c, performance.now());
   }
   function rvPause(c) {
-    if (rvAct === c) { rvAct = null; clearTimeout(rvTimer); rvTimer = 0; }
-    if (c.rs && c.rs.state === 'run') c.rs.state = 'pause';
+    if (!c.rs) return;
+    clearTimeout(c.rs.tm); c.rs.tm = 0;
+    if (c.rs.state === 'run') c.rs.state = 'pause';
     rvMark();
   }
   function rvTap(c) { if (c.rs && c.rs.state === 'run') rvPause(c); else rvStart(c); }
+  // пробел: что-то играет — пауза всем играющим; ничего — продолжить последний сыгравший (или первый непрочитанный)
   function rvKey() {
-    if (rvAct) { rvPause(rvAct); return; }
+    var pl = rvPlaying();
+    if (pl.length) { pl.forEach(rvPause); return; }
     var c = rvLast && rvLast.rs && rvLast.rs.state !== 'done' ? rvLast : null, k;
     if (!c) for (k = 0; k < cols.length; k++) if (cols[k].rs && cols[k].rs.state !== 'done') { c = cols[k]; break; }
     rvStart(c || cols[0]);
   }
   function rvStopAll() {
-    clearTimeout(rvTimer); rvTimer = 0; clearTimeout(rvKickT); rvKickT = 0; rvAct = null;
-    cols.forEach(function (c) { if (c.rs && c.rs.state === 'run') c.rs.state = 'pause'; });
+    clearTimeout(rvKickT); rvKickT = 0;
+    cols.forEach(function (c) { if (c.rs) { clearTimeout(c.rs.tm); c.rs.tm = 0; if (c.rs.state === 'run') c.rs.state = 'pause'; } });
     rvMark();
   }
 
   // включение: текст допечатан (он под окном), окна готовы, первый блок стартует через delay мс
   function rvEnter(delay) {
     finishTyping();
-    zwrap.classList.add('rvm'); zwrap.classList.remove('exp');
+    zwrap.classList.add('rvm');      // развёрнутый блок остаётся развёрнутым: окно просто крупнее
     cols.forEach(function (c) {
-      c.card.classList.remove('big'); c.bx.hidden = true; c.bx.setAttribute('aria-expanded', 'false'); c.bx.setAttribute('aria-label', 'Развернуть ответ');
       c.card.classList.add('rsv'); c.card.classList.remove('live', 'fin'); rvPrep(c);
     });
     rvLast = null;
-    if (!calm && cols.length) rvKickT = setTimeout(function () { rvKickT = 0; if (ansOpen && !closing && readMode === 'rsvp') rvStart(cols[0]); }, delay);
+    if (!calm && cols.length) rvKickT = setTimeout(function () { rvKickT = 0; if (ansOpen && !closing && readMode === 'rsvp') rvStart(cols.filter(function (c) { return c.card.classList.contains('big'); })[0] || cols[0]); }, delay);   // развёрнутый блок виден — читаем его, иначе первый
   }
   function rvLeave() {
     rvStopAll();
@@ -732,7 +737,7 @@
   // новая скорость действует сразу: текущее слово досиживается по новому темпу, позиция не сбрасывается
   function setWpm(v) {
     wpm = snapWpm(v); save(K_WPM, wpm); paintCtl();
-    if (rvAct && rvAct.rs) rvSchedule(rvAct, rvAct.rs.from);
+    rvPlaying().forEach(function (c) { rvSchedule(c, c.rs.from); });
   }
   function sliderOpen() { return !!(ctl && ctl.zr.classList.contains('open')); }
   function sliderHide() { clearTimeout(sliderT); sliderT = 0; if (ctl) { ctl.zr.classList.remove('open', 'drag'); ctl.wb.setAttribute('aria-expanded', 'false'); } }
@@ -774,7 +779,7 @@
     return { mode: readMode, wpm: wpm, cols: cols.map(function (c) {
       var r = c.rs, ms = 0;
       if (r) r.words.forEach(function (w) { ms += rvDelay(w); });
-      return { a: c.a, state: r ? r.state : '', i: r ? r.i : -1, n: r ? r.words.length : 0, expectedMs: Math.round(ms), long: r ? r.words.filter(function (w) { return w.len > 8; }).length : 0 };
+      return { a: c.a, big: c.card.classList.contains('big'), state: r ? r.state : '', i: r ? r.i : -1, n: r ? r.words.length : 0, expectedMs: Math.round(ms), long: r ? r.words.filter(function (w) { return w.len > 8; }).length : 0 };
     }) };
   }
 
@@ -1072,7 +1077,7 @@
       D.themes.forEach(function (t) { if (t.id === th) theme = th; });
       (load(K_READ, []) || []).forEach(function (id) { readIds[id] = 1; });
       readMode = load(K_RMODE, 'type') === 'rsvp' ? 'rsvp' : 'type';
-      var sw = load(K_WPM, WPM_DEF); wpm = typeof sw === 'number' && sw >= WPM_MIN && sw <= WPM_MAX ? snapWpm(sw) : WPM_DEF;
+      var sw = load(K_WPM, WPM_DEF); wpm = typeof sw === 'number' && isFinite(sw) ? snapWpm(sw) : WPM_DEF;      // сохранённое вне диапазона зажимается
       buildWorld();
       if (!field) buildUI();
       buildNodes(); paintAuthors(); paintThemes();

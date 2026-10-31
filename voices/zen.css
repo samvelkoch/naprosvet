@@ -138,6 +138,11 @@ html.zen-on body{overflow:hidden}
 .rv .pre{display:flex;justify-content:flex-end;white-space:pre}
 .rv .orp{color:var(--accent)}
 .rv .post{white-space:pre}
+.zc.big .rv .rw{height:67.6px;font-size:29.12px}
+.zc.big .rv .rw::before,.zc.big .rv .rw::after{height:9px}
+.zc.big .rv .wd{top:10px;bottom:10px}
+.zw.exp .zc.rsv .body{display:none}
+.zw.exp .zc.rsv:not(.big) .rv{display:none}
 .rv .rp{position:relative;flex:none;height:2px;margin:0 0 14px;background:var(--ring);overflow:hidden}
 .rv .rp i{position:absolute;inset:0;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
 @media (prefers-reduced-motion:reduce){.zr>button,.zv,.zn,.rv .rs{transition-duration:.01s!important}}
