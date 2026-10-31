@@ -27,7 +27,7 @@ LIMIT_MB = 20
 FIXED = [
     "index.html", "manifest.webmanifest", "theme.js", "app.js", "app.css",
     "favicon.svg", "favicon.ico", "apple-touch-icon.png",
-    "voices/index.html", "voices/data.json", "voices/zen.js", "voices/zen.css", "voices/zen-drum.js", "voices/zen-ink.js",
+    "voices/index.html", "voices/data.json", "voices/zen.js", "voices/zen.css", "voices/zen-drum.js", "voices/zen-light.js",
     "brodsky/index.html", "chekhov/index.html", "gary/index.html",
 ]
 GLOBS = ["icons/*.png", "today/*", "shelf/*"]
