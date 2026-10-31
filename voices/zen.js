@@ -11,13 +11,15 @@
   function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
 
   var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme', K_MODE = 'voices-zen-mode';
-  // режимы: Вселенная живёт в этом файле, Барабан и Чернила регистрируются из zen-drum.js и zen-ink.js
-  var MODE_IDS = ['universe', 'drum', 'ink'];
-  var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', ink: 'Чернила' };
+  // режимы: Вселенная живёт в этом файле, Барабан и «На просвет» регистрируются из zen-drum.js и zen-light.js
+  var MODE_IDS = ['universe', 'drum', 'light'];
+  var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', light: 'На просвет' };
+  var MODE_ALIAS = { ink: 'light' };    // старые адреса и сохранённый режим «Чернила» ведут в «На просвет»
+  function canon(id) { return MODE_ALIAS[id] || id; }
   var MODE_ICONS = {
     universe: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="7" r="2.4"/><circle cx="16.5" cy="5.5" r="1.3"/><circle cx="19" cy="12.5" r="2.7"/><circle cx="10" cy="14" r="1.1"/><circle cx="5" cy="18.5" r="1.4"/><circle cx="14.5" cy="19" r="2"/></g></svg>',
-    drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 21 14.6 9.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16.2" cy="6.7" r="3.6" fill="currentColor"/></svg>',
-    ink: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.8C9.4 7 5.6 10.8 5.6 15.2a6.4 6.4 0 0 0 12.8 0C18.4 10.8 14.6 7 12 2.8Z" fill="currentColor"/></svg>'
+    drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="8" y="2.6" width="8" height="18.8" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8 12h8"/><path d="M8.5 9.2h7M8.5 14.8h7"/><path d="M10.3 6.8h3.4M10.3 17.2h3.4"/></g></svg>',
+    light: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><defs><mask id="zlm" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="1.8" y="4.1" width="14.4" height="17.8" rx="2.2" fill="#000"/></mask></defs><circle cx="16" cy="9.6" r="6.2" fill="currentColor" mask="url(#zlm)"/><rect x="3.2" y="5.5" width="11.6" height="15" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
   };
   var BG = '#120d0a';
   var AMP = 14;                         // наибольший размах собственного плавания вопроса, px мира
@@ -791,7 +793,7 @@
     if (!insts[id]) insts[id] = regs[id](api, scenes[id]);
     return insts[id];
   }
-  function lastMode() { var m = load(K_MODE, 'universe'); return MODE_IDS.indexOf(m) >= 0 ? m : 'universe'; }
+  function lastMode() { var m = canon(load(K_MODE, 'universe')); return MODE_IDS.indexOf(m) >= 0 ? m : 'universe'; }
   function paintMode() {
     btnM.innerHTML = MODE_ICONS[mode] || MODE_ICONS.universe;
     btnM.setAttribute('aria-label', MODE_NAMES[mode] || ''); btnM.title = MODE_NAMES[mode] || '';
@@ -825,7 +827,7 @@
 
   // ---------------------------------------------------------------- вход и выход
   function inUrl() { return /[?&]zen\b/.test(location.search); }
-  function modeFromUrl() { var m = /[?&]zen=([a-z]+)/.exec(location.search); return m && MODE_IDS.indexOf(m[1]) >= 0 ? m[1] : ''; }
+  function modeFromUrl() { var m = /[?&]zen=([a-z]+)/.exec(location.search); m = m && canon(m[1]); return m && MODE_IDS.indexOf(m) >= 0 ? m : ''; }
   function zenUrl(id) { return location.pathname + '?zen=' + (mode || wantMode || 'universe') + (id ? '#' + id : ''); }
   function idFromHash() { var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {} return h && IDX[h] != null ? IDX[h] : -1; }
 
