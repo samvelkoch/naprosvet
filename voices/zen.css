@@ -101,6 +101,47 @@ html.zen-on body{overflow:hidden}
 .zc .body p.typing::after{content:"";display:inline-block;width:.5em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--accent);animation:zblink 1s steps(1) infinite}
 @keyframes zblink{50%{opacity:0}}
 
+/* чтение по словам (RSVP): переключатель способа и бегунок скорости в углу карточки вопроса, окно слова в каждом блоке автора */
+.zw .zk{padding-right:42px}
+.zw.rvm .zk{min-height:84px}
+.zr{position:absolute;z-index:2;top:22px;right:4px;display:flex;flex-direction:column;align-items:center}
+.zr>button{width:30px;height:28px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--za-qink);opacity:.5;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .25s}
+.zr>button:hover,.zr>button[aria-expanded="true"]{opacity:.9}
+.zr>button[hidden]{display:none}
+.zr>button:focus-visible{outline:1px solid var(--hmark);outline-offset:-3px}
+.zr svg{display:block}
+.zv{position:absolute;right:calc(100% + 2px);bottom:0;width:196px;height:28px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;
+  background:var(--za-q);box-shadow:-10px 0 14px -2px var(--za-q);opacity:0;visibility:hidden;transform:translateX(6px);transition:opacity .2s,transform .2s,visibility .2s;touch-action:none}
+.zr.open .zv{opacity:1;visibility:visible;transform:none}
+.zv input{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:34px;margin:-3px 0;padding:0;background:transparent;cursor:pointer;touch-action:none;--p:0%;-webkit-tap-highlight-color:transparent}
+.zv input:focus{outline:none}
+.zv input::-webkit-slider-runnable-track{height:1px;border:0;background:linear-gradient(90deg,var(--accent) var(--p),rgba(240,232,216,.28) var(--p))}
+.zv input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5.5px;border-radius:50%;border:0;background:var(--za-qink);transition:transform .15s}
+.zv input::-moz-range-track{height:1px;border:0;background:rgba(240,232,216,.28)}
+.zv input::-moz-range-progress{height:1px;background:var(--accent)}
+.zv input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;border:0;background:var(--za-qink)}
+.zr.drag .zv input::-webkit-slider-thumb{transform:scale(1.25)}
+.zv input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 2px var(--hmark)}
+.zn{flex:none;width:26px;text-align:right;font:11px/1 var(--f-mono);color:var(--za-qink);opacity:.55;transition:opacity .2s}
+.zr.drag .zn{opacity:1}
+.zc.rsv{cursor:pointer}
+.zc .rv{display:none;flex:1 1 auto;min-height:0;flex-direction:column;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.zc.rsv .rv{display:flex}
+.zc.rsv .body{display:none}
+.rv .rs{flex:1 1 auto;min-height:0;display:flex;align-items:center;opacity:.5;transition:opacity .25s}
+.zc.live .rv .rs{opacity:1}
+.rv .rw{position:relative;width:100%;height:52px;flex:none;font-family:var(--f-serif);font-size:22.4px;line-height:1;color:var(--ink);overflow:hidden}
+.rv .rw::before,.rv .rw::after{content:"";position:absolute;left:50%;width:1px;height:7px;margin-left:-.5px;background:var(--muted);opacity:.7}
+.rv .rw::before{top:0}
+.rv .rw::after{bottom:0}
+.rv .wd{position:absolute;left:0;right:0;top:8px;bottom:8px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;white-space:pre;-webkit-font-smoothing:antialiased}
+.rv .pre{display:flex;justify-content:flex-end;white-space:pre}
+.rv .orp{color:var(--accent)}
+.rv .post{white-space:pre}
+.rv .rp{position:relative;flex:none;height:2px;margin:0 0 14px;background:var(--ring);overflow:hidden}
+.rv .rp i{position:absolute;inset:0;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+@media (prefers-reduced-motion:reduce){.zr>button,.zv,.zn,.rv .rs{transition-duration:.01s!important}}
+
 /* летящая копия вопроса: поле <-> заголовок */
 .zfly{position:absolute;left:0;top:0;z-index:6;transform-origin:0 0;white-space:pre;pointer-events:none;font-family:var(--f-serif);font-weight:400;line-height:1.25}
 

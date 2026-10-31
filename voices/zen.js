@@ -10,7 +10,7 @@
   function load(key, def) { try { var v = localStorage.getItem(key); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }
   function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
 
-  var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme', K_MODE = 'voices-zen-mode';
+  var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme', K_MODE = 'voices-zen-mode', K_RMODE = 'voices-zen-read-mode', K_WPM = 'voices-zen-wpm';
   // режимы: Вселенная живёт в этом файле, Барабан и «На просвет» регистрируются из zen-drum.js и zen-light.js
   var MODE_IDS = ['universe', 'drum', 'light'];
   var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', light: 'На просвет' };
@@ -415,6 +415,10 @@
     if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' || k === ' ' || k === 'Escape' || k === 'Enter') e.stopPropagation();
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (k === 'Escape') { e.preventDefault(); if (built && popOpen()) closePop(); else if (ansOpen) requestCloseAnswer(); else requestExit(); return; }
+    if (ansOpen && k === ' ' && readMode === 'rsvp' && !closing) {      // пробел: пауза и продолжение чтения по словам
+      if (!/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName)) { e.preventDefault(); rvKey(); }
+      return;
+    }
     if (ansOpen || !built || !curMode) return;
     if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (curMode.key) curMode.key(e);
@@ -499,6 +503,7 @@
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', function () { if (active) { measure(); if (curMode && curMode.resize) curMode.resize(); } });
     document.addEventListener('visibilitychange', function () {
+      if (document.hidden) rvStopAll();
       if (!curMode) return;
       if (document.hidden) curMode.pause();
       else if (active && !ansOpen && !leaving) curMode.resume();
@@ -517,7 +522,8 @@
     var q = D.questions[qn];
     zwrap.innerHTML = ''; cols = [];
     titleCard = el('section', 'zk'); titleH2 = el('h2', null, q.q); titleCard.appendChild(titleH2); zwrap.appendChild(titleCard);
-    zwrap.classList.remove('exp');
+    zwrap.classList.remove('exp'); zwrap.classList.toggle('rvm', readMode === 'rsvp');
+    buildCtl();
     var single = authCount() < 2;
     ORDER.forEach(function (a) {
       if (!authors[a]) return;
@@ -526,7 +532,7 @@
       hd.appendChild(el('h3', null, SHORT[a]));
       hd.appendChild(el('span', 'who', D.authors[a].years + ' · ' + WHERE[a]));
       var bx = el('button', 'zx'); bx.type = 'button'; bx.innerHTML = EXP; bx.setAttribute('aria-label', 'Развернуть ответ'); bx.setAttribute('aria-expanded', 'false');
-      bx.hidden = single; hd.appendChild(bx);
+      bx.hidden = single || readMode === 'rsvp'; hd.appendChild(bx);
       card.appendChild(hd);
       var paras = T.answer(q.a[a]);
       var ps = paras.map(function (pa) { var p = el('p', 'later'); T.fillP(p, pa); body.appendChild(p); return p; });
@@ -567,6 +573,209 @@
       }
       typeRaf = busy ? requestAnimationFrame(tick) : 0;
     });
+  }
+
+  // ---------------------------------------------------------------- чтение по словам (RSVP, как Spritz)
+  // В каждом блоке автора своё окно: слово в фиксированной точке, опорная буква (ORP) на одной вертикали. Читает один блок, остальные на паузе.
+  var WPM_MIN = 150, WPM_MAX = 800, WPM_STEP = 10, WPM_DEF = 250, RV_FS = 22.4, RV_PARA = 350, RV_NEXT = 600;
+  var LCH = 'A-Za-z0-9À-ɏЀ-ӿ';       // буквы и цифры; всё остальное по краям слова — пунктуация и кавычки
+  var RE_LEAD = new RegExp('^[^' + LCH + ']+'), RE_TAIL = new RegExp('[^' + LCH + ']+$'), RE_ANY = new RegExp('[' + LCH + ']');
+  var readMode = 'type', wpm = WPM_DEF, sliderT = 0, rvTimer = 0, rvKickT = 0, rvAct = null, rvLast = null, rvCv = null, ctl = null;
+  var ICO_TXT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5h16M4 10h16M4 14.5h16M4 19h9"/></svg>';
+  var ICO_RSVP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v4.5M12 16v4.5"/><path d="M3.5 12h5.5M15 12h5.5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>';
+  // иконка скорости: линия с ползунком, положение ползунка показывает текущее значение
+  function icoWpm() {
+    var x = 6.5 + 11 * (wpm - WPM_MIN) / (WPM_MAX - WPM_MIN);
+    return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3.5 12h17"/><circle cx="' + x.toFixed(2) + '" cy="12" r="3" fill="var(--za-q)"/></svg>';
+  }
+
+  function orpAt(len) { return len <= 1 ? 0 : len <= 5 ? 1 : len <= 9 ? 2 : len <= 13 ? 3 : 4; }
+  // слово: кусок до опорной буквы, она сама, остаток; k — множитель длительности (длинное слово, знак после слова)
+  function rvWord(t, it) {
+    var lead = (RE_LEAD.exec(t) || [''])[0], rest = t.slice(lead.length), tail = (RE_TAIL.exec(rest) || [''])[0];
+    var len = rest.length - tail.length, oi = Math.min(t.length - 1, lead.length + (len ? orpAt(len) : 0));
+    var tp = tail.replace(/[»"”’')\]\s ]+/g, ''), ch = tp.charAt(tp.length - 1), k = 1;
+    if (len > 8) k *= 1.3;
+    if ('.!?…'.indexOf(ch) >= 0 && ch) k *= 2.2; else if (ch && ',;:—–-'.indexOf(ch) >= 0) k *= 1.6;
+    return { t: t, pre: t.slice(0, oi), orp: t.charAt(oi), post: t.slice(oi + 1), len: len, k: k, it: it, para: false };
+  }
+  function rvWords(paras) {
+    var out = [];
+    paras.forEach(function (pa) {
+      var em = [], first = out.length, re = /\S+/g, m, j;
+      pa.segs.forEach(function (sg) { for (j = 0; j < sg.t.length; j++) em.push(sg.em ? 1 : 0); });
+      while ((m = re.exec(pa.text))) {
+        var t = m[0], it = 0;
+        for (j = 0; j < t.length; j++) if (em[m.index + j]) { it = 1; break; }
+        if (!RE_ANY.test(t) && out.length > first) { var pv = out[out.length - 1]; out[out.length - 1] = rvWord(pv.t + ' ' + t, pv.it || it); continue; }   // отдельное тире — к предыдущему слову
+        out.push(rvWord(t, it));
+      }
+      if (out.length > first) out[out.length - 1].para = true;
+    });
+    return out;
+  }
+  function rvDelay(w) { return w.k * 60000 / wpm + (w.para ? RV_PARA : 0); }
+
+  // окно блока: направляющая с засечками, слово на сетке «до | опорная | после» (боковые колонки равны, значит опорная буква ровно на оси), полоска прогресса
+  function rvDom(c) {
+    if (c.rd) return c.rd;
+    var rv = el('div', 'rv'), st = el('div', 'rs'), rw = el('div', 'rw'), wd = el('div', 'wd'), pre = el('span', 'pre'), orp = el('span', 'orp'), post = el('span', 'post');
+    var rp = el('div', 'rp'), fill = el('i');
+    wd.appendChild(pre); wd.appendChild(orp); wd.appendChild(post); rw.appendChild(wd); st.appendChild(rw);
+    rp.appendChild(fill); rv.appendChild(st); rv.appendChild(rp); c.card.appendChild(rv);
+    return (c.rd = { rv: rv, rw: rw, wd: wd, pre: pre, orp: orp, post: post, fill: fill, ff: '' });
+  }
+  function rvPrep(c) {
+    var d = rvDom(c);
+    c.rs = { words: rvWords(c.paras), i: 0, state: 'idle', began: false, due: 0 };
+    rvShow(c); return c.rs;
+  }
+  function rvShow(c) {
+    var r = c.rs, d = c.rd, w = r.words[r.i], n = r.words.length;
+    if (!w) return;
+    d.pre.textContent = w.pre; d.orp.textContent = w.orp; d.post.textContent = w.post;
+    d.wd.style.fontStyle = w.it ? 'italic' : '';
+    var fs = '';
+    if (w.len > 9) {     // очень длинное слово уменьшаем, чтобы оно не вылезло из окна; опорная буква остаётся на оси
+      if (!rvCv) rvCv = document.createElement('canvas').getContext('2d');
+      if (!d.ff) d.ff = getComputedStyle(d.rw).fontFamily;
+      rvCv.font = (w.it ? 'italic ' : '') + '400 ' + RV_FS + 'px ' + d.ff;
+      var ow = rvCv.measureText(w.orp).width / 2, half = d.rw.clientWidth / 2 - 6;
+      var ext = Math.max(rvCv.measureText(w.pre).width + ow, rvCv.measureText(w.post).width + ow);
+      if (half > 20 && ext > half) fs = (RV_FS * half / ext).toFixed(2) + 'px';
+    }
+    d.wd.style.fontSize = fs;
+    d.fill.style.transform = 'scaleX(' + (r.began ? (r.i + 1) / n : 0).toFixed(4) + ')';
+  }
+  function rvMark() { cols.forEach(function (c) { if (c.rs) { c.card.classList.toggle('live', c.rs.state === 'run'); c.card.classList.toggle('fin', c.rs.state === 'done'); } }); }
+
+  function rvSchedule(c, from) {
+    var r = c.rs, due = from + rvDelay(r.words[r.i]);
+    r.due = due; r.from = from; clearTimeout(rvTimer);
+    rvTimer = setTimeout(function () { rvTimer = 0; rvStep(c); }, Math.max(0, due - performance.now()));
+  }
+  function rvStep(c) {
+    if (rvAct !== c || !ansOpen) return;
+    var r = c.rs, base = r.due;
+    if (r.i + 1 >= r.words.length) { rvFinish(c); return; }
+    r.i++; rvShow(c);
+    var t = performance.now();
+    rvSchedule(c, t - base > 80 ? t : base);      // опоздали заметно (поток был занят): не догоняем, идём от сейчас
+  }
+  function rvFinish(c) {
+    var r = c.rs; r.state = 'done'; rvAct = null; rvLast = c; rvMark();
+    clearTimeout(rvTimer);
+    rvTimer = setTimeout(function () { rvTimer = 0; rvNext(c); }, RV_NEXT);
+  }
+  // следующий непрочитанный блок по порядку, после последнего — с начала
+  function rvNext(c) {
+    if (!ansOpen || closing || readMode !== 'rsvp') return;
+    var k = cols.indexOf(c);
+    for (var j = 1; j <= cols.length; j++) { var x = cols[(k + j) % cols.length]; if (x.rs && x.rs.state !== 'done') { rvStart(x); return; } }
+  }
+  function rvStart(c) {
+    clearTimeout(rvTimer); rvTimer = 0; clearTimeout(rvKickT); rvKickT = 0;
+    if (!c.rs) return;
+    if (rvAct && rvAct !== c) rvPause(rvAct);
+    var r = c.rs;
+    if (r.state === 'done') r.i = 0;
+    r.state = 'run'; r.began = true; rvAct = c; rvLast = c;
+    rvShow(c); rvMark();
+    rvSchedule(c, performance.now());
+  }
+  function rvPause(c) {
+    if (rvAct === c) { rvAct = null; clearTimeout(rvTimer); rvTimer = 0; }
+    if (c.rs && c.rs.state === 'run') c.rs.state = 'pause';
+    rvMark();
+  }
+  function rvTap(c) { if (c.rs && c.rs.state === 'run') rvPause(c); else rvStart(c); }
+  function rvKey() {
+    if (rvAct) { rvPause(rvAct); return; }
+    var c = rvLast && rvLast.rs && rvLast.rs.state !== 'done' ? rvLast : null, k;
+    if (!c) for (k = 0; k < cols.length; k++) if (cols[k].rs && cols[k].rs.state !== 'done') { c = cols[k]; break; }
+    rvStart(c || cols[0]);
+  }
+  function rvStopAll() {
+    clearTimeout(rvTimer); rvTimer = 0; clearTimeout(rvKickT); rvKickT = 0; rvAct = null;
+    cols.forEach(function (c) { if (c.rs && c.rs.state === 'run') c.rs.state = 'pause'; });
+    rvMark();
+  }
+
+  // включение: текст допечатан (он под окном), окна готовы, первый блок стартует через delay мс
+  function rvEnter(delay) {
+    finishTyping();
+    zwrap.classList.add('rvm'); zwrap.classList.remove('exp');
+    cols.forEach(function (c) {
+      c.card.classList.remove('big'); c.bx.hidden = true; c.bx.setAttribute('aria-expanded', 'false'); c.bx.setAttribute('aria-label', 'Развернуть ответ');
+      c.card.classList.add('rsv'); c.card.classList.remove('live', 'fin'); rvPrep(c);
+    });
+    rvLast = null;
+    if (!calm && cols.length) rvKickT = setTimeout(function () { rvKickT = 0; if (ansOpen && !closing && readMode === 'rsvp') rvStart(cols[0]); }, delay);
+  }
+  function rvLeave() {
+    rvStopAll();
+    zwrap.classList.remove('rvm');
+    var single = authCount() < 2;
+    cols.forEach(function (c) { c.card.classList.remove('rsv', 'live', 'fin'); c.bx.hidden = single; c.rs = null; c.body.scrollTop = 0; fade(c); });
+  }
+  function beginRead() { if (readMode === 'rsvp') rvEnter(1000); else startTyping(); }
+
+  function setReadMode(m) {
+    if (m === readMode) return;
+    readMode = m; save(K_RMODE, m);
+    if (m === 'rsvp') goal('zen_rsvp');
+    paintCtl();
+    if (!ansOpen || closing) return;
+    if (m === 'rsvp') rvEnter(250); else rvLeave();
+  }
+  function snapWpm(v) { v = Math.round(v / WPM_STEP) * WPM_STEP; return Math.max(WPM_MIN, Math.min(WPM_MAX, v)); }
+  // новая скорость действует сразу: текущее слово досиживается по новому темпу, позиция не сбрасывается
+  function setWpm(v) {
+    wpm = snapWpm(v); save(K_WPM, wpm); paintCtl();
+    if (rvAct && rvAct.rs) rvSchedule(rvAct, rvAct.rs.from);
+  }
+  function sliderOpen() { return !!(ctl && ctl.zr.classList.contains('open')); }
+  function sliderHide() { clearTimeout(sliderT); sliderT = 0; if (ctl) { ctl.zr.classList.remove('open', 'drag'); ctl.wb.setAttribute('aria-expanded', 'false'); } }
+  function sliderLater() { clearTimeout(sliderT); sliderT = setTimeout(sliderHide, 2500); }
+  function buildCtl() {
+    var zr = el('div', 'zr'), rb = el('button', 'rm'), wb = el('button', 'wp'), pn = el('div', 'zv'), rg = el('input'), nm = el('span', 'zn');
+    rb.type = 'button'; wb.type = 'button'; wb.setAttribute('aria-expanded', 'false');
+    rg.type = 'range'; rg.min = WPM_MIN; rg.max = WPM_MAX; rg.step = WPM_STEP; rg.value = wpm; rg.setAttribute('aria-label', 'Слов в минуту');
+    pn.appendChild(rg); pn.appendChild(nm);
+    var guard = function (e) { e.stopPropagation(); return performance.now() - openedAt >= 600; };
+    rb.addEventListener('click', function (e) { if (guard(e)) { sliderHide(); setReadMode(readMode === 'rsvp' ? 'type' : 'rsvp'); } });
+    wb.addEventListener('click', function (e) {
+      if (!guard(e)) return;
+      if (sliderOpen()) { sliderHide(); return; }
+      zr.classList.add('open'); wb.setAttribute('aria-expanded', 'true'); sliderLater();
+    });
+    rg.addEventListener('input', function () { clearTimeout(sliderT); sliderT = 0; zr.classList.add('drag'); setWpm(parseInt(rg.value, 10)); });
+    rg.addEventListener('change', function () { zr.classList.remove('drag'); sliderLater(); });
+    ['pointerdown', 'touchstart', 'mousedown'].forEach(function (n) { rg.addEventListener(n, function () { clearTimeout(sliderT); sliderT = 0; zr.classList.add('drag'); }, { passive: true }); });
+    ['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(function (n) { rg.addEventListener(n, function () { zr.classList.remove('drag'); sliderLater(); }); });
+    pn.addEventListener('click', function (e) { e.stopPropagation(); });
+    zr.appendChild(pn); zr.appendChild(rb); zr.appendChild(wb); titleCard.appendChild(zr);
+    ctl = { zr: zr, rb: rb, wb: wb, rg: rg, nm: nm }; paintCtl();
+  }
+  function paintCtl() {
+    if (!ctl) return;
+    var on = readMode === 'rsvp', t = on ? 'Читать текстом' : 'Читать по словам';
+    ctl.rb.innerHTML = on ? ICO_RSVP : ICO_TXT; ctl.rb.setAttribute('aria-label', t); ctl.rb.title = t;
+    ctl.wb.hidden = !on; ctl.wb.innerHTML = icoWpm();
+    var tw = 'Скорость чтения, слов в минуту: ' + wpm; ctl.wb.setAttribute('aria-label', tw); ctl.wb.title = tw;
+    if (parseInt(ctl.rg.value, 10) !== wpm) ctl.rg.value = wpm;
+    ctl.nm.textContent = wpm;
+    ctl.rg.style.setProperty('--p', ((wpm - WPM_MIN) / (WPM_MAX - WPM_MIN) * 100).toFixed(1) + '%');
+    if (!on) sliderHide();
+    zwrap.classList.toggle('rvm', on);
+  }
+  // для проверки из консоли: состояние окон и ожидаемая длительность блока при текущей скорости
+  function rvInfo() {
+    return { mode: readMode, wpm: wpm, cols: cols.map(function (c) {
+      var r = c.rs, ms = 0;
+      if (r) r.words.forEach(function (w) { ms += rvDelay(w); });
+      return { a: c.a, state: r ? r.state : '', i: r ? r.i : -1, n: r ? r.words.length : 0, expectedMs: Math.round(ms), long: r ? r.words.filter(function (w) { return w.len > 8; }).length : 0 };
+    }) };
   }
 
   // ---- полёт заголовка (FLIP): состояние элемента-источника снимается до любых сбросов
@@ -618,7 +827,7 @@
     buildAnswer(q);
     root.classList.add('ans'); za.classList.add('on'); za.scrollTop = 0; zwrap.style.transition = ''; zwrap.style.transform = '';
     try { za.focus({ preventScroll: true }); } catch (e) {}
-    if (!s0) { titleCard.classList.add('show'); startTyping(); return; }
+    if (!s0) { titleCard.classList.add('show'); beginRead(); return; }
     // FLIP: копия вопроса с места в режиме летит в заголовок
     var r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / s0.fs;
     var col1 = getComputedStyle(titleH2).color;
@@ -640,7 +849,7 @@
       c.card.animate([{ transform: 'translateY(46px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
         { duration: 520, delay: 240 + j * 110, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
     });
-    startTyping();
+    beginRead();
   }
 
   function requestCloseAnswer() { if (!ansOpen || closing) return; if (pushedAns) history.back(); else doClose(); }
@@ -656,6 +865,7 @@
     if (!ansOpen || closing) return;
     closing = true; pushedAns = false;
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
+    rvStopAll();
     var q = curQ, m = ansMode || curMode;
     if (calm) { finishClose(); return; }
     var tg = m && m.returnTarget ? m.returnTarget(q) : null;
@@ -694,12 +904,14 @@
     };
   }
   function cleanupAnswer() {
+    rvStopAll(); sliderHide(); ctl = null;
     closeAnims.forEach(function (a) { try { a.cancel(); } catch (e) {} }); closeAnims = [];
     za.classList.remove('on'); zwrap.innerHTML = ''; zwrap.style.transition = ''; zwrap.style.transform = '';
     closing = false; cols = [];
   }
   function finishClose() {
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
+    rvStopAll();
     dropFly(); ansOpen = false; pushedAns = false;
     root.classList.remove('ans');
     noteClosed();
@@ -711,7 +923,7 @@
   function initAnswerEvents() {
     var pull = null;
     za.addEventListener('touchstart', function (e) {
-      if (e.touches.length !== 1 || !ansOpen) { pull = null; return; }
+      if (e.touches.length !== 1 || !ansOpen || (e.target.closest && e.target.closest('.zv'))) { pull = null; return; }   // бегунок тянется пальцем в любую сторону, закрытие свайпом его не трогает
       var b = e.target.closest ? e.target.closest('.body') : null;
       pull = { y: e.touches[0].clientY, b: b, top: !b || b.scrollTop <= 0, on: false, dy: 0 };
     }, { passive: true });
@@ -719,7 +931,8 @@
       if (!pull || !pull.top) return;
       if (pull.b && pull.b.scrollTop > 0) { pull.top = false; return; }
       var dy = e.touches[0].clientY - pull.y;
-      if (dy <= 0) { if (!pull.on) return; dy = 0; }
+      if (!pull.on && dy < 8) return;       // дрожание пальца при касании не считается свайпом: касание остаётся касанием
+      if (dy <= 0) dy = 0;
       pull.on = true; pull.dy = dy;
       if (e.cancelable) e.preventDefault();
       zwrap.style.transition = 'none'; zwrap.style.transform = 'translateY(' + (dy * 0.55).toFixed(1) + 'px)';
@@ -734,9 +947,14 @@
     za.addEventListener('touchend', release);
     za.addEventListener('touchcancel', function () { if (pull) pull.dy = 0; release(); });
     za.addEventListener('click', function (e) {
-      if (!ansOpen || performance.now() - openedAt < 600) return;
-      if (e.target.closest && e.target.closest('.zk')) { requestCloseAnswer(); return; }
-      if (typeRaf && e.target.closest && e.target.closest('.zc')) finishTyping();   // касание по тексту: допечатать всё сразу
+      if (!ansOpen || closing || performance.now() - openedAt < 600 || !e.target.closest) return;
+      if (e.target.closest('.zr')) return;
+      if (sliderOpen()) { sliderHide(); return; }       // касание вне бегунка только сворачивает его
+      if (e.target.closest('.zk')) { requestCloseAnswer(); return; }
+      var cd = e.target.closest('.zc');
+      if (!cd) return;
+      if (readMode === 'rsvp') { for (var k = 0; k < cols.length; k++) if (cols[k].card === cd) { rvTap(cols[k]); return; } return; }
+      if (typeRaf) finishTyping();   // касание по тексту: допечатать всё сразу
     });
   }
 
@@ -853,6 +1071,8 @@
       var th = load(K_THEME, ''); theme = '';
       D.themes.forEach(function (t) { if (t.id === th) theme = th; });
       (load(K_READ, []) || []).forEach(function (id) { readIds[id] = 1; });
+      readMode = load(K_RMODE, 'type') === 'rsvp' ? 'rsvp' : 'type';
+      var sw = load(K_WPM, WPM_DEF); wpm = typeof sw === 'number' && sw >= WPM_MIN && sw <= WPM_MAX ? snapWpm(sw) : WPM_DEF;
       buildWorld();
       if (!field) buildUI();
       buildNodes(); paintAuthors(); paintThemes();
@@ -913,6 +1133,7 @@
     active = false; window.zenActive = false;
     stopLoop(); if (built) { finishClose(); closePop(); }
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
+    rvStopAll();
     if (leaving) { clearTimeout(leaveTimer); leaving.leave(); leaving = null; }
     if (curMode) { curMode.leave(); curMode = null; mode = ''; }
     root.classList.remove('on', 'ans', 'moving');
@@ -943,7 +1164,8 @@
   window.VoicesZen = {
     check: function () { return built ? check() : null; }, dim: function () { return { WD: WD, HD: HD, nodes: NODES }; }, enter: function () { enter('push'); },
     register: function (id, make) { regs[id] = make; },
-    mode: function () { return mode; }, setMode: function (id) { return built ? setMode(id, {}) : false; }
+    mode: function () { return mode; }, setMode: function (id) { return built ? setMode(id, {}) : false; },
+    rsvp: function () { return rvInfo(); }
   };
 
   var openBtn = document.getElementById('zenopen');
