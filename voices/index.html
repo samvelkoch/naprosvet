@@ -2,6 +2,11 @@
 <html lang="ru"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+// ?zen: слой Zen откроет zen.js; до его старта страница скрыта, а если файл не загрузился, через 4 с она возвращается
+window.zenActive = /[?&]zen\b/.test(location.search);
+if (window.zenActive) { document.documentElement.className += " zen-boot"; setTimeout(function () { if (!window.zenReady) { window.zenActive = false; document.documentElement.className = document.documentElement.className.replace(" zen-boot", ""); } }, 4000); }
+</script>
 <title>Голоса</title>
 <meta name="description" content="Бродский, Чехов и Ромен Гари отвечают на одни и те же вопросы. Реконструкция голосов по текстам авторов.">
 <meta property="og:type" content="website"><meta property="og:locale" content="ru_RU">
@@ -19,6 +24,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="preload" href="data.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="zen.css">
+<script src="zen.js" defer></script>
 <style>
 :root{
   --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
@@ -271,6 +278,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
 </div></div></header>
 <main><div class="inner">
   <div class="tools">
+    <button type="button" class="zenbtn" id="zenopen" aria-label="Zen" title="Zen"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M17.46 5.49A8.5 8.5 0 1 0 20.37 13.48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <div class="seg mode" role="group" aria-label="Режим">
       <button type="button" data-mode="read" aria-pressed="true">Читать</button>
       <button type="button" data-mode="play" aria-pressed="false">Чей ответ?</button>
@@ -391,7 +399,7 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
   function render(i) {
     stop();
     var q = D.questions[i];
-    history.replaceState(null, '', location.pathname + (mode === 'play' ? '?play' : '') + '#' + q.id);
+    if (!window.zenActive) history.replaceState(null, '', location.pathname + (mode === 'play' ? '?play' : '') + '#' + q.id);
     if (mode === 'play') return renderGame(q);
     stage.innerHTML = '';
     stage.appendChild(qcard(q));
@@ -468,6 +476,9 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
       if (c.pi >= c.paras.length) c.done = true; else c.wait = 380;
     }
   }
+
+  // движок печати для Zen (voices/zen.js): те же разбор, темп и шаг
+  window.VoicesType = { answer: answer, fillP: fillP, show: show, step: step, CPS: CPS, SHORT: SHORT, WHERE: WHERE, ORDER: ORDER };
 
   function finish() {
     stop();
@@ -823,7 +834,9 @@ footer .row{border-top:1px dashed var(--ring);padding-top:18px;display:flex;flex
     stage.innerHTML = '<div class="status">Барабан крутится…</div>';
     var first = fromHash();
     buildDeck(first);
-    if (first != null) { pos = 0; park(first); render(first); } else { park(pick()); next(); }
+    if (first != null) { pos = 0; park(first); render(first); if (window.zenActive) finish(); }
+    else if (window.zenActive) { var z0 = pick(); buildDeck(z0); pos = 0; park(z0); render(z0); finish(); } // под Zen барабан не крутим и не печатаем
+    else { park(pick()); next(); }
   }).catch(function () {
     stage.innerHTML = '<div class="status">Не получилось загрузить ответы. Обновите страницу.</div>';
   });
