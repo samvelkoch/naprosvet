@@ -1,0 +1,79 @@
+/* «Голоса_»: режим Zen. Ночное небо из вопросов, экран ответов поверх. Токены цвета берём из :root страницы. */
+.zenbtn{flex:none;width:38px;height:38px;display:inline-grid;place-items:center;padding:0;border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.zenbtn:hover{color:var(--accent);border-color:var(--accent)}
+.zenbtn:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+/* ?zen: пока zen.js не открыл слой, страница под ним скрыта */
+html.zen-boot{background:#120d0a}
+html.zen-boot body{visibility:hidden}
+html.zen-on{overflow:hidden;overscroll-behavior:none}
+html.zen-on body{overflow:hidden}
+
+#zen{--zen-bg:#120d0a;position:fixed;inset:0;z-index:80;display:none;visibility:visible;overflow:hidden;
+  background:radial-gradient(120% 100% at 50% 38%,#1b1411 0,var(--zen-bg) 68%);color:var(--htext);
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+#zen.on{display:block}
+
+/* поле */
+.zf{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab;transition:opacity .45s ease}
+.zf.drag{cursor:grabbing}
+#zen.ans .zf{opacity:.12;pointer-events:none}
+.zq{position:absolute;left:0;top:0;transform-origin:0 0;white-space:pre;font-family:var(--f-serif);font-weight:400;line-height:1.25;
+  color:var(--htext);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .5s ease;-webkit-font-smoothing:antialiased}
+.zq.intro{transition-duration:.8s}
+
+/* три иконки справа сверху */
+.zt{position:absolute;z-index:4;top:calc(env(safe-area-inset-top,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);display:flex;gap:0;transition:opacity .35s}
+.zt button{position:relative;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--htext);
+  opacity:.45;cursor:pointer;transition:opacity .35s;-webkit-tap-highlight-color:transparent}
+.zt button:hover,.zt button[aria-expanded="true"]{opacity:.85}
+.zt button:focus-visible{outline:1px solid var(--hmark);outline-offset:-6px}
+.zt svg{display:block}
+.zt .dot{position:absolute;top:10px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--hmark);display:none}
+.zt button[data-on] .dot{display:block}
+#zen.moving .zt button{opacity:.15}
+#zen.ans .zt{opacity:0;pointer-events:none}
+.zt button.shake{animation:zshake .34s}
+@keyframes zshake{20%{transform:translateX(-4px)}50%{transform:translateX(4px)}80%{transform:translateX(-2px)}}
+
+.zp{position:absolute;z-index:5;top:calc(env(safe-area-inset-top,0px) + 52px);right:calc(env(safe-area-inset-right,0px) + 8px);min-width:178px;
+  max-height:calc(100% - env(safe-area-inset-top,0px) - 72px);overflow-y:auto;overscroll-behavior:contain;padding:6px 0;
+  background:var(--desk-2);border:1px solid rgba(255,255,255,.08);box-shadow:0 14px 30px -10px rgba(0,0,0,.7);
+  font:13px/1.2 var(--f-mono);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility .2s}
+.zp.on{opacity:1;visibility:visible;transform:none}
+.zp button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;color:var(--htext-2);opacity:.6;font:inherit;padding:11px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.zp button:hover{opacity:1}
+.zp button[aria-pressed="true"]{color:var(--htext);opacity:1}
+.zp button i{flex:none;width:7px;height:7px;border-radius:50%;border:1px solid currentColor}
+.zp button[aria-pressed="true"] i{background:var(--hmark);border-color:var(--hmark)}
+.zp button.shake{animation:zshake .34s}
+.zp button:focus-visible{outline:1px solid var(--hmark);outline-offset:-3px}
+
+/* экран ответов */
+.za{position:absolute;inset:0;z-index:3;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;touch-action:pan-y;
+  visibility:hidden;-webkit-user-select:text;user-select:text}
+.za.on{visibility:visible}
+.za:focus{outline:none}
+.zw{max-width:680px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 72px) max(16px,env(safe-area-inset-left))}
+.zk{position:relative;background:var(--surface);border:1px solid var(--ring);padding:22px clamp(18px,3vw,32px) 24px;cursor:pointer;
+  box-shadow:0 14px 26px -18px rgba(0,0,0,.5)}
+.zk::before{content:"";position:absolute;top:-1px;right:-1px;width:18px;height:18px;background:linear-gradient(225deg,var(--zen-bg) 50%,var(--fold) 50%)}
+.zk h2{margin:0;font:italic 400 clamp(23px,5vw,30px)/1.3 var(--f-serif);color:var(--ink);opacity:0}
+.zk.show h2{opacity:1;transition:opacity .2s}
+.zc{margin-top:14px;background:var(--surface);border:1px solid var(--ring);border-top:3px solid var(--accent);padding:18px 20px 22px}
+.zc h3{margin:0;font:600 19px/1.15 var(--f-mono);letter-spacing:-.02em;text-transform:uppercase;color:var(--ink)}
+.zc .who{margin:4px 0 12px;font:11.5px/1.5 var(--f-mono);color:var(--muted)}
+.zc .body p{margin:0 0 .8em;font-size:16.5px;line-height:1.62;color:var(--ink)}
+.zc .body p:last-child{margin-bottom:0}
+.zc .body em{color:var(--muted)}
+.zc .body p.later{display:none}
+.zc .body p.typing::after{content:"";display:inline-block;width:.5em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--accent);animation:zblink 1s steps(1) infinite}
+@keyframes zblink{50%{opacity:0}}
+
+/* летящая копия вопроса: поле <-> заголовок */
+.zfly{position:absolute;left:0;top:0;z-index:6;transform-origin:0 0;white-space:pre;pointer-events:none;font-family:var(--f-serif);font-weight:400;line-height:1.25}
+
+@media (prefers-reduced-motion:reduce){
+  .zq,.zf,.zt,.zt button,.zp{transition-duration:.01s!important}
+  .zt button.shake,.zp button.shake{animation:none}
+}
