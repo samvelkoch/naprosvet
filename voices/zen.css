@@ -60,9 +60,9 @@ html.zen-on body{overflow:hidden}
 .za.on{visibility:visible}
 .za:focus{outline:none}
 /* цвета экрана ответов: бумага сайта (светлая или тёмная тема), блок вопроса заметно темнее блоков с ответами */
-#zen{--za-card:var(--surface);--za-q:#e0d4bf;--za-qink:var(--ink)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:var(--ink)}}
-:root[data-theme="dark"] #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:var(--ink)}
+#zen{--za-card:var(--surface);--za-q:#221a14;--za-qink:#f7f0e2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:#f0e8d8}}
+:root[data-theme="dark"] #zen{--za-card:#2a221c;--za-q:#0d0906;--za-qink:#f0e8d8}
 /* один экран: вопрос сверху, под ним блоки авторов делят остаток поровну и не растут, текст прокручивается внутри блока */
 .zw{box-sizing:border-box;height:100%;max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
   padding:calc(env(safe-area-inset-top,0px) + 14px) max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom,0px) + 14px) max(12px,env(safe-area-inset-left))}
@@ -82,7 +82,10 @@ html.zen-on body{overflow:hidden}
 .zx .i,.zc.big .zx .o{display:none}
 .zc.big .zx .i{display:inline}
 .zc .body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:0 6px 14px 0}
-.zc.more .body{-webkit-mask-image:linear-gradient(#000 calc(100% - 30px),transparent);mask-image:linear-gradient(#000 calc(100% - 30px),transparent)}
+/* текст уходит за край блока плавно, в прозрачность: сверху, когда прокручен, и снизу, когда есть продолжение */
+.zc .body{--ft:0px;--fb:0px;-webkit-mask-image:linear-gradient(transparent,#000 var(--ft),#000 calc(100% - var(--fb)),transparent);mask-image:linear-gradient(transparent,#000 var(--ft),#000 calc(100% - var(--fb)),transparent)}
+.zc.top .body{--ft:28px}
+.zc.more .body{--fb:30px}
 .zw.exp .zc{flex:none}
 .zw.exp .zc .body{display:none}
 .zw.exp .zc.big{flex:1 1 0}
