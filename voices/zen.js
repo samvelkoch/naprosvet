@@ -12,13 +12,13 @@
 
   var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme';
   var BG = '#120d0a';
-  var GAP = 18, PAD = GAP / 2;          // зазор между боксами, вдвое больше амплитуды покачивания
+  var AMP = 14;                         // наибольший размах собственного плавания вопроса, px мира
+  var GAP = 2 * AMP + 14, PAD = GAP / 2; // зазор больше двух размахов: соседи плавают, но не сталкиваются
   var TAU = 0.45;                       // трение инерции, с
-  var SNAP_V = 40;                      // ниже этой скорости (px/с) включается магнит
+  var REST_V = 40;                      // ниже этой скорости (px/с) поле считается остановившимся
   var Z_MIN = 0.55, Z_MAX = 2.2;
   var IDLE = 6000, DRIFT = 8;           // через 6 с без касаний поле дрейфует до 8 px/с
-  var SWAY = 3;
-  var ORDER = ['brodsky', 'chekhov', 'gary'];
+    var ORDER = ['brodsky', 'chekhov', 'gary'];
   var SHORT = { brodsky: 'Бродский', chekhov: 'Чехов', gary: 'Гари' };
   var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, январь 1900', gary: 'Париж, 1978–1980' };
 
@@ -27,7 +27,7 @@
   var active = false, enteredPush = false, pushedAns = false, ansOpen = false, closing = false;
 
   // ---- мир ----
-  var n = 0, X, Y, WD, HD, SZ, BASE, PH1, PH2, SP1, SP2, VIS, ACT, RD, LINES = [], NODES = [], IDX = {};
+  var n = 0, X, Y, WD, HD, SZ, BASE, PH1, PH2, SP1, SP2, AM, PH3, SP3, OPS, LO, VIS, ACT, RD, LINES = [], NODES = [], IDX = {};
   var WW = 0, WH = 0, maxBW = 0, maxBH = 0;
   var camX = 0, camY = 0, zoom = 1, vw = 0, vh = 0, minZ = Z_MIN;
   var vx = 0, vy = 0;                   // скорость камеры, мир/с
@@ -37,7 +37,7 @@
 
   // ---- кадр ----
   var raf = 0, last = 0, lastInput = 0, driftAmt = 0, dAng = 0, pending = false, snap = null, wheelUntil = 0, touching = false;
-  var dX = NaN, dY = NaN, dZ = NaN, forceDraw = true;
+  var dX = NaN, dY = NaN, dZ = NaN, forceDraw = true, introUntil = 0;
 
   // ---------------------------------------------------------------- раскладка на торе
   function ovl1(a, aw, b, bw, L) { var d = ((b - a) % L + L) % L; return d < aw || (L - d) < bw; }
@@ -63,7 +63,8 @@
     var qs = D.questions; n = qs.length;
     X = new Float64Array(n); Y = new Float64Array(n); WD = new Float64Array(n); HD = new Float64Array(n);
     SZ = new Float32Array(n); BASE = new Float32Array(n); PH1 = new Float32Array(n); PH2 = new Float32Array(n);
-    SP1 = new Float32Array(n); SP2 = new Float32Array(n); VIS = new Uint8Array(n); ACT = new Uint8Array(n); RD = new Uint8Array(n);
+    SP1 = new Float32Array(n); SP2 = new Float32Array(n); AM = new Float32Array(n); PH3 = new Float32Array(n); SP3 = new Float32Array(n);
+    OPS = new Float32Array(n); LO = new Float32Array(n); VIS = new Uint8Array(n); ACT = new Uint8Array(n); RD = new Uint8Array(n);
     LINES = []; IDX = {}; maxBW = 0; maxBH = 0;
     var AW = new Float64Array(n), AH = new Float64Array(n), sumA = 0, i, r, tier, size, em;
     for (i = 0; i < n; i++) {
@@ -73,13 +74,15 @@
       size = tier === 0 ? 14 + Math.random() * 3 : tier === 1 ? 20 + Math.random() * 5 : 30 + Math.random() * 12;
       em = tier === 0 ? 14 + Math.random() * 8 : tier === 1 ? 12 + Math.random() * 6 : 9 + Math.random() * 5;
       var m = wrap(q.q, size, em * size);
-      SZ[i] = size; BASE[i] = 0.32 + Math.random() * 0.53; LINES.push(m.lines);
+      SZ[i] = size; BASE[i] = 0.45 + Math.random() * 0.5; LINES.push(m.lines);
       WD[i] = Math.ceil(m.w) + 2; HD[i] = Math.ceil(m.lines.length * size * 1.25);
       AW[i] = WD[i] + GAP; AH[i] = HD[i] + GAP; sumA += AW[i] * AH[i];
       if (WD[i] > maxBW) maxBW = WD[i];
       if (HD[i] > maxBH) maxBH = HD[i];
       PH1[i] = Math.random() * 6.283; PH2[i] = Math.random() * 6.283;
-      SP1[i] = 0.00055 + Math.random() * 0.0003; SP2[i] = 0.00045 + Math.random() * 0.0003;
+      // плавание: своя фигура Лиссажу у каждого, период 9–25 с; дыхание яркости: период 5–13 с
+      SP1[i] = 0.00025 + Math.random() * 0.00045; SP2[i] = 0.00025 + Math.random() * 0.00045; AM[i] = AMP * (0.55 + Math.random() * 0.45);
+      PH3[i] = Math.random() * 6.283; SP3[i] = 0.00048 + Math.random() * 0.0008;
     }
     var order = []; for (i = 0; i < n; i++) order.push(i);
     order.sort(function (a, b) { return AW[b] * AH[b] - AW[a] * AH[a]; });   // крупные первыми
@@ -116,7 +119,7 @@
       }
       return true;
     }
-    var W = Math.sqrt(2.6 * sumA), H = W, tries = 0;
+    var W = Math.sqrt(1.6 * sumA), H = W, tries = 0;
     while (!tryPlace(W, H) && tries < 60) { W *= 1.06; H *= 1.06; tries++; }
     WW = W; WH = H;
     for (i = 0; i < n; i++) { X[i] = RX[i] + PAD; Y[i] = RY[i] + PAD; }
@@ -141,7 +144,13 @@
     if (i === FOC) return 1;
     return BASE[i] * (RD[i] ? 0.5 : 1);
   }
-  function setOp(i) { NODES[i].style.opacity = opacityOf(i); }
+  // дыхание: вопрос медленно разгорается и почти гаснет, у каждого свой ритм
+  function breath(i, t) {
+    if (calm) return 1;
+    var b = 0.5 + 0.5 * Math.sin(t * SP3[i] + PH3[i]); b = b * b * (3 - 2 * b);
+    return 0.1 + 0.9 * b;
+  }
+  function setOp(i) { OPS[i] = opacityOf(i); LO[i] = OPS[i] * breath(i, performance.now()); NODES[i].style.opacity = LO[i].toFixed(3); forceDraw = true; }
   function setFocus(i) { var o = FOC; if (o === i) return; FOC = i; if (o >= 0) setOp(o); if (i >= 0) setOp(i); }
   function applyTheme() {
     for (var i = 0; i < n; i++) { ACT[i] = !theme || D.questions[i].t.indexOf(theme) >= 0 ? 1 : 0; setOp(i); }
@@ -178,11 +187,11 @@
     var cy = Y[i] + HD[i] * 0.5 - cy0; cy -= WH * Math.round(cy / WH);
     px = vw * 0.5 + (cx - WD[i] * 0.5) * z; py = vh * 0.5 + (cy - HD[i] * 0.5) * z;
   }
-  function sway(i, tm) { if (calm) return; px += Math.sin(tm * SP1[i] + PH1[i]) * SWAY; py += Math.cos(tm * SP2[i] + PH2[i]) * SWAY; }
+  function sway(i, tm) { if (calm) return; px += Math.sin(tm * SP1[i] + PH1[i]) * AM[i] * zoom; py += Math.sin(tm * SP2[i] + PH2[i]) * AM[i] * zoom; }
 
   // ---------------------------------------------------------------- кадр
   function draw(now) {
-    var z = zoom, i, w, h, sx, sy, v, margin = 24, nd, tr;
+    var z = zoom, i, w, h, sx, sy, v, margin = 24 + AMP * z, nd, tr, o, live = now > introUntil;
     camX = ((camX % WW) + WW) % WW; camY = ((camY % WH) + WH) % WH;
     if (calm && !forceDraw && camX === dX && camY === dY && z === dZ) return;
     dX = camX; dY = camY; dZ = z; forceDraw = false;
@@ -196,26 +205,9 @@
         nd = NODES[i];
         if (VIS[i] !== 1) { nd.style.visibility = 'visible'; VIS[i] = 1; }
         nd.style.transform = 'translate3d(' + px.toFixed(2) + 'px,' + py.toFixed(2) + 'px,0) scale(' + zs + ')';
+        if (live) { o = OPS[i] * breath(i, now); if (Math.abs(o - LO[i]) > 0.004) { LO[i] = o; nd.style.opacity = o.toFixed(3); } }
       } else if (VIS[i] !== 0) { NODES[i].style.visibility = 'hidden'; VIS[i] = 0; }
     }
-  }
-
-  function startSnap(now) {
-    pending = false; vx = vy = 0;
-    var best = -1, bd = 1e9, R = 0.35 * Math.min(vw, vh), i, d, cx, cy;
-    for (i = 0; i < n; i++) {
-      if (!ACT[i]) continue;
-      place(i, camX, camY, zoom);
-      cx = px + WD[i] * zoom * 0.5 - vw * 0.5; cy = py + HD[i] * zoom * 0.5 - vh * 0.5;
-      d = Math.sqrt(cx * cx + cy * cy);
-      if (d < R && d < bd) { bd = d; best = i; }
-    }
-    if (best < 0) return;
-    var dx = X[best] + WD[best] * 0.5 - camX; dx -= WW * Math.round(dx / WW);
-    var dy = Y[best] + HD[best] * 0.5 - camY; dy -= WH * Math.round(dy / WH);
-    setFocus(best);
-    if (calm) { camX += dx; camY += dy; forceDraw = true; return; }
-    snap = { t0: now, dur: 420, x0: camX, y0: camY, dx: dx, dy: dy };
   }
 
   function physics(now, dt) {
@@ -231,7 +223,7 @@
       var f = Math.exp(-dt / TAU); vx *= f; vy *= f;
       if (Math.abs(vx) + Math.abs(vy) < 0.5 / zoom) vx = vy = 0;
     }
-    if (pending && now > wheelUntil && Math.sqrt(vx * vx + vy * vy) * zoom < SNAP_V) startSnap(now);
+    if (pending && now > wheelUntil && Math.sqrt(vx * vx + vy * vy) * zoom < REST_V) pending = false;
     if (calm) return;
     var idle = !snap && !vx && !vy && !pending && now - lastInput > IDLE;
     if (idle) {
@@ -450,33 +442,63 @@
   }
 
   // ---------------------------------------------------------------- экран ответов
+  var openedAt = 0;   // касание, открывшее вопрос, не должно «прокликнуть» в карточку ответа
+  var EXP = '<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">' +
+    '<g class="o"><path d="M12 3h5v5M17 3l-5.5 5.5M8 17H3v-5M3 17l5.5-5.5"/></g><g class="i"><path d="M17 8h-5V3M12 8l5.5-5.5M3 12h5v5M8 12l-5.5 5.5"/></g></svg>';
   var cols = [], typeRaf = 0, flyEl = null, flyAnim = null, closeAnims = [], titleCard = null, titleH2 = null;
 
   function buildAnswer(i) {
     var q = D.questions[i];
     zwrap.innerHTML = ''; cols = [];
     titleCard = el('section', 'zk'); titleH2 = el('h2', null, q.q); titleCard.appendChild(titleH2); zwrap.appendChild(titleCard);
+    zwrap.classList.remove('exp');
+    var single = authCount() < 2;
     ORDER.forEach(function (a) {
       if (!authors[a]) return;
-      var card = el('article', 'zc'), body = el('div', 'body');
-      card.appendChild(el('h3', null, SHORT[a]));
-      card.appendChild(el('div', 'who', D.authors[a].years + ' · ' + WHERE[a]));
+      // блок автора не растёт: высота делится поровну, текст прокручивается внутри
+      var card = el('article', 'zc'), hd = el('div', 'hd'), body = el('div', 'body');
+      hd.appendChild(el('h3', null, SHORT[a]));
+      hd.appendChild(el('span', 'who', D.authors[a].years + ' · ' + WHERE[a]));
+      var bx = el('button', 'zx'); bx.type = 'button'; bx.innerHTML = EXP; bx.setAttribute('aria-label', 'Развернуть ответ'); bx.setAttribute('aria-expanded', 'false');
+      bx.hidden = single; hd.appendChild(bx);
+      card.appendChild(hd);
       var paras = T.answer(q.a[a]);
       var ps = paras.map(function (pa) { var p = el('p', 'later'); T.fillP(p, pa); body.appendChild(p); return p; });
       card.appendChild(body); zwrap.appendChild(card);
-      cols.push({ a: a, card: card, ps: ps, paras: paras, pi: 0, ci: 0, acc: 0, wait: 650 + Math.random() * 450, done: false });
+      var c = { a: a, card: card, body: body, bx: bx, ps: ps, paras: paras, pi: 0, ci: 0, acc: 0, wait: 650 + Math.random() * 450, done: false, follow: true };
+      // пока читатель не тронул блок, он следит за печатью; тронул — прокрутка его
+      function mine() { c.follow = false; }
+      body.addEventListener('touchstart', mine, { passive: true });
+      body.addEventListener('wheel', mine, { passive: true });
+      body.addEventListener('scroll', function () { fade(c); }, { passive: true });
+      bx.addEventListener('click', function (e) { e.stopPropagation(); expand(c); });
+      cols.push(c);
     });
+  }
+  function fade(c) { var b = c.body; c.card.classList.toggle('more', b.scrollHeight - b.scrollTop - b.clientHeight > 4); }
+  // один блок на весь экран, остальные сворачиваются до строки с именем; повторное касание возвращает поровну
+  function expand(c) {
+    var on = !c.card.classList.contains('big');
+    cols.forEach(function (x) { x.card.classList.remove('big'); x.bx.setAttribute('aria-expanded', 'false'); x.bx.setAttribute('aria-label', 'Развернуть ответ'); });
+    zwrap.classList.toggle('exp', on);
+    if (on) { c.card.classList.add('big'); c.bx.setAttribute('aria-expanded', 'true'); c.bx.setAttribute('aria-label', 'Свернуть ответ'); }
+    cols.forEach(function (x) { if (x.follow) x.body.scrollTop = x.body.scrollHeight; fade(x); });
   }
   function finishTyping() {
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
-    cols.forEach(function (c) { c.done = true; c.ps.forEach(function (p, k) { T.show(c.paras[k], Infinity); p.className = ''; }); });
+    cols.forEach(function (c) { c.done = true; c.follow = false; c.ps.forEach(function (p, k) { T.show(c.paras[k], Infinity); p.className = ''; }); c.body.scrollTop = 0; fade(c); });
   }
   function startTyping() {
     if (calm) return finishTyping();
     var lt = performance.now();
     typeRaf = requestAnimationFrame(function tick(now) {
       var dt = Math.min(now - lt, 64), busy = false; lt = now;
-      for (var c = 0; c < cols.length; c++) { T.step(cols[c], dt); if (!cols[c].done) busy = true; }
+      for (var c = 0; c < cols.length; c++) {
+        var x = cols[c]; if (x.done) continue;
+        T.step(x, dt); if (!x.done) busy = true;
+        if (x.follow) x.body.scrollTop = x.body.scrollHeight;
+        fade(x);
+      }
       typeRaf = busy ? requestAnimationFrame(tick) : 0;
     });
   }
@@ -504,7 +526,7 @@
       place(i, camX, camY, zoom); sway(i, now); p0 = { x: px, y: py };
       var cs = getComputedStyle(NODES[i]); col0 = cs.color; op0 = parseFloat(cs.opacity);
     }
-    ansOpen = true; closing = false; curQ = i;
+    ansOpen = true; closing = false; curQ = i; openedAt = now;
     stopLoop(); closePop(); setFocus(-1); setMoving(false); touching = false; np = 0; ptrs = {}; tap = null; vx = vy = 0; snap = null;
     goal('zen_q');
     readIds[D.questions[i].id] = 1; RD[i] = 1;
@@ -594,11 +616,12 @@
     var pull = null;
     za.addEventListener('touchstart', function (e) {
       if (e.touches.length !== 1 || !ansOpen) { pull = null; return; }
-      pull = { y: e.touches[0].clientY, top: za.scrollTop <= 0, on: false, dy: 0 };
+      var b = e.target.closest ? e.target.closest('.body') : null;
+      pull = { y: e.touches[0].clientY, b: b, top: !b || b.scrollTop <= 0, on: false, dy: 0 };
     }, { passive: true });
     za.addEventListener('touchmove', function (e) {
       if (!pull || !pull.top) return;
-      if (za.scrollTop > 0) { pull.top = false; return; }
+      if (pull.b && pull.b.scrollTop > 0) { pull.top = false; return; }
       var dy = e.touches[0].clientY - pull.y;
       if (dy <= 0) { if (!pull.on) return; dy = 0; }
       pull.on = true; pull.dy = dy;
@@ -615,7 +638,7 @@
     za.addEventListener('touchend', release);
     za.addEventListener('touchcancel', function () { if (pull) pull.dy = 0; release(); });
     za.addEventListener('click', function (e) {
-      if (!ansOpen) return;
+      if (!ansOpen || performance.now() - openedAt < 600) return;
       if (e.target.closest && e.target.closest('.zk')) { requestCloseAnswer(); return; }
       if (typeRaf && e.target.closest && e.target.closest('.zc')) finishTyping();   // касание по тексту: допечатать всё сразу
     });
@@ -700,6 +723,7 @@
       for (i = 0; i < n; i++) { nd = NODES[i]; nd.style.transition = 'none'; nd.style.opacity = 0; }
       void field.offsetWidth;
       for (i = 0; i < n; i++) { nd = NODES[i]; nd.style.transition = ''; nd.style.transitionDelay = (Math.random() * 0.6).toFixed(2) + 's'; nd.classList.add('intro'); setOp(i); }
+      introUntil = performance.now() + 1700;
       setTimeout(function () { for (var j = 0; j < n; j++) { NODES[j].style.transitionDelay = ''; NODES[j].classList.remove('intro'); } }, 1700);
     } else for (i = 0; i < n; i++) setOp(i);
   }
