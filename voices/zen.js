@@ -16,7 +16,7 @@
   var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', ink: 'Чернила' };
   var MODE_ICONS = {
     universe: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="7" r="2.4"/><circle cx="16.5" cy="5.5" r="1.3"/><circle cx="19" cy="12.5" r="2.7"/><circle cx="10" cy="14" r="1.1"/><circle cx="5" cy="18.5" r="1.4"/><circle cx="14.5" cy="19" r="2"/></g></svg>',
-    drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 21 14.6 9.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16.2" cy="6.7" r="3.6" fill="currentColor"/></svg>',
+    drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="8" y="2.6" width="8" height="18.8" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8 12h8"/><path d="M8.5 9.2h7M8.5 14.8h7"/><path d="M10.3 6.8h3.4M10.3 17.2h3.4"/></g></svg>',
     ink: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.8C9.4 7 5.6 10.8 5.6 15.2a6.4 6.4 0 0 0 12.8 0C18.4 10.8 14.6 7 12 2.8Z" fill="currentColor"/></svg>'
   };
   var BG = '#120d0a';

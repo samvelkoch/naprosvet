@@ -1,5 +1,6 @@
-/* «Голоса_», Zen: режим «Барабан». Вертикальный барабан с вопросами и рычаг однорукого бандита.
-   Дёрнул, барабан крутится и замедляется, встал на вопросе, касание открывает ответы. Регистрируется в хосте (zen.js). ES5, без библиотек. */
+/* «Голоса_», Zen: режим «Барабан». Вертикальный барабан с вопросами и колёсико с насечками у правого края.
+   Колёсико — привод барабана: прокатил пальцем, барабан крутится синхронно и по инерции встаёт на вопросе, касание открывает ответы.
+   Регистрируется в хосте (zen.js). ES5, без библиотек. */
 (function () {
   'use strict';
   if (!window.VoicesZen) return;
@@ -11,21 +12,20 @@
     var NB = 8, NR = 2 * NB + 2;   // строк по каждую сторону центра и размер пула узлов
     var PADX = 20, DWMAX = 720;
     var TAU = 0.5;                 // трение свободного вращения пальцем, с
-    var TH = 0.6;                  // доля хода рычага, после которой отпускание запускает барабан
-    var FMAX = 2.18;               // наибольший угол рычага, рад (125°)
-    var LL = 110;                  // длина рычага, px
+    var G = 16;                    // ход колёсика по дуге на одну строку барабана, px
+    var PITCH = 4;                 // шаг насечек по дуге, px (G кратен PITCH: на строке барабана колёсико стоит на насечке)
+    var WW = 24, HITW = 48, WEDGE = 4;   // видимая ширина колёсика, зона касания, отступ от края экрана, px
+    var THM = 1.25;                // угол цилиндра, видимый по каждую сторону центра, рад
+    var TAUW = 1.0;                // трение «тяжёлого» колёсика, с
+    var WK = 0.55;                 // скорость броска колёсика → строк в секунду на px/с по дуге
+    var VMAX = 32;                 // наибольшая скорость броска, строк/с
 
     // ---- сцена
-    var drum = el('div', 'zd'), meas = el('div', 'zd-m'), lever = el('div', 'zd-l'), hit = el('div', 'zd-h');
-    var mkL = el('i', 'zd-t l'), mkR = el('i', 'zd-t r');
-    var NS = 'http://www.w3.org/2000/svg';
-    var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'zd-s'); svg.setAttribute('aria-hidden', 'true');
-    var rod = document.createElementNS(NS, 'line'), ball = document.createElementNS(NS, 'circle'), pivot = document.createElementNS(NS, 'circle');
-    rod.setAttribute('class', 'rod'); ball.setAttribute('class', 'ball'); pivot.setAttribute('class', 'piv'); pivot.setAttribute('r', '3.2');
-    svg.appendChild(rod); svg.appendChild(pivot); svg.appendChild(ball);
-    hit.setAttribute('role', 'button'); hit.setAttribute('aria-label', 'Дёрнуть рычаг');
-    lever.appendChild(svg); lever.appendChild(hit);
-    scene.appendChild(drum); scene.appendChild(mkL); scene.appendChild(mkR); scene.appendChild(lever); scene.appendChild(meas);
+    var drum = el('div', 'zd'), meas = el('div', 'zd-m'), hit = el('div', 'zd-h'), mkL = el('i', 'zd-t l'), mkW = el('i', 'zd-wm'), sa = el('i', 'zd-sa');
+    var cv = document.createElement('canvas'), cx = cv.getContext('2d');
+    hit.setAttribute('role', 'button'); hit.setAttribute('aria-label', 'Колёсико: прокатить барабан');
+    hit.appendChild(cv);
+    scene.appendChild(drum); scene.appendChild(mkL); scene.appendChild(hit); scene.appendChild(mkW); scene.appendChild(sa); scene.appendChild(meas);
 
     var rows = [], i;
     for (i = 0; i < NR; i++) {
@@ -63,7 +63,7 @@
     }
 
     // ---- размеры
-    var vw = 0, vh = 0, dw = 300, hc = {}, lx = 0, lyp = 0;
+    var vw = 0, vh = 0, dw = 300, hc = {}, wl = 0, Hw = 280, Rw = 140, wTop = 0, sTop = 0, dpr = 1, wRGB = '232,222,208', wDirty = true, wPos = NaN;
     function qtext(q) { return api.data().questions[q].q; }
     function fullH(q) {
       var v = hc[q];
@@ -72,25 +72,67 @@
     }
     function layout() {
       vw = scene.clientWidth || window.innerWidth; vh = scene.clientHeight || window.innerHeight;
-      dw = Math.max(200, Math.min(DWMAX, vw - 2 * PADX));
+      // колёсико у правого края с учётом выреза; колонка текста сужается симметрично, чтобы не налезать на него
+      var saw = sa.offsetWidth || 0, wlMax = vw - saw - WEDGE - WW, pad = Math.max(PADX, vw - wlMax + 12);
+      dw = Math.max(200, Math.min(DWMAX, vw - 2 * pad));
+      wl = Math.round(Math.min(wlMax, (vw + dw) / 2 + 30));
       meas.style.width = dw + 'px'; hc = {};
       for (var k = 0; k < NR; k++) { rows[k].n.style.width = dw + 'px'; rows[k].n.style.marginLeft = (-dw / 2) + 'px'; rows[k].t = NaN; }
-      var mx = Math.max(6, (vw - dw) / 2 - 14);
-      mkL.style.left = mx + 'px'; mkR.style.right = mx + 'px';
-      var cy = vh / 2;
-      lx = Math.min(vw - 30, (vw + dw) / 2 + 40);
-      lyp = Math.max(cy + 150, Math.min(vh - 96, cy + 270));
-      hit.style.left = (lx - 34) + 'px'; hit.style.top = (lyp - LL - 32) + 'px'; hit.style.height = (LL * 1.75 + 64) + 'px';
-      svg.setAttribute('viewBox', '0 0 ' + vw + ' ' + vh); svg.setAttribute('width', vw); svg.setAttribute('height', vh);
-      pivot.setAttribute('cx', lx); pivot.setAttribute('cy', lyp);
+      mkL.style.left = Math.max(6, (vw - dw) / 2 - 14) + 'px';
+      var cy = Math.round(vh / 2);
+      Hw = 2 * Math.round(Math.max(150, Math.min(300, vh * 0.37)) / 2); Rw = (Hw / 2) / Math.sin(THM);
+      wTop = cy - Hw / 2;
+      var hl = wl - (HITW - WW) / 2;
+      hit.style.left = hl + 'px'; hit.style.width = Math.min(HITW, vw - hl) + 'px'; hit.style.top = (wTop - 18) + 'px'; hit.style.height = (Hw + 36) + 'px';
+      cv.style.left = (wl - hl) + 'px'; cv.style.top = '18px';
+      dpr = Math.min(3, window.devicePixelRatio || 1);
+      cv.width = Math.round(WW * dpr); cv.height = Math.round(Hw * dpr); cv.style.width = WW + 'px'; cv.style.height = Hw + 'px';
+      mkW.style.left = (wl - 9) + 'px'; mkW.style.width = (WW + 9) + 'px'; mkW.style.top = cy + 'px';
+      sTop = scene.getBoundingClientRect().top;
+      var m = /rgba?\((\d+)\D+(\d+)\D+(\d+)/.exec(getComputedStyle(cv).color || '');
+      wRGB = m ? m[1] + ',' + m[2] + ',' + m[3] : '232,222,208';
+      wDirty = true;
+    }
+
+    // ---- колёсико: торец цилиндра с насечками; фаза целиком берётся из pos, поэтому оно всегда синхронно с барабаном
+    function drawWheel() {
+      wDirty = false; wPos = pos;
+      var S = pos * G, base = Math.floor(S / PITCH), off = S - base * PITCH, c = Hw / 2, j, n = Math.ceil(THM * Rw / PITCH) + 2, k, gr, t;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.globalCompositeOperation = 'source-over'; cx.clearRect(0, 0, WW, Hw);
+      // объём: едва заметное тело, светлее к центру, и узкий блик чуть выше центра
+      gr = cx.createLinearGradient(0, 0, 0, Hw);
+      for (k = 0; k <= 20; k++) { t = k / 10 - 1; var cs0 = Math.sqrt(1 - Math.pow(t * Math.sin(THM), 2)); gr.addColorStop(k / 20, 'rgba(' + wRGB + ',' + (0.07 * cs0 * cs0).toFixed(3) + ')'); }
+      cx.fillStyle = gr; cx.fillRect(0, 0, WW, Hw);
+      gr = cx.createLinearGradient(0, c - 0.2 * Rw - 16, 0, c - 0.2 * Rw + 16);
+      gr.addColorStop(0, 'rgba(' + wRGB + ',0)'); gr.addColorStop(0.5, 'rgba(' + wRGB + ',0.07)'); gr.addColorStop(1, 'rgba(' + wRGB + ',0)');
+      cx.fillStyle = gr; cx.fillRect(0, 0, WW, Hw);
+      // насечки: шаг ~ cos угла, непрозрачность падает к краям
+      cx.fillStyle = 'rgb(' + wRGB + ')';
+      for (j = -n; j <= n; j++) {
+        var ph = (j * PITCH - off) / Rw, aph = Math.abs(ph);
+        if (aph >= THM) continue;
+        var cs = Math.cos(ph), a = 0.64 * Math.pow(cs, 1.5) * Math.min(1, (THM - aph) / 0.3);
+        cx.globalAlpha = a; cx.fillRect(0, c + Rw * Math.sin(ph), WW, 1);
+      }
+      cx.globalAlpha = 1;
+      // растворение: по вертикали в фон, по горизонтали концы насечек мягко сходят на нет
+      cx.globalCompositeOperation = 'destination-in';
+      gr = cx.createLinearGradient(0, 0, 0, Hw);
+      var vs = [0, 0.06, 0.14, 0.24, 0.36, 0.5], vk;
+      for (vk = 0; vk < vs.length; vk++) { var va = Math.pow(Math.min(1, vk / (vs.length - 1) * 1.15), 1.6); gr.addColorStop(vs[vk], 'rgba(0,0,0,' + va.toFixed(3) + ')'); gr.addColorStop(1 - vs[vk], 'rgba(0,0,0,' + va.toFixed(3) + ')'); }
+      cx.fillStyle = gr; cx.fillRect(0, 0, WW, Hw);
+      gr = cx.createLinearGradient(0, 0, WW, 0);
+      gr.addColorStop(0, 'rgba(0,0,0,0.15)'); gr.addColorStop(0.2, '#000'); gr.addColorStop(0.8, '#000'); gr.addColorStop(1, 'rgba(0,0,0,0.15)');
+      cx.fillStyle = gr; cx.fillRect(0, 0, WW, Hw);
+      cx.globalCompositeOperation = 'source-over';
     }
 
     // ---- состояние движения
     var pos = 0, v = 0, st = 'idle';           // idle | drag | fling | ease
-    var ez = null;                              // плавное движение: { p0, D, T, t0, lever }
+    var ez = null;                              // плавное движение: { p0, D, T, t0, click }
     var ex = 0, er = NaN, armed = false;        // раскрытие центральной строки
     var hideQ = -1, active = false, paused = false, raf = 0, last = 0, lastRound = 0, wheelUntil = 0, wheelT = 0, ready = false;
-    var lp = 0, lv = 0, lAuto = null, lHeld = false, lastTickAt = 0;   // рычаг: ход 0..1, скорость пружины, автотяга, пальцем
+    var ftau = TAU, fclick = false;             // свободное вращение: трение и щелчки (колёсико — тяжелее и с щелчками)
 
     // щелчок: только если браузер разрешает (после первого касания страницы)
     function vib(ms) {
@@ -101,25 +143,24 @@
     function nearest() { return Math.round(pos); }
     function settled(now) { return st === 'idle' && Math.abs(pos - Math.round(pos)) < 0.002 && now > wheelUntil; }
 
-    function easeTo(D, T, lever) {
+    function easeTo(D, T, click) {
       if (Math.abs(D) < 0.002) { st = 'idle'; ez = null; pos = pos + D; ended(); kick(); return; }
       if (calm) { pos += D; st = 'idle'; ez = null; ended(); kick(); return; }
-      ez = { p0: pos, D: D, T: T, t0: performance.now(), lever: !!lever }; st = 'ease'; v = 0; lastRound = Math.round(pos); kick();
+      ez = { p0: pos, D: D, T: T, t0: performance.now(), click: !!click }; st = 'ease'; v = 0; lastRound = Math.round(pos); kick();
     }
     function ended() { armed = true; }
     // свободное вращение пальцем закончилось: ленту надо довести до строки, продолжая движение в ту же сторону
-    function settleFrom(vel) {
-      if (Math.abs(vel) < 1) { var D0 = Math.round(pos) - pos; easeTo(D0, 0.26 + 0.1 * Math.abs(D0)); return; }
-      var dir = vel > 0 ? 1 : -1, tg = Math.round(pos + vel * TAU);
+    function settleFrom(vel, tau, click) {
+      if (Math.abs(vel) < 1) { var D0 = Math.round(pos) - pos; easeTo(D0, 0.26 + 0.1 * Math.abs(D0), click); return; }
+      var dir = vel > 0 ? 1 : -1, tg = Math.round(pos + vel * (tau || TAU));
       if ((tg - pos) * dir < 0.2) tg = dir > 0 ? Math.ceil(pos + 0.2) : Math.floor(pos - 0.2);
       var D = tg - pos;
-      easeTo(D, Math.max(0.3, Math.min(1.3, 3 * Math.abs(D) / Math.abs(vel))));
+      easeTo(D, Math.max(0.3, Math.min(1.3, 3 * Math.abs(D) / Math.abs(vel))), click);
     }
-    // запуск вращения рычагом: сила 0..1 даёт число строк и время (2.6–3.9 с, быстрый старт и долгое замедление)
-    function spin(power) {
-      var rows0 = 12 + Math.round(power * 20 + Math.random() * 3), T = 2.6 + power + Math.random() * 0.3;
-      var tg = Math.round(pos) - rows0;
-      easeTo(tg - pos, T, true);
+    // лёгкий запуск колёсика касанием: 12–30 строк в сторону dir (+1 — насечки вверх), долгое замедление 2.4–4 с
+    function spin(dir) {
+      var n = 12 + Math.floor(Math.random() * 19), T = 2.4 + (n - 12) / 18 * 1.2 + Math.random() * 0.3;
+      easeTo(Math.round(pos) + dir * n - pos, T, true);
     }
 
     // ---- кадр
@@ -161,18 +202,17 @@
         r.n.style.opacity = op.toFixed(3);
         r.n.style.transform = 'translate3d(0,' + (R * Math.sin(th) - h / 2).toFixed(2) + 'px,0) rotateX(' + (-th * 57.2958).toFixed(2) + 'deg)';
       }
-      // рычаг
-      var phi = Math.max(-0.05, lp) * FMAX, bx = lx + LL * Math.sin(phi) * 0.16, by = lyp - LL * Math.cos(phi), rr = 10 * (1 + 0.38 * Math.sin(Math.max(0, phi)));
-      rod.setAttribute('x1', lx); rod.setAttribute('y1', lyp); rod.setAttribute('x2', bx.toFixed(1)); rod.setAttribute('y2', by.toFixed(1));
-      ball.setAttribute('cx', bx.toFixed(1)); ball.setAttribute('cy', by.toFixed(1)); ball.setAttribute('r', rr.toFixed(1));
+      if (wDirty || pos !== wPos) drawWheel();
     }
 
     // возвращает true, пока что-то движется
     function step(now, dt) {
       var busy = false;
       if (st === 'fling') {
-        pos += v * dt; v *= Math.exp(-dt / TAU);
-        if (Math.abs(v) < 3.5) { settleFrom(v); } else busy = true;
+        pos += v * dt; v *= Math.exp(-dt / ftau);
+        var fr = Math.round(pos);
+        if (fr !== lastRound) { lastRound = fr; if (fclick && Math.abs(v) * ftau <= 6.5) vib(3); }   // щелчки на последних строках
+        if (Math.abs(v) < 3.5) { settleFrom(v, ftau, fclick); } else busy = true;
       }
       if (st === 'ease') {
         var s = (now - ez.t0) / (ez.T * 1000);
@@ -180,7 +220,7 @@
         else {
           var e = 1 - Math.pow(1 - s, 3); pos = ez.p0 + ez.D * e; busy = true;
           var rr = Math.round(pos);
-          if (rr !== lastRound) { lastRound = rr; if (ez.lever && Math.abs(ez.p0 + ez.D - pos) <= 6.5) vib(4); }   // щелчки на последних строках
+          if (rr !== lastRound) { lastRound = rr; if (ez.click && Math.abs(ez.p0 + ez.D - pos) <= 6.5) vib(3); }   // щелчки на последних строках
         }
       }
       if (st === 'drag') busy = true;
@@ -191,19 +231,8 @@
       else if (!want && ex > 0) { ex = calm ? 0 : Math.max(0, ex - dt / 0.15); busy = true; }
       if (ex <= 0 && !want) er = NaN;
       if (!want && st === 'idle' && now <= wheelUntil) busy = true;
-      // рычаг: пружина возврата и автотяга
-      if (lAuto) {
-        var u = Math.min(1, (now - lAuto.t0) / 150); lp = 0.9 * (1 - Math.pow(1 - u, 2)); busy = true;
-        if (u >= 1) { lAuto = null; spin(lAuto0); lv = 0; vib(8); }
-      } else if (!lHeld && (lp > 0.0005 || Math.abs(lv) > 0.001)) {
-        lv += (-180 * lp - 17 * lv) * dt; lp += lv * dt;
-        if (lp < -0.05) { lp = -0.05; lv = Math.max(lv, 0); }
-        if (Math.abs(lp) < 0.0008 && Math.abs(lv) < 0.01) { lp = 0; lv = 0; }
-        busy = true;
-      } else if (lHeld) busy = true;
       return busy;
     }
-    var lAuto0 = 0.5;
 
     function frame(now) {
       raf = 0;
@@ -230,43 +259,36 @@
 
     // ---- жесты
     var g = null, samples = [];
-    function dy2pull(dy) { return dy <= 0 ? 0 : 1 - Math.exp(-dy / 115); }
     function onDown(e) {
       if (!active || paused || g) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       var dead = api.popDown();
       try { scene.setPointerCapture(e.pointerId); } catch (x) {}
-      var onLever = e.target === hit;
-      var now = performance.now();
-      if (onLever) {
-        if (st === 'ease' || st === 'fling') { /* рычаг можно тянуть и на ходу: вращение не прерываем */ }
-        g = { id: e.pointerId, kind: 'lever', y0: e.clientY, x0: e.clientX, moved: false, dead: dead, dy: 0 };
-        lAuto = null; lHeld = true; samples.length = 0; samples.push({ t: now, y: e.clientY });
-        kick();
-      } else {
-        var moving = st !== 'idle' || now <= wheelUntil || Math.abs(pos - Math.round(pos)) > 0.002;
-        g = { id: e.pointerId, kind: 'drum', y0: e.clientY, x0: e.clientX, ly: e.clientY, moved: false, moving: moving, dead: dead, t0: now };
-        if (moving) { st = 'idle'; ez = null; v = 0; }
-        samples.length = 0; samples.push({ t: now, y: e.clientY });
-        kick();
-      }
+      var now = performance.now(), moving = st !== 'idle' || now <= wheelUntil || Math.abs(pos - Math.round(pos)) > 0.002;
+      var onW = e.target === hit;
+      // касание на ходу останавливает барабан, дальше можно тянуть и колёсико, и ленту
+      g = { id: e.pointerId, kind: onW ? 'wheel' : 'drum', y0: e.clientY, x0: e.clientX, ly: e.clientY, moved: false, moving: moving, dead: dead, t0: now, arc: 0 };
+      if (moving) { st = 'idle'; ez = null; v = 0; }
+      samples.length = 0; samples.push({ t: now, y: onW ? 0 : e.clientY });
+      if (onW) hit.classList.add('on');
+      kick();
     }
     function onMove(e) {
       if (!g || e.pointerId !== g.id) return;
       var now = performance.now(), y = e.clientY;
-      samples.push({ t: now, y: y }); while (samples.length > 2 && now - samples[0].t > 100) samples.shift();
-      if (g.kind === 'lever') {
-        var dy = y - g.y0;
-        if (!g.moved && Math.abs(dy) + Math.abs(e.clientX - g.x0) > 8) g.moved = true;
-        g.dy = dy;
-        var was = lp; lp = g.moved ? dy2pull(dy) : 0;
-        if (was < TH && lp >= TH) vib(6);
-        kick();
+      if (g.kind === 'wheel') {
+        // ход по дуге под пальцем: вне центра цилиндра экранное смещение меньше дуги в 1/cos раз
+        var u = Math.max(-1, Math.min(1, (y - sTop - wTop - Hw / 2) / Rw)), cs = Math.max(Math.cos(THM), Math.sqrt(1 - u * u));
+        if (g.moved) { g.arc += (y - g.ly) / cs; pos -= (y - g.ly) / cs / G; }
+        else if (Math.abs(y - g.y0) > 6) { g.moved = true; st = 'drag'; ez = null; v = 0; g.arc += (y - g.ly) / cs; pos -= (y - g.ly) / cs / G; }
+        samples.push({ t: now, y: g.arc });
       } else {
+        samples.push({ t: now, y: y });
         if (!g.moved && Math.abs(y - g.y0) > 8) { g.moved = true; st = 'drag'; ez = null; v = 0; }
         if (g.moved) { pos -= (y - g.ly) / P; }
-        g.ly = y; kick();
       }
+      while (samples.length > 2 && now - samples[0].t > 100) samples.shift();
+      g.ly = y; kick();
     }
     function velocity() {
       var l = samples[samples.length - 1], f = samples[0], now = performance.now();
@@ -277,30 +299,22 @@
       if (!g || e.pointerId !== g.id) return;
       var gg = g; g = null;
       try { scene.releasePointerCapture(e.pointerId); } catch (x) {}
-      var cancel = e.type === 'pointercancel';
-      if (gg.kind === 'lever') {
-        lHeld = false;
-        var vy = velocity();
-        if (!gg.moved) { if (!cancel && !gg.dead && st !== 'ease' && st !== 'fling') pullAuto(0.45 + Math.random() * 0.3); }
-        else if (!cancel && lp >= TH && st !== 'ease' && st !== 'fling') {
-          var power = Math.max(0, Math.min(1, 0.2 + 0.6 * Math.max(0, vy) / 1600 + (lp - TH) * 1.2));
-          lv = Math.max(0, vy) / 4000;
-          spin(power); if (calm) lp = 0;
-        }
-        kick(); return;
-      }
-      var now = performance.now();
+      hit.classList.remove('on');
+      var cancel = e.type === 'pointercancel', w = gg.kind === 'wheel';
       if (!gg.moved) {
         st = 'idle'; ez = null;
         if (cancel || gg.dead) { settleFrom(0); return; }
         if (gg.moving) { settleFrom(0); return; }   // касание на ходу только останавливает барабан
-        tapRow(e.clientY); kick(); return;
+        if (w) tapWheel(e.clientY); else tapRow(e.clientY);
+        kick(); return;
       }
       if (calm) { st = 'idle'; ez = null; pos = Math.round(pos); ended(); kick(); return; }
-      var vel = -velocity() / P;
-      if (vel > 40) vel = 40; else if (vel < -40) vel = -40;
-      if (Math.abs(vel) >= 3.5) { st = 'fling'; v = vel; kick(); }
-      else { st = 'idle'; settleFrom(Math.abs(vel) < 1 ? 0 : vel); }
+      var vel = -velocity() / (w ? G : P), lim = w ? VMAX : 40;
+      if (w) vel *= WK;
+      if (vel > lim) vel = lim; else if (vel < -lim) vel = -lim;
+      ftau = w ? TAUW : TAU; fclick = w;
+      if (Math.abs(vel) >= 3.5) { st = 'fling'; v = vel; lastRound = Math.round(pos); kick(); }
+      else { st = 'idle'; settleFrom(Math.abs(vel) < 1 ? 0 : vel, ftau, fclick); }
     }
     function tapRow(y) {
       var best = null, bd = 1e9, k;
@@ -314,11 +328,11 @@
       var D = best.t - pos;
       easeTo(D, Math.max(0.35, Math.min(0.9, 0.3 + 0.09 * Math.abs(D))));
     }
-    // рычаг тянется сам (касание без протяжки, пробел): короткая анимация и запуск
-    function pullAuto(power) {
+    // касание колёсика без протяжки: лёгкий запуск; верхняя половина гонит насечки вверх, нижняя вниз
+    function tapWheel(y) {
       if (st === 'ease' || st === 'fling') return;
-      if (calm) { spin(power); return; }
-      lAuto = { t0: performance.now() }; lAuto0 = power; kick();
+      var d = y - sTop - wTop - Hw / 2;
+      spin(Math.abs(d) < 10 ? (Math.random() < 0.5 ? 1 : -1) : d < 0 ? 1 : -1);
     }
     function onWheel(e) {
       e.preventDefault();
@@ -342,7 +356,7 @@
     function fresh(q) {
       layout(); resetTape(q);
       st = 'idle'; ez = null; v = 0; ex = q != null && q >= 0 ? 1 : 0; er = q != null && q >= 0 ? 0 : NaN; armed = false;
-      lp = lv = 0; lAuto = null; lHeld = false; hideQ = -1; lastRound = 0;
+      hideQ = -1; lastRound = 0; ftau = TAU; fclick = false; hit.classList.remove('on'); wDirty = true;
       for (var k = 0; k < NR; k++) rows[k].t = NaN;
     }
     return {
@@ -353,13 +367,13 @@
         else layout();
         g = null; render(performance.now()); kick();
       },
-      leave: function () { active = false; halt(); g = null; lHeld = false; clearTimeout(wheelT); },
+      leave: function () { active = false; halt(); g = null; hit.classList.remove('on'); clearTimeout(wheelT); },
       pause: function () { paused = true; halt(); },
       resume: function () { paused = false; kick(); },
       resize: function () { if (!active) return; var cp = pos; layout(); pos = cp; render(performance.now()); kick(); },
       refresh: function () { fresh(); render(performance.now()); kick(); },
       onOpened: function (q) {
-        hideQ = q; g = null; lHeld = false; st = 'idle'; ez = null; lAuto = null; lp = lv = 0;
+        hideQ = q; g = null; hit.classList.remove('on'); st = 'idle'; ez = null;
         var now = performance.now(); render(now);
       },
       onClosed: function () { hideQ = -1; armed = false; if (active) { render(performance.now()); kick(); } },
@@ -374,11 +388,11 @@
         if (k === ' ' || k === 'Enter') {
           if (e.target.tagName === 'BUTTON') return;
           e.preventDefault(); if (e.repeat) return;
-          if (armed && settled(now)) openCenter(); else if (st === 'idle') pullAuto(0.5 + Math.random() * 0.4);
+          if (armed && settled(now)) openCenter(); else if (st === 'idle') spin(-1);
         } else if (k === 'ArrowUp' || k === 'ArrowDown') {
           e.preventDefault();
           var d = k === 'ArrowUp' ? -1 : 1, tg = Math.round(pos) + d;
-          if (st === 'ease' && ez && !ez.lever) tg = Math.round(ez.p0 + ez.D) + d;
+          if (st === 'ease' && ez && !ez.click) tg = Math.round(ez.p0 + ez.D) + d;
           easeTo(tg - pos, 0.32);
         }
       }
