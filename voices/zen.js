@@ -10,7 +10,15 @@
   function load(key, def) { try { var v = localStorage.getItem(key); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }
   function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
 
-  var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme';
+  var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme', K_MODE = 'voices-zen-mode';
+  // режимы: Вселенная живёт в этом файле, Барабан и Чернила регистрируются из zen-drum.js и zen-ink.js
+  var MODE_IDS = ['universe', 'drum', 'ink'];
+  var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', ink: 'Чернила' };
+  var MODE_ICONS = {
+    universe: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="7" r="2.4"/><circle cx="16.5" cy="5.5" r="1.3"/><circle cx="19" cy="12.5" r="2.7"/><circle cx="10" cy="14" r="1.1"/><circle cx="5" cy="18.5" r="1.4"/><circle cx="14.5" cy="19" r="2"/></g></svg>',
+    drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 21 14.6 9.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16.2" cy="6.7" r="3.6" fill="currentColor"/></svg>',
+    ink: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.8C9.4 7 5.6 10.8 5.6 15.2a6.4 6.4 0 0 0 12.8 0C18.4 10.8 14.6 7 12 2.8Z" fill="currentColor"/></svg>'
+  };
   var BG = '#120d0a';
   var AMP = 14;                         // наибольший размах собственного плавания вопроса, px мира
   var GAP = 2 * AMP + 14, PAD = GAP / 2; // зазор больше двух размахов: соседи плавают, но не сталкиваются
@@ -23,7 +31,8 @@
   var WHERE = { brodsky: 'Венеция, ноябрь 1993', chekhov: 'Ялта, январь 1900', gary: 'Париж, 1978–1980' };
 
   var T = null, D = null, prep = null, built = false;
-  var root, field, tools, za, zwrap, popA, popT, btnA, btnT, btnX, metaTheme, oldTheme = '';
+  var root, field, tools, za, zwrap, popA, popT, btnA, btnT, btnX, btnM, metaTheme, oldTheme = '';
+  var regs = {}, insts = {}, scenes = {}, mode = '', curMode = null, wantMode = '', leaving = null, leaveTimer = 0, ansMode = null, ansQ = -1, uniOn = false;
   var active = false, enteredPush = false, pushedAns = false, ansOpen = false, closing = false;
 
   // ---- мир ----
@@ -31,7 +40,7 @@
   var WW = 0, WH = 0, maxBW = 0, maxBH = 0;
   var camX = 0, camY = 0, zoom = 1, vw = 0, vh = 0, minZ = Z_MIN;
   var vx = 0, vy = 0;                   // скорость камеры, мир/с
-  var FOC = -1, openIdx = -1, curQ = -1;
+  var FOC = -1, openIdx = -1, curQ = -1;   // curQ — НОМЕР вопроса на открытом экране ответов
   var authors = { brodsky: true, chekhov: true, gary: true }, theme = '';
   var readIds = {};
 
@@ -278,13 +287,13 @@
 
   function frame(now) {
     raf = 0;
-    if (!active || ansOpen || document.hidden || !built) return;
+    if (!active || !uniOn || ansOpen || document.hidden || !built) return;
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     physics(now, dt);
     draw(now);
     raf = requestAnimationFrame(frame);
   }
-  function startLoop() { if (raf || !active || ansOpen || document.hidden || !built) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+  function startLoop() { if (raf || !active || !uniOn || ansOpen || document.hidden || !built) return; last = performance.now(); raf = requestAnimationFrame(frame); }
   function stopLoop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 
   function poke() { lastInput = performance.now(); driftAmt = 0; }
@@ -363,7 +372,7 @@
     if (!t.moved) {
       if (t.dead || e.type === 'pointercancel') return;
       if (t.stopped) { pending = true; return; }                // первое касание на ходу только останавливает поле
-      if (now - t.t < 300) { var i = hitTest(t.x, t.y, t.cx, t.cy); if (i >= 0) openQ(i, true); }
+      if (now - t.t < 300) { var i = hitTest(t.x, t.y, t.cx, t.cy); if (i >= 0) uniOpen(i); }
       return;
     }
     var v = { x: 0, y: 0 };
@@ -404,12 +413,16 @@
     if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' || k === ' ' || k === 'Escape' || k === 'Enter') e.stopPropagation();
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (k === 'Escape') { e.preventDefault(); if (built && popOpen()) closePop(); else if (ansOpen) requestCloseAnswer(); else requestExit(); return; }
-    if (ansOpen || !built) return;
+    if (ansOpen || !built || !curMode) return;
     if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-    var s = 650 / zoom, dx = 0, dy = 0;
+    if (curMode.key) curMode.key(e);
+  }
+  // клавиши Вселенной: стрелки двигают поле, Enter открывает вопрос в фокусе или ближайший к центру
+  function uniKey(e) {
+    var k = e.key, s = 650 / zoom, dx = 0, dy = 0;
     if (k === 'ArrowLeft') dx = -1; else if (k === 'ArrowRight') dx = 1; else if (k === 'ArrowUp') dy = -1; else if (k === 'ArrowDown') dy = 1;
     if (dx || dy) { e.preventDefault(); poke(); snap = null; setFocus(-1); vx = dx * s; vy = dy * s; pending = true; if (calm) { camX += dx * 80 / zoom; camY += dy * 80 / zoom; vx = vy = 0; forceDraw = true; } }
-    else if (k === 'Enter' && e.target.tagName !== 'BUTTON') { var i = FOC >= 0 ? FOC : nearestCenter(); if (i >= 0) { e.preventDefault(); openQ(i, true); } }
+    else if (k === 'Enter' && e.target.tagName !== 'BUTTON') { var i = FOC >= 0 ? FOC : nearestCenter(); if (i >= 0) { e.preventDefault(); uniOpen(i); } }
   }
 
   // ---------------------------------------------------------------- иконки и поповеры
@@ -439,14 +452,16 @@
   function buildUI() {
     if (!root) { root = el('div'); root.id = 'zen'; document.body.appendChild(root); }
     root.setAttribute('aria-label', 'Zen');
-    field = el('div', 'zf');
+    field = el('div', 'zf zs'); scenes.universe = field;
+    MODE_IDS.forEach(function (id) { if (id !== 'universe' && regs[id]) { scenes[id] = el('div', 'zs zs-' + id); } });
     tools = el('div', 'zt');
+    btnM = el('button'); btnM.type = 'button';
     btnA = iconBtn('Авторы', '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="2.7"/><circle cx="12" cy="12" r="2.7"/><circle cx="19" cy="12" r="2.7"/></g></svg>');
     btnT = iconBtn('Темы', '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></g></svg><span class="dot"></span>');
     btnX = el('button'); btnX.type = 'button'; btnX.setAttribute('aria-label', 'Выйти из Zen'); btnX.title = 'Выйти из Zen';
     btnX.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M17.46 5.49A8.5 8.5 0 1 0 20.37 13.48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
     btnA.setAttribute('aria-expanded', 'false'); btnT.setAttribute('aria-expanded', 'false'); btnX.removeAttribute('aria-haspopup');
-    tools.appendChild(btnA); tools.appendChild(btnT); tools.appendChild(btnX);
+    tools.appendChild(btnM); tools.appendChild(btnA); tools.appendChild(btnT); tools.appendChild(btnX);
 
     popA = el('div', 'zp'); popA.setAttribute('role', 'group'); popA.setAttribute('aria-label', 'Авторы');
     ORDER.forEach(function (a) {
@@ -460,13 +475,16 @@
     popT = el('div', 'zp'); popT.setAttribute('role', 'group'); popT.setAttribute('aria-label', 'Темы');
     [{ id: '', title: 'Все' }].concat(D.themes).forEach(function (t) {
       var b = el('button'); b.type = 'button'; b.dataset.t = t.id; b.appendChild(el('i')); b.appendChild(document.createTextNode(t.title));
-      b.addEventListener('click', function () { theme = t.id; save(K_THEME, theme); paintThemes(); if (built) applyTheme(); closePop(); });
+      b.addEventListener('click', function () { theme = t.id; save(K_THEME, theme); paintThemes(); if (built) { applyTheme(); if (curMode && curMode.refresh) curMode.refresh(); } closePop(); });
       popT.appendChild(b);
     });
 
     za = el('div', 'za'); za.tabIndex = -1; zwrap = el('div', 'zw'); za.appendChild(zwrap);
-    root.appendChild(field); root.appendChild(tools); root.appendChild(popA); root.appendChild(popT); root.appendChild(za);
+    root.appendChild(field);
+    MODE_IDS.forEach(function (id) { if (scenes[id] && id !== 'universe') root.appendChild(scenes[id]); });
+    root.appendChild(tools); root.appendChild(popA); root.appendChild(popT); root.appendChild(za);
 
+    btnM.addEventListener('click', function () { nextMode(); });
     btnA.addEventListener('click', function () { togglePop(popA, btnA); });
     btnT.addEventListener('click', function () { togglePop(popT, btnT); });
     btnX.addEventListener('click', function () { requestExit(); });
@@ -477,8 +495,12 @@
     field.addEventListener('wheel', onWheel, { passive: false });
     field.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     document.addEventListener('keydown', onKey, true);
-    window.addEventListener('resize', function () { if (active) measure(); });
-    document.addEventListener('visibilitychange', function () { if (document.hidden) stopLoop(); else if (active) { poke(); startLoop(); } });
+    window.addEventListener('resize', function () { if (active) { measure(); if (curMode && curMode.resize) curMode.resize(); } });
+    document.addEventListener('visibilitychange', function () {
+      if (!curMode) return;
+      if (document.hidden) curMode.pause();
+      else if (active && !ansOpen && !leaving) curMode.resume();
+    });
     initAnswerEvents();
     paintAuthors(); paintThemes();
   }
@@ -489,8 +511,8 @@
     '<g class="o"><path d="M12 3h5v5M17 3l-5.5 5.5M8 17H3v-5M3 17l5.5-5.5"/></g><g class="i"><path d="M17 8h-5V3M12 8l5.5-5.5M3 12h5v5M8 12l-5.5 5.5"/></g></svg>';
   var cols = [], typeRaf = 0, flyEl = null, flyAnim = null, closeAnims = [], titleCard = null, titleH2 = null;
 
-  function buildAnswer(i) {
-    var q = D.questions[QI[i]];
+  function buildAnswer(qn) {
+    var q = D.questions[qn];
     zwrap.innerHTML = ''; cols = [];
     titleCard = el('section', 'zk'); titleH2 = el('h2', null, q.q); titleCard.appendChild(titleH2); zwrap.appendChild(titleCard);
     zwrap.classList.remove('exp');
@@ -545,46 +567,63 @@
     });
   }
 
-  function makeFly(i) {
-    var f = el('div', 'zfly', LINES[i].join('\n')); f.style.fontSize = SZ[i] + 'px'; root.appendChild(f); return f;
+  // ---- полёт заголовка (FLIP): состояние элемента-источника снимается до любых сбросов
+  function flyState(src, o) {
+    o = o || {};
+    var r = src.getBoundingClientRect(), cs = getComputedStyle(src), w = src.offsetWidth;
+    return {
+      x: o.x != null ? o.x : r.left, y: o.y != null ? o.y : r.top,
+      sc: o.scale || (w ? r.width / w : 1),
+      op: o.opacity != null ? o.opacity : parseFloat(cs.opacity),
+      col: cs.color, fs: parseFloat(cs.fontSize), st: cs.fontStyle, ws: cs.whiteSpace, ta: cs.textAlign, lh: cs.lineHeight, bw: w,
+      text: src.textContent
+    };
   }
+  function makeFly(st) {
+    var f = el('div', 'zfly', st.text);
+    f.style.fontSize = st.fs + 'px'; f.style.lineHeight = st.lh; f.style.whiteSpace = st.ws; f.style.textAlign = st.ta;
+    if (st.ws !== 'pre' && st.bw) f.style.width = st.bw + 'px';
+    root.appendChild(f); return f;
+  }
+  // левый край копии, когда её надо поставить в блок заголовка: центрованный текст центруем
+  function flyLeft(st, k, r) { return st.ta === 'center' && st.ws !== 'pre' ? r.left + (r.width - st.bw * k) / 2 : r.left; }
   function dropFly() {
     if (flyAnim) { try { flyAnim.cancel(); } catch (e) {} flyAnim = null; }
     if (flyEl && flyEl.parentNode) flyEl.parentNode.removeChild(flyEl); flyEl = null;
   }
   function tf(x, y, k) { return 'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) scale(' + k.toFixed(4) + ')'; }
 
-  function openQ(i, fly) {
+  // режим открывает ответы так: openAnswer(номер вопроса, элемент-источник, { scale, opacity })
+  function openAnswer(q, src, o) {
     if (ansOpen && !closing) return;
     if (closing) finishClose();
-    history.pushState({ zen: 2 }, '', zenUrl(D.questions[QI[i]].id)); pushedAns = true;
-    showAnswer(i, fly);
+    history.pushState({ zen: 2 }, '', zenUrl(D.questions[q].id)); pushedAns = true;
+    showAnswer(q, src, o);
   }
+  function uniOpen(i) { openAnswer(QI[i], NODES[i], { scale: zoom }); }
 
-  function showAnswer(i, fly) {
+  function showAnswer(q, src, o) {
     if (closing) finishClose();
-    var now = performance.now(), p0 = null, op0 = 0, col0 = '';
-    if (fly && !calm && built) {   // состояние узла на момент касания, до всех сбросов
-      place(i, camX, camY, zoom); sway(i, now); p0 = { x: px, y: py };
-      var cs = getComputedStyle(NODES[i]); col0 = cs.color; op0 = parseFloat(cs.opacity);
-    }
-    ansOpen = true; closing = false; curQ = i; openedAt = now;
-    stopLoop(); closePop(); setFocus(-1); setMoving(false); touching = false; np = 0; ptrs = {}; tap = null; vx = vy = 0; snap = null;
+    var now = performance.now(), s0 = null;
+    if (src && !calm && built) s0 = flyState(src, o);   // состояние узла на момент касания, до всех сбросов
+    ansOpen = true; closing = false; curQ = q; openedAt = now; ansMode = curMode; ansQ = q;
+    if (curMode) curMode.pause();
+    closePop(); setMoving(false);
     goal('zen_q');
-    readIds[D.questions[QI[i]].id] = 1; RD[i] = 1;
+    readIds[D.questions[q].id] = 1;
     save(K_READ, Object.keys(readIds));
-    openIdx = i; setOp(i);
-    buildAnswer(i);
+    if (curMode && curMode.onOpened) curMode.onOpened(q);
+    buildAnswer(q);
     root.classList.add('ans'); za.classList.add('on'); za.scrollTop = 0; zwrap.style.transition = ''; zwrap.style.transform = '';
     try { za.focus({ preventScroll: true }); } catch (e) {}
-    if (!p0) { titleCard.classList.add('show'); startTyping(); return; }
-    // FLIP: копия вопроса с места в поле летит в заголовок
-    var r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / SZ[i];
+    if (!s0) { titleCard.classList.add('show'); startTyping(); return; }
+    // FLIP: копия вопроса с места в режиме летит в заголовок
+    var r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / s0.fs;
     var col1 = getComputedStyle(titleH2).color;
-    dropFly(); flyEl = makeFly(i);
+    dropFly(); flyEl = makeFly(s0);
     flyAnim = flyEl.animate([
-      { transform: tf(p0.x, p0.y, zoom), color: col0, opacity: op0, fontStyle: 'normal' },
-      { transform: tf(r.left, r.top, k), color: col1, opacity: 1, fontStyle: 'italic' }
+      { transform: tf(s0.x, s0.y, s0.sc), color: s0.col, opacity: s0.op, fontStyle: s0.st },
+      { transform: tf(flyLeft(s0, k, r), r.top, k), color: col1, opacity: 1, fontStyle: 'italic' }
     ], { duration: 480, easing: 'cubic-bezier(.16,.8,.3,1)', fill: 'forwards' });
     var fa = flyAnim;
     fa.onfinish = function () {
@@ -604,41 +643,54 @@
 
   function requestCloseAnswer() { if (!ansOpen || closing) return; if (pushedAns) history.back(); else doClose(); }
 
+  // режим сообщает, что вопрос снова на своём месте
+  function noteClosed() {
+    if (ansQ < 0) return;
+    var q = ansQ, m = ansMode; ansQ = -1;
+    if (m && m.onClosed) m.onClosed(q);
+  }
+
   function doClose() {
     if (!ansOpen || closing) return;
     closing = true; pushedAns = false;
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
-    var i = curQ, now = performance.now();
+    var q = curQ, m = ansMode || curMode;
     if (calm) { finishClose(); return; }
-    // копия заголовка с его нынешнего места летит назад в поле
-    var r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / SZ[i];
-    var sx = r.left, sy = r.top;
+    var tg = m && m.returnTarget ? m.returnTarget(q) : null;
+    if (!tg || !tg.el) {
+      // режим не знает, куда лететь: заголовок растворяется вместе с экраном ответов
+      var da = za.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' });
+      closeAnims = [da];
+      root.classList.remove('ans'); ansOpen = false; if (m) m.resume();
+      da.onfinish = function () { if (closeAnims[0] !== da) return; noteClosed(); cleanupAnswer(); };
+      return;
+    }
+    // копия заголовка с его нынешнего места летит назад в режим
+    var st = flyState(tg.el, tg), r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / st.fs;
+    var sx = flyLeft(st, k, r), sy = r.top;
     if (r.bottom < 0 || r.top > vh) { sx = Math.max(16, vw / 2 - 150); sy = 60; }
-    var col1 = getComputedStyle(NODES[i]).color, col0 = getComputedStyle(titleH2).color;
-    dropFly(); flyEl = makeFly(i);
+    var col0 = getComputedStyle(titleH2).color;
+    dropFly(); flyEl = makeFly(st);
     var f = flyEl;
     titleCard.classList.remove('show');                      // настоящий заголовок гаснет, летит копия
-    place(i, camX, camY, zoom); sway(i, now);
-    var op1 = BASE[i] * 0.5;                                 // прочитанный вопрос тусклее
+    var op1 = st.op;
     flyAnim = f.animate([
       { transform: tf(sx, sy, k), color: col0, opacity: 1, fontStyle: 'italic' },
-      { transform: tf(px, py, zoom), color: col1, opacity: ACT[i] ? op1 : 0.06, fontStyle: 'normal' }
+      { transform: tf(st.x, st.y, st.sc), color: st.col, opacity: op1, fontStyle: st.st }
     ], { duration: 460, easing: 'cubic-bezier(.3,.1,.2,1)', fill: 'forwards' });
     var fa = flyAnim;
     closeAnims = [za.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-in', fill: 'forwards' })];
-    root.classList.remove('ans');                            // поле проявляется, иконки возвращаются
-    ansOpen = false; startLoopForClose();
+    root.classList.remove('ans');                            // режим проявляется, иконки возвращаются
+    ansOpen = false; if (m) m.resume();
     fa.onfinish = function () {
       if (flyAnim !== fa) return;
       flyAnim = null;
-      openIdx = -1; setOp(i);
-      var out = f.animate([{ opacity: ACT[i] ? op1 : 0.06 }, { opacity: 0 }], { duration: 260, fill: 'forwards' });
+      noteClosed();
+      var out = f.animate([{ opacity: op1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' });
       out.onfinish = function () { if (f.parentNode) f.parentNode.removeChild(f); if (flyEl === f) flyEl = null; };
       cleanupAnswer();
     };
   }
-  // поле рисуется ещё во время обратного полёта: ansOpen уже false, closing остаётся true до конца
-  function startLoopForClose() { poke(); startLoop(); }
   function cleanupAnswer() {
     closeAnims.forEach(function (a) { try { a.cancel(); } catch (e) {} }); closeAnims = [];
     za.classList.remove('on'); zwrap.innerHTML = ''; zwrap.style.transition = ''; zwrap.style.transform = '';
@@ -648,9 +700,9 @@
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
     dropFly(); ansOpen = false; pushedAns = false;
     root.classList.remove('ans');
-    if (openIdx >= 0) { var i = openIdx; openIdx = -1; setOp(i); }
+    noteClosed();
     cleanupAnswer();
-    if (active) { poke(); startLoop(); }
+    if (active && curMode) curMode.resume();
   }
 
   // свайп вниз с самого верха колонки и касание карточки вопроса: назад в поле
@@ -686,10 +738,96 @@
     });
   }
 
+  // ---------------------------------------------------------------- режимы
+  var uni = {
+    enter: function (o) {
+      measure();
+      if (o.first) zoom = Math.max(minZ, Math.min(Z_MAX, 1));
+      if (!camX && !camY) { camX = Math.random() * WW; camY = Math.random() * WH; }
+      for (var i = 0; i < n; i++) VIS[i] = 2;
+      forceDraw = true; uniOn = true;
+      if (o.q >= 0) {
+        var s = SL[o.q];
+        camX = X[s] + WD[s] / 2; camY = Y[s] + HD[s] / 2;
+        draw(performance.now()); intro(false);
+      } else { draw(performance.now()); intro(o.first); poke(); startLoop(); }
+    },
+    leave: function () {
+      uniOn = false; stopLoop();
+      ptrs = {}; np = 0; touching = false; tap = null; pinch = null; vx = vy = 0; snap = null; pending = false;
+      field.classList.remove('drag'); if (root) root.classList.remove('moving');
+    },
+    pause: function () { stopLoop(); },
+    resume: function () { poke(); startLoop(); },
+    // вопрос открывается: поле замирает, место вопроса гаснет (его заменяет летящая копия)
+    onOpened: function (q) {
+      var i = SL[q];
+      setFocus(-1); touching = false; np = 0; ptrs = {}; tap = null; vx = vy = 0; snap = null;
+      RD[i] = 1; openIdx = i; setOp(i);
+    },
+    onClosed: function () { if (openIdx >= 0) { var i = openIdx; openIdx = -1; setOp(i); } },
+    returnTarget: function (q) {
+      var i = SL[q];
+      place(i, camX, camY, zoom); sway(i, performance.now());
+      return { el: NODES[i], x: px, y: py, scale: zoom, opacity: ACT[i] ? BASE[i] * 0.5 : 0.06 };   // прочитанный тусклее
+    },
+    key: uniKey
+  };
+  insts.universe = uni;
+
+  var api = {
+    calm: calm, goal: goal, el: el, load: load, save: save,
+    data: function () { return D; },
+    theme: function () { return theme; },
+    matches: function (q) { return matches(q); },
+    isRead: function (q) { return !!readIds[D.questions[q].id]; },
+    open: openAnswer,
+    popDown: function () { if (popOpen()) { closePop(); return true; } return false; }   // касание закрыло поповер: вопрос не открываем
+  };
+
+  function registered(id) { return id === 'universe' || !!(regs[id] && scenes[id]); }
+  function modeObj(id) {
+    if (!registered(id)) return null;
+    if (!insts[id]) insts[id] = regs[id](api, scenes[id]);
+    return insts[id];
+  }
+  function lastMode() { var m = load(K_MODE, 'universe'); return MODE_IDS.indexOf(m) >= 0 ? m : 'universe'; }
+  function paintMode() {
+    btnM.innerHTML = MODE_ICONS[mode] || MODE_ICONS.universe;
+    btnM.setAttribute('aria-label', MODE_NAMES[mode] || ''); btnM.title = MODE_NAMES[mode] || '';
+  }
+  // o: instant — старый режим выключается сразу; first — вход в Zen; q — вопрос, который режим должен показать; keepUrl — адрес уже верный
+  function setMode(id, o) {
+    o = o || {};
+    var nu = modeObj(id);
+    if (!nu || nu === curMode) return false;
+    if (leaving) { clearTimeout(leaveTimer); leaving.leave(); leaving = null; }
+    if (closing) finishClose();
+    var old = curMode;
+    mode = id; curMode = nu;
+    MODE_IDS.forEach(function (k) { if (scenes[k]) scenes[k].classList.toggle('cur', k === id); });
+    paintMode(); closePop();
+    nu.enter({ first: !!o.first, q: o.q != null ? o.q : -1 });
+    if (old) {
+      if (o.instant) old.leave();
+      else { leaving = old; leaveTimer = setTimeout(function () { var m = leaving; leaving = null; if (m) m.leave(); }, 380); }
+    }
+    save(K_MODE, id);
+    if (!o.keepUrl) history.replaceState(history.state, '', zenUrl());
+    if (id !== 'universe') goal('zen_mode_' + id);
+    return true;
+  }
+  function nextMode() {
+    if (!built || ansOpen || !active) return;
+    var ids = MODE_IDS.filter(registered), k = ids.indexOf(mode);
+    if (ids.length > 1) setMode(ids[(k + 1) % ids.length], {});
+  }
+
   // ---------------------------------------------------------------- вход и выход
   function inUrl() { return /[?&]zen\b/.test(location.search); }
-  function zenUrl(id) { return location.pathname + '?zen' + (id ? '#' + id : ''); }
-  function idFromHash() { var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {} return h && IDX[h] != null ? SL[IDX[h]] : -1; }
+  function modeFromUrl() { var m = /[?&]zen=([a-z]+)/.exec(location.search); return m && MODE_IDS.indexOf(m[1]) >= 0 ? m[1] : ''; }
+  function zenUrl(id) { return location.pathname + '?zen=' + (mode || wantMode || 'universe') + (id ? '#' + id : ''); }
+  function idFromHash() { var h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {} return h && IDX[h] != null ? IDX[h] : -1; }
 
   function fontsReady() {
     var p = Promise.resolve();
@@ -698,12 +836,14 @@
     } catch (e) {}
     return Promise.race([p.then(function () {}, function () {}), new Promise(function (res) { setTimeout(res, 2500); })]);
   }
+  // отложенные скрипты режимов выполняются до DOMContentLoaded: ждём его, чтобы все режимы успели зарегистрироваться
+  var modesReady = new Promise(function (res) { document.addEventListener('DOMContentLoaded', function () { res(); }); if (document.readyState === 'complete') res(); });
   function prepare() {
     if (prep) return prep;
     T = window.VoicesType; ORDER = T.ORDER; SHORT = T.SHORT; WHERE = T.WHERE;   // подписи авторов общие со страницей
     prep = Promise.all([
       fetch('data.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }),
-      fontsReady()
+      fontsReady(), modesReady
     ]).then(function (res) {
       D = res[0];
       var a = load(K_AUTH, null);
@@ -724,6 +864,7 @@
     if (active) return;
     active = true; window.zenActive = true;
     if (!root) { root = el('div'); root.id = 'zen'; document.body.appendChild(root); }   // слой нужен сразу, пока грузятся данные
+    wantMode = how === 'push' ? lastMode() : (modeFromUrl() || lastMode());
     if (how === 'push') { history.pushState({ zen: 1 }, '', zenUrl()); enteredPush = true; }
     else if (how === 'pop') enteredPush = true;
     else enteredPush = false;
@@ -737,20 +878,15 @@
       document.documentElement.classList.remove('zen-boot');
       measure();
       var id = how === 'push' ? -1 : idFromHash();
-      zoom = Math.max(minZ, Math.min(Z_MAX, 1));
-      if (!camX && !camY) { camX = Math.random() * WW; camY = Math.random() * WH; }
-      for (var i = 0; i < n; i++) VIS[i] = 2;
+      if (!registered(wantMode)) wantMode = 'universe';
       forceDraw = true;
       if (how === 'boot') {
-        if (id >= 0) { history.replaceState({ zen: 1 }, '', zenUrl()); history.pushState({ zen: 2 }, '', zenUrl(D.questions[QI[id]].id)); pushedAns = true; }
+        if (id >= 0) { history.replaceState({ zen: 1 }, '', zenUrl()); history.pushState({ zen: 2 }, '', zenUrl(D.questions[id].id)); pushedAns = true; }
         else history.replaceState({ zen: 1 }, '', zenUrl());
         enteredPush = false;
       } else if (how === 'pop' && id >= 0) pushedAns = true;
-      if (id >= 0) {
-        camX = X[id] + WD[id] / 2; camY = Y[id] + HD[id] / 2;
-        draw(performance.now()); intro(false);
-        showAnswer(id, false);
-      } else { draw(performance.now()); intro(true); poke(); startLoop(); }
+      setMode(wantMode, { instant: true, first: true, q: id, keepUrl: true });
+      if (id >= 0) showAnswer(id, null);
     }, function () {      // данные не загрузились: возвращаем обычную страницу
       var back = enteredPush;
       leave(); document.documentElement.classList.remove('zen-boot');
@@ -775,7 +911,8 @@
     active = false; window.zenActive = false;
     stopLoop(); if (built) { finishClose(); closePop(); }
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
-    ptrs = {}; np = 0; touching = false; tap = null; pinch = null; vx = vy = 0; snap = null; pending = false;
+    if (leaving) { clearTimeout(leaveTimer); leaving.leave(); leaving = null; }
+    if (curMode) { curMode.leave(); curMode = null; mode = ''; }
     root.classList.remove('on', 'ans', 'moving');
     document.documentElement.classList.remove('zen-on', 'zen-boot');
     if (metaTheme && oldTheme != null) metaTheme.setAttribute('content', oldTheme);
@@ -786,18 +923,26 @@
     else { history.replaceState(null, '', location.pathname); leave(); }
   }
 
-  // «назад»/«вперёд»: состояние Zen полностью читается из адреса
+  // «назад»/«вперёд»: состояние Zen (режим и открытый вопрос) полностью читается из адреса
   window.addEventListener('popstate', function () {
     var z = inUrl();
     if (!z) { if (active) leave(); return; }
     if (!active) { enter('pop'); return; }
     if (!built) return;
-    var id = idFromHash();
-    if (id >= 0 && !ansOpen) { pushedAns = true; showAnswer(id, false); }
+    var id = idFromHash(), um = modeFromUrl();
+    if (um && um !== mode && registered(um)) {
+      if (ansOpen) finishClose();
+      setMode(um, { instant: true, keepUrl: true, q: id });
+    }
+    if (id >= 0 && !ansOpen) { pushedAns = true; if (curMode && curMode.focus) curMode.focus(id); showAnswer(id, null); }
     else if (id < 0 && ansOpen) doClose();
   });
 
-  window.VoicesZen = { check: function () { return built ? check() : null; }, dim: function () { return { WD: WD, HD: HD, nodes: NODES }; }, enter: function () { enter('push'); } };
+  window.VoicesZen = {
+    check: function () { return built ? check() : null; }, dim: function () { return { WD: WD, HD: HD, nodes: NODES }; }, enter: function () { enter('push'); },
+    register: function (id, make) { regs[id] = make; },
+    mode: function () { return mode; }, setMode: function (id) { return built ? setMode(id, {}) : false; }
+  };
 
   var openBtn = document.getElementById('zenopen');
   if (openBtn) openBtn.addEventListener('click', function () { enter('push'); });
