@@ -44,6 +44,8 @@
   var camX = 0, camY = 0, zoom = 1, vw = 0, vh = 0, minZ = Z_MIN;
   var vx = 0, vy = 0;                   // скорость камеры, мир/с
   var FOC = -1, openIdx = -1, curQ = -1;   // curQ — НОМЕР вопроса на открытом экране ответов
+  // след: только что закрытый вопрос не гаснет сразу — 7 с горит ровно и ярче соседей, потом 3 с уходит в «прочитано»; случайно смахнул — вопрос под пальцем
+  var trI = -1, trT0 = 0, TR_HOLD = 7000, TR_FADE = 3000, TR_OP = 0.92;
   var authors = { brodsky: true, chekhov: true, gary: true }, theme = '';
   var readIds = {};
 
@@ -167,7 +169,7 @@
   function swapSlot(i) {
     for (var k = 0; k < 16; k++) {
       var j = Math.floor(Math.random() * n);
-      if (j === i || VIS[j] || j === openIdx) continue;
+      if (j === i || VIS[j] || j === openIdx || j === trI) continue;
       var qa = QI[i], qb = QI[j];
       if (theme && !matches(qb) && k < 12) continue;
       var fa = fitIn(qb, i), fb = fitIn(qa, j);
@@ -192,7 +194,22 @@
     if (i === openIdx) return 0;
     if (!ACT[i]) return 0.06;
     if (i === FOC) return 1;
-    return BASE[i] * (RD[i] ? 0.5 : 1);
+    var o = BASE[i] * (RD[i] ? 0.5 : 1);
+    return i === trI ? o + (TR_OP - o) * trailW(performance.now()) : o;
+  }
+  // вес следа: 1 пока держится, дальше плавно к 0; на нуле след снимается
+  function trailW(now) {
+    if (trI < 0) return 0;
+    var k = (now - trT0 - TR_HOLD) / TR_FADE;
+    if (k <= 0) return 1;
+    NODES[trI].classList.remove('tr');      // тёплый оттенок уходит вместе с яркостью (transition в css)
+    if (k < 1) return 1 - k * k * (3 - 2 * k);
+    trailEnd(); return 0;
+  }
+  function trailEnd() {
+    if (trI < 0) return;
+    var i = trI; trI = -1;
+    NODES[i].classList.remove('tr'); CYC[i] = cycleOf(i, performance.now()); setOp(i);   // дыхание продолжается с текущего вдоха, без внезапной подмены
   }
   // дыхание: вопрос медленно разгорается и почти гаснет, у каждого свой ритм
   function breath(i, t) {
@@ -202,7 +219,9 @@
   }
   // номер вдоха: меняется ровно в момент, когда вопрос погас полностью
   function cycleOf(i, t) { return Math.floor((t * SP3[i] + PH3[i] + 1.5708) / 6.2832); }
-  function setOp(i) { OPS[i] = opacityOf(i); LO[i] = OPS[i] * breath(i, performance.now()); NODES[i].style.opacity = LO[i].toFixed(3); forceDraw = true; }
+  // след не дышит, пока горит: дыхание возвращается по мере того, как он гаснет
+  function lum(i, now) { var b = breath(i, now); if (i !== trI) return OPS[i] * b; var w = trailW(now); OPS[i] = opacityOf(i); return OPS[i] * (w + (1 - w) * b); }
+  function setOp(i) { OPS[i] = opacityOf(i); LO[i] = lum(i, performance.now()); NODES[i].style.opacity = LO[i].toFixed(3); forceDraw = true; }
   function setFocus(i) { var o = FOC; if (o === i) return; FOC = i; if (o >= 0) setOp(o); if (i >= 0) setOp(i); }
   function matches(q) { return !theme || D.questions[q].t.indexOf(theme) >= 0 ? 1 : 0; }
   function applyTheme() {
@@ -246,7 +265,7 @@
   function draw(now) {
     var z = zoom, i, w, h, sx, sy, v, margin = 24 + AMP * z, nd, tr, o, live = now > introUntil;
     camX = ((camX % WW) + WW) % WW; camY = ((camY % WH) + WH) % WH;
-    if (calm && !forceDraw && camX === dX && camY === dY && z === dZ) return;
+    if (calm && !forceDraw && trI < 0 && camX === dX && camY === dY && z === dZ) return;
     dX = camX; dY = camY; dZ = z; forceDraw = false;
     var zs = z.toFixed(4);
     for (i = 0; i < n; i++) {
@@ -257,9 +276,11 @@
         sway(i, now);
         nd = NODES[i];
         if (VIS[i] !== 1) { nd.style.visibility = 'visible'; VIS[i] = 1; CYC[i] = cycleOf(i, now); }
-        else if (!calm && live && i !== openIdx) { var cy = cycleOf(i, now); if (cy !== CYC[i]) { CYC[i] = cy; swapSlot(i); } }
+        else if (!calm && live && i !== openIdx && i !== trI) { var cy = cycleOf(i, now); if (cy !== CYC[i]) { CYC[i] = cy; swapSlot(i); } }
         nd.style.transform = 'translate3d(' + px.toFixed(2) + 'px,' + py.toFixed(2) + 'px,0) scale(' + zs + ')';
-        if (live) { o = OPS[i] * breath(i, now); if (Math.abs(o - LO[i]) > 0.004) { LO[i] = o; nd.style.opacity = o.toFixed(3); } }
+        if (live) {
+          o = lum(i, now);
+          if (Math.abs(o - LO[i]) > 0.004) { LO[i] = o; nd.style.opacity = o.toFixed(3); } }
       } else if (VIS[i] !== 0) { NODES[i].style.visibility = 'hidden'; VIS[i] = 0; }
     }
   }
@@ -279,7 +300,7 @@
     }
     if (pending && now > wheelUntil && Math.sqrt(vx * vx + vy * vy) * zoom < REST_V) pending = false;
     if (calm) return;
-    var idle = !snap && !vx && !vy && !pending && now - lastInput > IDLE;
+    var idle = !snap && !vx && !vy && !pending && trI < 0 && now - lastInput > IDLE;   // пока горит след, поле не уплывает
     if (idle) {
       if (driftAmt === 0) { dAng = Math.random() * 6.283; setFocus(-1); }
       driftAmt = Math.min(1, driftAmt + dt / 3);
@@ -293,6 +314,7 @@
     if (!active || !uniOn || ansOpen || document.hidden || !built) return;
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     physics(now, dt);
+    if (trI >= 0) trailW(now);   // след догорает и вне экрана
     draw(now);
     raf = requestAnimationFrame(frame);
   }
@@ -727,6 +749,38 @@
   }
   function beginRead() { if (readMode === 'rsvp') rvEnter(1000); else startTyping(); }
 
+  // возврат: тот же вопрос, открытый снова в течение 90 с, не печатается заново — текст на месте, прокрутка та же, чтение по словам идёт с того слова
+  var resume = null, RESUME_MS = 90000;
+  function snapRead() {
+    var st = { q: curQ, t: performance.now(), mode: readMode, big: '', cols: {} };
+    cols.forEach(function (c) {
+      if (c.card.classList.contains('big')) st.big = c.a;
+      st.cols[c.a] = { top: c.body.scrollTop, rs: c.rs ? { i: c.rs.i, state: c.rs.state, began: c.rs.began } : null };
+    });
+    resume = st;
+  }
+  function startRead(q) {
+    var st = resume; resume = null;
+    if (!st || st.q !== q || performance.now() - st.t > RESUME_MS) { beginRead(); return; }
+    cols.forEach(function (c) { if (c.a === st.big) expand(c); });
+    if (readMode === 'rsvp' && st.mode !== 'rsvp') { rvEnter(1000); return; }
+    finishTyping();
+    if (readMode !== 'rsvp') { cols.forEach(function (c) { var s = st.cols[c.a]; if (s) { c.body.scrollTop = s.top; fade(c); } }); return; }
+    var go = null;
+    zwrap.classList.add('rvm'); rvLast = null;
+    cols.forEach(function (c) {
+      c.card.classList.add('rsv'); c.card.classList.remove('live', 'fin');
+      var r = rvPrep(c), s = st.cols[c.a] && st.cols[c.a].rs;
+      if (!s) return;
+      r.began = s.began; r.state = s.state === 'run' ? 'pause' : s.state;
+      r.i = Math.min(r.words.length - 1, s.state === 'run' ? Math.max(0, s.i - 2) : s.i);   // играло — на два слова назад, чтобы войти в фразу
+      if (s.state === 'run' && !go) go = c;
+      rvShow(c);
+    });
+    rvMark();
+    if (go && !calm) rvKickT = setTimeout(function () { rvKickT = 0; if (ansOpen && !closing && readMode === 'rsvp') rvStart(go); }, 900);
+  }
+
   function setReadMode(m) {
     if (m === readMode) return;
     readMode = m; save(K_RMODE, m);
@@ -834,7 +888,7 @@
     buildAnswer(q);
     root.classList.add('ans'); za.classList.add('on'); za.scrollTop = 0; zwrap.style.transition = ''; zwrap.style.transform = '';
     try { za.focus({ preventScroll: true }); } catch (e) {}
-    if (!s0) { titleCard.classList.add('show'); beginRead(); return; }
+    if (!s0) { titleCard.classList.add('show'); startRead(q); return; }
     // FLIP: копия вопроса с места в режиме летит в заголовок
     var r = titleH2.getBoundingClientRect(), F = parseFloat(getComputedStyle(titleH2).fontSize), k = F / s0.fs;
     var col1 = getComputedStyle(titleH2).color;
@@ -856,7 +910,7 @@
       c.card.animate([{ transform: 'translateY(46px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
         { duration: 520, delay: 240 + j * 110, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
     });
-    beginRead();
+    startRead(q);
   }
 
   function requestCloseAnswer() { if (!ansOpen || closing) return; if (pushedAns) history.back(); else doClose(); }
@@ -870,6 +924,7 @@
 
   function doClose() {
     if (!ansOpen || closing) return;
+    snapRead();                                              // до остановки чтения: что играло, то и продолжится
     closing = true; pushedAns = false;
     if (typeRaf) cancelAnimationFrame(typeRaf); typeRaf = 0;
     rvStopAll();
@@ -980,7 +1035,7 @@
       } else { draw(performance.now()); intro(o.first); poke(); startLoop(); }
     },
     leave: function () {
-      uniOn = false; stopLoop();
+      uniOn = false; stopLoop(); trailEnd();
       ptrs = {}; np = 0; touching = false; tap = null; pinch = null; vx = vy = 0; snap = null; pending = false;
       field.classList.remove('drag'); if (root) root.classList.remove('moving');
     },
@@ -989,14 +1044,20 @@
     // вопрос открывается: поле замирает, место вопроса гаснет (его заменяет летящая копия)
     onOpened: function (q) {
       var i = SL[q];
+      trailEnd();
       setFocus(-1); touching = false; np = 0; ptrs = {}; tap = null; vx = vy = 0; snap = null;
       RD[i] = 1; openIdx = i; setOp(i);
     },
-    onClosed: function () { if (openIdx >= 0) { var i = openIdx; openIdx = -1; setOp(i); } },
+    onClosed: function () { if (openIdx >= 0) { var i = openIdx; openIdx = -1; trI = i; trT0 = performance.now(); NODES[i].classList.add('tr'); setOp(i); } },
     returnTarget: function (q) {
       var i = SL[q];
-      place(i, camX, camY, zoom); sway(i, performance.now());
-      return { el: NODES[i], x: px, y: py, scale: zoom, opacity: ACT[i] ? BASE[i] * 0.5 : 0.06 };   // прочитанный тусклее
+      place(i, camX, camY, zoom);
+      if (px < 0 || py < 0 || px + WD[i] * zoom > vw || py + HD[i] * zoom > vh) {   // вопрос за краем (открыт по ссылке): поле подводит его к центру, чтобы след был под пальцем
+        camX = X[i] + WD[i] / 2; camY = Y[i] + HD[i] / 2; vx = vy = 0; snap = null; forceDraw = true; draw(performance.now());
+        place(i, camX, camY, zoom);
+      }
+      sway(i, performance.now());
+      return { el: NODES[i], x: px, y: py, scale: zoom, opacity: ACT[i] ? TR_OP : 0.06 };   // садится следом: ярко, гаснет потом
     },
     key: uniKey
   };

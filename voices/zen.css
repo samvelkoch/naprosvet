@@ -26,6 +26,8 @@ html.zen-on body{overflow:hidden}
 .zq{position:absolute;left:0;top:0;transform-origin:0 0;white-space:pre;font-family:var(--f-serif);font-weight:400;line-height:1.25;
   color:var(--htext);opacity:0;visibility:hidden;pointer-events:none;-webkit-font-smoothing:antialiased}
 .zq.intro{transition:opacity .8s ease}
+.zq{transition:color 2.5s ease}
+.zq.tr{color:color-mix(in srgb,var(--htext) 80%,var(--accent))}
 
 /* четыре иконки справа сверху: режим, авторы, темы, выход */
 .zt{position:absolute;z-index:4;top:calc(env(safe-area-inset-top,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);display:flex;gap:0;transition:opacity .35s}
