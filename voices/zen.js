@@ -546,6 +546,7 @@
       bx.addEventListener('click', function (e) { e.stopPropagation(); expand(c); });
       cols.push(c);
     });
+    zwrap.className = zwrap.className.replace(/\s*\bn\d\b/g, '') + ' n' + cols.length;   // на широком экране блоки авторов идут колонками: их число задаёт сетку
   }
   function fade(c) { var b = c.body; c.card.classList.toggle('more', b.scrollHeight - b.scrollTop - b.clientHeight > 4); c.card.classList.toggle('top', b.scrollTop > 2); }
   // один блок на весь экран, остальные сворачиваются до строки с именем; повторное касание возвращает поровну
