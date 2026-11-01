@@ -192,6 +192,45 @@ html.zen-on body{overflow:hidden}
 .zl-cv{position:absolute;inset:0;pointer-events:none}
 .zl-k{position:absolute;left:0;top:0;margin:0;white-space:pre;text-align:left;font-family:var(--f-serif);font-weight:400;line-height:1.25;color:#f0e2c8;visibility:hidden;pointer-events:none}
 
+/* режим «Свой»: canvas на родительском фоне #zen (без своего), внизу панель из пяти бегунков, трёх тумблеров и пяти точек-пресетов (всё без подписей).
+   .zu-k — невидимый узел с текстом вопроса: источник для полёта заголовка в ответы и обратно */
+.zu-cv{position:absolute;inset:0;pointer-events:none}
+.zu-k{position:absolute;left:0;top:0;margin:0;white-space:pre;text-align:left;font-family:var(--f-serif);font-weight:400;line-height:1.25;color:var(--htext);visibility:hidden;pointer-events:none}
+.zu-p{position:absolute;z-index:3;left:50%;bottom:0;width:min(100%,560px);box-sizing:border-box;padding:6px 20px calc(env(safe-area-inset-bottom,0px) + 10px);
+  background:rgba(18,13,10,.84);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.08);color:var(--htext);
+  touch-action:none;-webkit-user-select:none;user-select:none;transform:translate(-50%,102%);visibility:hidden;
+  transition:transform .34s cubic-bezier(.2,.8,.2,1),visibility .34s}
+.zu-p.on{transform:translate(-50%,0);visibility:visible}
+.zu-h{display:block;width:34px;height:3px;margin:4px auto 4px;border-radius:2px;background:rgba(240,232,216,.22)}
+.zu-r{display:flex;align-items:center;gap:14px;height:38px}
+.zu-i{flex:none;width:26px;display:grid;place-items:center;color:var(--htext);opacity:.6}
+.zu-i svg{display:block}
+.zu-in{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:34px;margin:0;padding:0;background:transparent;cursor:pointer;touch-action:none;--p:0%;-webkit-tap-highlight-color:transparent}
+.zu-in:focus{outline:none}
+.zu-in::-webkit-slider-runnable-track{height:1px;border:0;background:linear-gradient(90deg,var(--accent) var(--p),rgba(240,232,216,.28) var(--p))}
+.zu-in::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5.5px;border-radius:50%;border:0;background:var(--za-qink);transition:transform .15s}
+.zu-in::-moz-range-track{height:1px;border:0;background:rgba(240,232,216,.28)}
+.zu-in::-moz-range-progress{height:1px;background:var(--accent)}
+.zu-in::-moz-range-thumb{width:12px;height:12px;border-radius:50%;border:0;background:var(--za-qink)}
+.zu-in:active::-webkit-slider-thumb{transform:scale(1.25)}
+.zu-in:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 2px var(--hmark)}
+.zu-in:disabled{opacity:.3;cursor:default}
+.zu-t{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 0;padding:0 2px}
+.zu-sw{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:12px;height:42px;padding:0;border:0;background:none;color:var(--htext);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.zu-sw:focus-visible{outline:1px solid var(--hmark);outline-offset:-4px}
+.zu-cap{position:relative;flex:none;width:26px;height:14px;box-sizing:border-box;border:1px solid rgba(240,232,216,.45);border-radius:7px;transition:border-color .2s}
+.zu-cap i{position:absolute;left:2px;top:2px;width:8px;height:8px;border-radius:50%;background:rgba(240,232,216,.7);transition:transform .2s cubic-bezier(.3,.7,.3,1),background .2s}
+.zu-sw[aria-checked="true"] .zu-cap{border-color:var(--accent)}
+.zu-sw[aria-checked="true"] .zu-cap i{transform:translateX(12px);background:var(--accent)}
+.zu-sw[aria-checked="true"] .zu-i{opacity:.9}
+.zu-d{display:flex;justify-content:center;gap:10px;margin:0;padding:2px 0 0}
+.zu-pd{width:32px;height:30px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--htext);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.zu-pd i{display:block;width:7px;height:7px;border-radius:50%;border:1px solid rgba(240,232,216,.55);transition:background .2s,border-color .2s}
+.zu-pd:hover i{border-color:var(--htext)}
+.zu-pd[data-on] i{background:var(--hmark);border-color:var(--hmark)}
+.zu-pd:focus-visible{outline:1px solid var(--hmark);outline-offset:-4px}
+@media (prefers-reduced-motion:reduce){.zu-p,.zu-cap,.zu-cap i,.zu-in::-webkit-slider-thumb{transition-duration:.01s!important}}
+
 @media (prefers-reduced-motion:reduce){
   .zq,.zs,.zt,.zt button,.zp{transition-duration:.01s!important}
   .zt button.shake,.zp button.shake{animation:none}

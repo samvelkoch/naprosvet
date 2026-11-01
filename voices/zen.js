@@ -11,15 +11,16 @@
   function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
 
   var K_READ = 'voices-zen-read', K_AUTH = 'voices-zen-authors', K_THEME = 'voices-zen-theme', K_MODE = 'voices-zen-mode', K_RMODE = 'voices-zen-read-mode', K_WPM = 'voices-zen-wpm';
-  // режимы: Вселенная живёт в этом файле, Барабан и «На просвет» регистрируются из zen-drum.js и zen-light.js
-  var MODE_IDS = ['universe', 'drum', 'light'];
-  var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', light: 'На просвет' };
+  // режимы: Вселенная живёт в этом файле, Барабан, «На просвет» и «Свой» регистрируются из zen-drum.js, zen-light.js и zen-custom.js
+  var MODE_IDS = ['universe', 'drum', 'light', 'custom'];
+  var MODE_NAMES = { universe: 'Вселенная', drum: 'Барабан', light: 'На просвет', custom: 'Свой' };
   var MODE_ALIAS = { ink: 'light' };    // старые адреса и сохранённый режим «Чернила» ведут в «На просвет»
   function canon(id) { return MODE_ALIAS[id] || id; }
   var MODE_ICONS = {
     universe: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="7" r="2.4"/><circle cx="16.5" cy="5.5" r="1.3"/><circle cx="19" cy="12.5" r="2.7"/><circle cx="10" cy="14" r="1.1"/><circle cx="5" cy="18.5" r="1.4"/><circle cx="14.5" cy="19" r="2"/></g></svg>',
     drum: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="8" y="2.6" width="8" height="18.8" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M8 12h8"/><path d="M8.5 9.2h7M8.5 14.8h7"/><path d="M10.3 6.8h3.4M10.3 17.2h3.4"/></g></svg>',
-    light: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><defs><mask id="zlm" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="1.8" y="4.1" width="14.4" height="17.8" rx="2.2" fill="#000"/></mask></defs><circle cx="16" cy="9.6" r="6.2" fill="currentColor" mask="url(#zlm)"/><rect x="3.2" y="5.5" width="11.6" height="15" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
+    light: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><defs><mask id="zlm" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="1.8" y="4.1" width="14.4" height="17.8" rx="2.2" fill="#000"/></mask></defs><circle cx="16" cy="9.6" r="6.2" fill="currentColor" mask="url(#zlm)"/><rect x="3.2" y="5.5" width="11.6" height="15" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+    custom: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M3.5 6h17M3.5 12h17M3.5 18h17"/></g><g fill="currentColor" stroke="#120d0a" stroke-width="1.4"><circle cx="15.5" cy="6" r="2.4"/><circle cx="7.5" cy="12" r="2.4"/><circle cx="12.5" cy="18" r="2.4"/></g></svg>'
   };
   var BG = '#120d0a';
   var AMP = 14;                         // наибольший размах собственного плавания вопроса, px мира
