@@ -145,6 +145,24 @@ html.zen-on body{overflow:hidden}
 .zw.exp .zc.rsv:not(.big) .rv{display:none}
 .rv .rp{position:relative;flex:none;height:2px;margin:0 0 14px;background:var(--ring);overflow:hidden}
 .rv .rp i{position:absolute;inset:0;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+/* широкий экран: вопрос сверху во всю ширину, блоки авторов рядом колонками; развёрнутый блок вдвое шире соседей, они не прячутся */
+@media (min-width:900px) and (min-height:520px){
+.zw{max-width:1280px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:14px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.zw.n1{grid-template-columns:minmax(0,760px);justify-content:center}
+.zw.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.zw.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.zw.n2.exp{grid-template-columns:2fr 1fr}
+.zw.n3.exp{grid-template-columns:repeat(4,minmax(0,1fr))}
+.zw .zk{grid-column:1/-1}
+.zw .zc,.zw.exp .zc{grid-row:2;min-height:0}
+.zw.n2.exp .zc:not(.big){grid-column:auto}
+.zw.exp .zc.big{grid-column:span 2}
+.zw.n2.exp .zc.big{grid-column:auto;order:-1}
+.zw.n2.exp .zk{order:-2}
+.zw.exp .zc:not(.rsv) .body{display:block}
+.zw.exp .zc.rsv:not(.big) .rv{display:flex}
+.zw.exp .zc:not(.big){padding-bottom:0}
+}
 @media (prefers-reduced-motion:reduce){.zr>button,.zv,.zn,.rv .rs{transition-duration:.01s!important}}
 
 /* летящая копия вопроса: поле <-> заголовок */
