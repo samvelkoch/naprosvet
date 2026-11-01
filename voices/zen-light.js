@@ -1,69 +1,72 @@
-/* «Голоса_», Zen: режим «На просвет». Тёмный лист бумаги с вопросами-водяными знаками, палец — лампа за листом.
-   Под светом знаки проступают тёмной сепией там, где стоят. Свет рисует Canvas 2D (один спрайт), текст — DOM под маской.
-   Регистрируется в хосте (zen.js). ES5, без библиотек. */
+/* «Голоса_», Zen: режим «На просвет». Тёмный экран, по нему справа налево едут строки-ленты с вопросами:
+   в покое буквы тёмные на тёмном и размыты; палец (мышь) прочерчивает тонкую линию света, и буквы под ней проступают —
+   светлые, резкие, чуть крупнее. Фон не светлеет никогда: светятся только буквы.
+   Всё рисует один canvas. Тусклый слой — по спрайту на вопрос (размытие запечено), светящиеся буквы — по одной. Регистрируется в хосте (zen.js). ES5, без библиотек. */
 (function () {
   'use strict';
   if (!window.VoicesZen) return;
 
   window.VoicesZen.register('light', function (api, scene) {
     var el = api.el, calm = api.calm;
-    var R = 180;                    // радиус света, px
-    var RISE = 300;                 // разгорание света под пальцем, мс
-    var FALL = 2500;                // остывание света после отпускания, мс
-    var TRAIL = 1500;               // остывание точки следа, мс
-    var STEP = 20;                  // точку следа ставим каждые столько px пути лампы
-    var TRAIL_K = 0.13;             // сила точки следа: точек много, они складываются
-    var OM = 18;                    // жёсткость пружины лампы: отставание около 100 мс
-    var OPEN_AT = 0.45;             // вопрос считается проявленным при такой силе света в центре
-    var IDLE = 7000;                // через 7 с тишины лампа блуждает
-    // блуждающий свет: меньше лампы (радиус 0.52–0.68 R), то «приближается» (меньше, ярче, чётче ядро), то «удаляется» (больше, мягче, тусклее);
-    // несколько синусов с несоизмеримыми периодами (6–17 с) — ритм не читается; отдельная огибающая иногда гасит свет почти до нуля
-    var WR0 = 0.52, WR1 = 0.68;     // радиус блуждающего света в долях R: вблизи — WR0, вдали — WR1
-    var WS_FAR = 0.30, WS_NEAR = 0.62;   // сила: вдали / вблизи
+
+    // ---- константы
+    var DIM = [232, 214, 184];      // цвет тусклых букв #e8d6b8 (по яркости почти фон: после размытия пик 0.06–0.085 от этого цвета над #120d0a)
+    var DIM_A = 0.17;               // непрозрачность текста в спрайте до размытия (тонкий штрих после размытия теряет ~3/4); ряд множит на 0.9–1.1 и на 1…0.58 (толстый штрих крупных букв после размытия ярче, выравниваем)
+    var DIM_SEP = 0.6;              // «·» между вопросами: доля яркости тусклого текста
+    var LIT = '#f0e2c8';            // цвет засвеченных букв
+    var READ_K = 0.72;              // прочитанный вопрос: тусклее
+    var FS0 = 13, FS1 = 34;         // кегль строки, px (на мобильном; треугольное распределение со смещением к средним)
+    var V0 = 10, V1 = 28;           // скорость строки, px/с: крупные быстрее
+    var ASC = 0.96, DESC = 0.26, SCALE = 1.065;   // полоса строки: над базовой линией ASC·кегль, под ней DESC·кегль, с запасом на увеличение букв
+    var GAP0 = 2, GAP1 = 18;        // зазор между полосами строк, px (до распределения остатка)
+    var PADB = 10, PADX = 10;       // поля спрайта под размытие, px
+    var HW = 10;                    // «толщина» линии света: на этом расстоянии от оси яркость падает от 1 до 0 (на уровне 0.5 около 5 px от оси и ещё запас на букву)
+    var REACH = 4.5;                // максимальная поправка на размер буквы: линия, прошедшая через букву, зажигает её целиком
+    var TAIL = 2000;                // каждая точка следа гаснет через это время после появления, мс
+    var LIT_SC = 0.06;              // увеличение зажжённой буквы (до ×1.06)
+    var ATTACK = 70;                // постоянная времени разгорания буквы, мс
+    var PSTEP = 4;                  // шаг точек линии по пути пальца, px
+    var PCAP = 1400;                // ёмкость кольца точек
+    var OPEN_AT = 0.4;              // вопрос считается засвеченным при такой яркости буквы под пальцем
+    var IDLE = 7000;                // через 7 с тишины свет блуждает
+    var OM = 18;                    // жёсткость пружины блуждающего света
+    var WR0 = 21, WR1 = 30;         // радиус блуждающего света, px (диаметр около 40–60): вблизи — WR0, вдали — WR1
+    var WS_FAR = 0.55, WS_NEAR = 1.0;   // сила блуждающего света: вдали / вблизи
     var WPER = [6.3, 9.7, 13.4, 16.9];   // периоды «дыхания дистанции», с
     var WVAN = [13.7, 23.3];        // периоды огибающей «растворения», с
-    // дрейф знаков: каждый знак вместе со своим проявленным слоем медленно плавает на DA px; зазор раскладки GAP >= 2*DA, значит соседи не сталкиваются
-    var DA = 15, GAP = 34, ICON_GAP = 56, MAXL = 80;
-    var MAGNET = 230;               // притяжение блуждающего света к указателю, px/с² на расстоянии 300 px (ближе — сильнее)
-    var WORBIT = 50;                // размах кружения у самого указателя, px (с учётом второй гармоники орбита 40–70 px)
-    var WM_BLUR = 2.6;              // минимальное размытие водяного знака, px (дальше растёт с кеглем: 0.14 кегля)
-    var WM_OP = [0.06, 0.085];       // яркость водяного знака в пике «дыхания» (после размытия) — едва светлее бумаги
-    var GLOW = [232, 214, 184];     // центр свечения #e8d6b8
-    // ярусы размера: A–B — разброс размера, W — ширина строки, px; MIN — ниже не уменьшаем при замене знака
-    var TIER = [
-      { a: 15, b: 18, w1: 130, w2: 230, min: 14, len: 120, nar: 70 },     // nar — предел длины вопроса на узком экране: меньше строк, плотнее лист
-      { a: 20, b: 24, w1: 170, w2: 260, min: 18, len: 110, nar: 58 },
-      { a: 28, b: 34, w1: 230, w2: 300, min: 24, len: 70, nar: 40 }
-    ];
+    var MAGNET = 230;               // притяжение блуждающего света к указателю, px/с² на расстоянии 300 px
+    var WORBIT = 50;                // размах кружения у самого указателя, px
+    var MAXQW = 3600;               // вопрос шире этого не берём (предел размера спрайта)
 
-    // ---- слои сцены
-    var wm = el('div', 'zl-wm'), cv = el('canvas', 'zl-glow'), ink = el('div', 'zl-ink'), fib = el('div', 'zl-fib'), grain = el('div', 'zl-grain');
-    var ctx = cv.getContext('2d');
-    scene.appendChild(wm); scene.appendChild(cv); scene.appendChild(ink); scene.appendChild(fib); scene.appendChild(grain);
-    var EMPTY = 'linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0))';
+    // ---- слои сцены: один canvas, плюс скрытый узел-источник для полёта заголовка (FLIP)
+    var cv = el('canvas', 'zl-cv'), ctx = cv.getContext('2d'), proxy = el('div', 'zl-k');
+    scene.appendChild(cv); scene.appendChild(proxy);
 
-    var vw = 0, vh = 0, dpr = 1, spriteDpr = 0, safe = { t: 0, r: 0, b: 0, l: 0 }, zone = null;
-    var active = false, paused = false, raf = 0, last = 0, clk = 0, lastAct = 0, timers = [], hadLight = false;
-    var slots = [], FF = 'Georgia, serif', mc = null;
-    var lights = [], act = [], g = null, openQ = -1, relitQ = -1, sprites = [null, null];
+    var vw = 0, vh = 0, dpr = 1, safe = { t: 0, r: 0, b: 0, l: 0 }, topY = 0, FF = 'Georgia, serif', BO = 1, mc = null;
+    var active = false, paused = false, raf = 0, last = 0, clk = 0, lastAct = 0, timers = [], frozen = false, holdT = 0;
+    var rows = [], pool0 = [], MC = {}, openQ = -1, relitQ = -1, g = null, hoverOn = false, mkBudget = 0;
 
     function later(fn, ms) { var t = setTimeout(function () { var k = timers.indexOf(t); if (k >= 0) timers.splice(k, 1); fn(); }, ms); timers.push(t); return t; }
     function rnd(a, b) { return a + Math.random() * (b - a); }
-    function sm(x) { return x * x * (3 - 2 * x); }
-    // профиль света: гладкий колокол, на краю радиуса ровно ноль и нулевой наклон (ни колец, ни края)
-    function prof(t) { var u = 1 - t * t; return u <= 0 ? 0 : Math.pow(u, 2.4); }
-    function prof2(t) { var u = 1 - t * t; return u <= 0 ? 0 : Math.pow(u, 5); }   // узкое яркое ядро: блуждающий свет вблизи
-    var STOPS = [], PROF = [], PROF2 = [], i0;
-    for (i0 = 0; i0 <= 12; i0++) { STOPS.push(i0 / 12); PROF.push(prof(i0 / 12)); PROF2.push(prof2(i0 / 12)); }
-    // профиль света L в точке t = d / L.r: у лампы и следа обычный, у блуждающего света смесь с узким ядром
-    function lp(L, t) { return L.n > 0.001 ? (1 - L.n) * prof(t) + L.n * prof2(t) : prof(t); }
+    function sm(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x); }
+    function fade(age) { var a = age / TAIL; return a <= 0 ? 1 : a >= 1 ? 0 : 1 - a * a * (3 - 2 * a); }
+    function qtext(q) { return api.data().questions[q].q; }
 
-    // ---------------------------------------------------------------- размеры, спрайт света
+    // ---------------------------------------------------------------- размеры
     function probeSafe() {
       var p = el('i'); p.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
       scene.appendChild(p); var cs = getComputedStyle(p);
       safe = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
       scene.removeChild(p);
+    }
+    // смещение базовой линии от верха строки при line-height 1.25 (доля кегля): по нему узел-источник совпадает с буквами на canvas
+    function measureBO() {
+      var d = el('div'), m = el('span');
+      d.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;white-space:pre;pointer-events:none;font:400 100px/1.25 ' + FF;
+      m.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+      d.textContent = 'Ag'; d.appendChild(m); scene.appendChild(d);
+      var b = m.getBoundingClientRect().top - d.getBoundingClientRect().top; scene.removeChild(d);
+      BO = b > 0 ? b / 100 : 1.0;
     }
     function size() {
       vw = scene.clientWidth || window.innerWidth; vh = scene.clientHeight || window.innerHeight;
@@ -71,239 +74,196 @@
       cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
       cv.style.width = vw + 'px'; cv.style.height = vh + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      probeSafe();
-      // зона иконок справа сверху: берём настоящий прямоугольник панели, иначе оцениваем
-      var tl = scene.parentNode && scene.parentNode.querySelector ? scene.parentNode.querySelector('.zt') : null, sr = scene.getBoundingClientRect(), z;
-      if (tl) { var r = tl.getBoundingClientRect(); z = { x: r.left - sr.left, y: 0, w: r.right - sr.left - (r.left - sr.left), h: r.bottom - sr.top }; }
-      if (!z || z.w < 20) z = { x: vw - 182 - safe.r, y: 0, w: 182 + safe.r, h: 50 + safe.t };
-      zone = { x: z.x - ICON_GAP, y: 0, w: vw - (z.x - ICON_GAP), h: z.h + ICON_GAP };
-      if (!sprites[0] || spriteDpr !== dpr) makeSprites();
-    }
-    // спрайты лампы: центр #e8d6b8, дробный шум в альфе убирает ступени градиента; второй (узкое ядро) вдвое грубее — он только для блуждающего света
-    function makeSprite(pf, S) {
-      var c = document.createElement('canvas'), x = c.getContext('2d'), im, d, h = S / 2, px, py, t, a, o;
-      c.width = c.height = S; im = x.createImageData(S, S); d = im.data;
-      for (py = 0; py < S; py++) for (px = 0; px < S; px++) {
-        t = Math.sqrt((px + 0.5 - h) * (px + 0.5 - h) + (py + 0.5 - h) * (py + 0.5 - h)) / h;
-        a = t >= 1 ? 0 : pf(t) * 0.9 * 255 + Math.random() - 0.5;
-        o = (py * S + px) * 4; d[o] = GLOW[0]; d[o + 1] = GLOW[1]; d[o + 2] = GLOW[2]; d[o + 3] = a < 0 ? 0 : a;
-      }
-      x.putImageData(im, 0, 0); return c;
-    }
-    function makeSprites() {
-      sprites[0] = makeSprite(prof, Math.ceil(2 * R * dpr));
-      sprites[1] = makeSprite(prof2, Math.ceil(1.2 * R * dpr));
-      spriteDpr = dpr;
+      probeSafe(); measureBO();
+      // низ панели иконок справа сверху: строки начинаются под ней
+      var tl = scene.parentNode && scene.parentNode.querySelector ? scene.parentNode.querySelector('.zt') : null, sr = scene.getBoundingClientRect(), zb = 0;
+      if (tl) { var r = tl.getBoundingClientRect(); zb = r.bottom - sr.top; }
+      if (!(zb > 20)) zb = safe.t + 50;
+      topY = Math.round(zb + 10);
     }
 
-    // ---------------------------------------------------------------- раскладка знаков
-    function wrap(text, size, maxW) {
-      if (!mc) mc = document.createElement('canvas').getContext('2d');
-      mc.font = '400 ' + size + 'px ' + FF;
-      var words = text.replace(/\s+/g, ' ').trim().split(' '), sp = mc.measureText(' ').width, lines = [], cur = '', curW = 0, best = 0, k, w;
-      for (k = 0; k < words.length; k++) {
-        w = mc.measureText(words[k]).width;
-        if (!cur) { cur = words[k]; curW = w; }
-        else if (curW + sp + w <= maxW) { cur += ' ' + words[k]; curW += sp + w; }
-        else { lines.push(cur); if (curW > best) best = curW; cur = words[k]; curW = w; }
-      }
-      lines.push(cur); if (curW > best) best = curW;
-      return { lines: lines, w: Math.ceil(best) + 2, h: Math.ceil(lines.length * size * 1.25) };
-    }
+    // ---------------------------------------------------------------- вопросы, метрики
     function pool() {
       var D = api.data(), p = [], k;
       for (k = 0; k < D.questions.length; k++) if (api.matches(k)) p.push(k);
       return p;
     }
-    function qtext(q) { return api.data().questions[q].q; }
-    function clash(r, list) {
-      for (var k = 0; k < list.length; k++) {
-        var s = list[k];
-        if (r.x < s.x + s.w + GAP && r.x + r.w + GAP > s.x && r.y < s.y + s.h + GAP && r.y + r.h + GAP > s.y) return true;
+    // позиции и ширины букв: left[i] — начало буквы i в строке (с учётом кернинга), cw[i] — её ширина; считаем один раз на пару (вопрос, кегль)
+    function metrics(row, it) {
+      if (it.left) return;
+      var key = row.fs + '|' + it.q, m = MC[key], n, i, pre, c;
+      if (!m) {
+        mc.font = row.font; n = it.text.length;
+        m = { left: new Float32Array(n), cw: new Float32Array(n) };
+        for (i = 0; i < n; i++) {
+          pre = mc.measureText(it.text.slice(0, i + 1)).width; c = mc.measureText(it.text.charAt(i)).width;
+          m.cw[i] = c; m.left[i] = pre - c;
+        }
+        MC[key] = m;
       }
-      return false;
+      it.left = m.left; it.cw = m.cw;
     }
-    function inZone(r) { return zone && r.x < zone.x + zone.w && r.x + r.w > zone.x && r.y < zone.y + zone.h && r.y + r.h > zone.y; }
+    function shownSet() {
+      var o = {}, k, j;
+      for (k = 0; k < rows.length; k++) for (j = 0; j < rows[k].items.length; j++) o[rows[k].items[j].q] = 1;
+      return o;
+    }
+    function mkItem(row, q) {
+      var text = qtext(q).replace(/\s+/g, ' ').trim();
+      mc.font = row.font;
+      var qw = mc.measureText(text).width;
+      return { q: q, text: text, x: 0, qw: qw, w: qw + row.gap, sp: null, left: null, cw: null, gI: null, gT: null, gD: null, hot: 0, hidden: false, rd: api.isRead(q) };
+    }
+    // случайный подходящий вопрос: из выбранной темы, не показанный сейчас (если вопросов хватает), не шире MAXQW
+    function pickItem(row) {
+      if (!pool0.length) return null;
+      var sh = shownSet(), tries = 0, q, it, free = [], k;
+      sh[openQ] = 1;
+      for (k = 0; k < pool0.length; k++) if (!sh[pool0[k]]) free.push(pool0[k]);
+      while (tries++ < 40) {
+        // свободных вопросов хватает — повторов на экране нет; кончились — тогда берём любой
+        q = free.length ? free[Math.floor(Math.random() * free.length)] : pool0[Math.floor(Math.random() * pool0.length)];
+        it = mkItem(row, q);
+        if (it.qw > MAXQW) continue;
+        return it;
+      }
+      return null;
+    }
+    function lastEdge(row) { var it = row.items[row.items.length - 1]; return it.x + it.w; }
+    // лента достраивается справа, пока правый край не уйдёт за экран; слева снимаются ушедшие
+    function maintain(row) {
+      var it, k, guard = 0;
+      while (row.items.length && !row.items[0].hidden && row.items[0].x + row.items[0].w - row.off < -4) row.items.shift();
+      while ((!row.items.length || lastEdge(row) - row.off < vw + 80) && guard++ < 40) {
+        it = pickItem(row); if (!it) break;
+        it.x = row.items.length ? lastEdge(row) : row.off - rnd(0, 0.85) * it.w;
+        row.items.push(it);
+      }
+    }
+    function fillLeft(row) {
+      var it, guard = 0;
+      while (row.items.length && row.items[0].x - row.off > -60 && guard++ < 40) {
+        it = pickItem(row); if (!it) break;
+        it.x = row.items[0].x - it.w; row.items.unshift(it);
+      }
+    }
 
-    // место для бокса w×h среди ВСЕХ допустимых (перебор по сетке 5 px): случайное в полосе у самого верха свободного места,
-    // так лист заполняется плотно и без дыр, но не рядами
-    function spot(w, h, x0, y0, x1, y1) {
-      var vx = [], vy = [], x, y, k, minY = 1e9, c = 0, pick = null, r = { x: 0, y: 0, w: w, h: h };
-      for (y = y0; y + h <= y1; y += 5) for (x = x0; x + w <= x1; x += 5) {
-        r.x = x; r.y = y;
-        if (inZone(r) || clash(r, slots)) continue;
-        vx.push(x); vy.push(y); if (y < minY) minY = y;
-      }
-      for (k = 0; k < vx.length; k++) if (vy[k] <= minY + 25) { c++; if (Math.random() * c < 1) pick = { x: vx[k], y: vy[k] }; }
-      return pick;
+    // ---------------------------------------------------------------- раскладка строк
+    function pickFs() { var t = (Math.random() + Math.random()) / 2; return Math.round(FS0 + (FS1 - FS0) * Math.pow(t, 1.25)); }
+    function mkRow(y, fs) {
+      var top = Math.ceil(ASC * fs * SCALE), h = top + Math.ceil(DESC * fs * SCALE), v = V0 + (V1 - V0) * Math.pow((fs - FS0) / (FS1 - FS0), 0.9);
+      v = Math.max(V0, Math.min(V1, v * rnd(0.9, 1.1)));
+      return { y: y, fs: fs, h: h, base: y + top, gcy: y + top - 0.28 * fs, font: '400 ' + fs + 'px ' + FF, v: calm ? 0 : v, off: 0, items: [],
+        gap: fs * rnd(2.6, 4.4), blur: 2 + (fs - FS0) / (FS1 - FS0), a: rnd(0.9, 1.1) * (1 - 0.42 * (fs - FS0) / (FS1 - FS0)), reach: Math.min(REACH, fs * 0.25) };
     }
-    function clearSlots() { wm.innerHTML = ''; ink.innerHTML = ''; slots = []; }
-    // раскладка случайна: если вышло меньше 12 знаков, пробуем снова (до 10 раз)
     function layout() {
-      for (var t = 0; t < 10; t++) { build(); if (slots.length >= 12) break; }
-      try { var c = check(); console.info('[zen] На просвет: знаков ' + c.n + ', пересечений ' + c.overlaps + ', зазор < ' + GAP + 'px: ' + c.tight + ', худший дрейф: ' + c.worst + ', в зоне иконок: ' + c.inZone + ', за краем: ' + c.outside); } catch (e) {}
-    }
-    function build() {
-      clearSlots();
-      var P = pool(), n = Math.max(12, Math.min(20, Math.round(vw * vh / 16000))), tiers = [], k, used = {};
-      var nL = vw >= 1100 ? 2 : 1, nM = vw < 500 ? 3 : Math.round(n * 0.22), nS = n - nL - nM;
-      for (k = 0; k < nL; k++) tiers.push(2);
-      for (k = 0; k < nM; k++) tiers.push(1);
-      for (k = 0; k < nS + 12; k++) tiers.push(0);     // запас мелких: лист добивается, пока есть место
-      var cands = TIER.map(function (T) { return P.filter(function (q) { return qtext(q).length <= (vw < 500 ? T.nar : T.len); }); });
-      function C0(t) { return cands[t].length > 0; }
-      var x0 = 14 + Math.max(safe.l, safe.r), y0 = Math.max(12, safe.t + 10), x1 = vw - x0, y1 = vh - 14 - safe.b, miss = 0;
-      for (k = 0; k < tiers.length && slots.length < n && miss < 6; k++) {
-        var T = TIER[tiers[k]], ok = false, tryQ;
-        for (tryQ = 0; tryQ < 12 && !ok && C0(tiers[k]); tryQ++) {
-          var C = cands[tiers[k]], q = C[Math.floor(Math.random() * C.length)];
-          if (used[q]) continue;
-          var size = Math.round(rnd(T.a, T.b) * 2) / 2, ww = vw < 500 ? (tiers[k] === 0 ? rnd(110, 170) : tiers[k] === 1 ? rnd(T.w1, 210) : rnd(T.w1, T.w2)) : rnd(T.w1, T.w2), m = wrap(qtext(q), size, Math.min(ww, x1 - x0));
-          if (m.w > x1 - x0 || m.h > y1 - y0) continue;
-          var pos = spot(m.w, m.h, x0, y0, x1, y1);
-          if (pos) { ok = true; used[q] = 1; addSlot({ x: pos.x, y: pos.y, w: m.w, h: m.h }, tiers[k], q, size, m); }
-        }
-        if (!ok) miss++; else miss = 0;
+      rows = []; MC = {}; pool0 = pool();
+      if (!mc) mc = document.createElement('canvas').getContext('2d');
+      var y = topY, bottom = vh - 10 - safe.b, gaps = [], fs, row, k, slack, tot = 0, add = 0;
+      for (;;) {
+        fs = pickFs();
+        if (y + Math.ceil(1.25 * fs * SCALE) > bottom) { fs = Math.floor((bottom - y) / (1.25 * SCALE)); if (fs < FS0) break; }
+        row = mkRow(y, fs);
+        if (y + row.h > bottom) break;
+        rows.push(row); gaps.push(GAP0 + (GAP1 - GAP0) * Math.pow(Math.random(), 1.3));
+        y += row.h + gaps[gaps.length - 1];
       }
-    }
-    function addSlot(r, tier, q, size, m) {
-      var s = { x: r.x, y: r.y, w: r.w, h: r.h, tier: tier, q: -1, bx: 0, by: 0, tx: 0, ty: 0, tw: 0, th: 0, cx: 0, cy: 0, ox: 0, oy: 0, wx: 0, wy: 0, str: 0, f: 1, lit: false, litT: -1e9, next: clk + rnd(20000, 40000), op: 0.2, rd: false,
-        // дрейф: у каждого знака своя амплитуда, скорость и фаза по каждой оси; дыхание яркости: sp — скорость, ph — фаза, cyc — номер вдоха
-        da: DA * (0.6 + Math.random() * 0.4), sx: rnd(0.0006, 0.0012), sy: rnd(0.0006, 0.0012), px: rnd(0, 6.283), py: rnd(0, 6.283),
-        sp: rnd(0.0008, 0.0016), ph: rnd(0, 6.283), b: 1, wo: -1, cyc: 0, shx: 1e9, shy: 1e9,
-        wm: el('div', 'zl-w'), ink: el('div', 'zl-k') };
-      s.cyc = cycleOf(s, clk);
-      wm.appendChild(s.wm); ink.appendChild(s.ink); slots.push(s);
-      put(s, q, size, m);
-    }
-    function put(s, q, size, m) {
-      s.q = q; s.size = size;
-      s.tw = m.w; s.th = m.h; s.bx = s.x + (s.w - m.w) / 2; s.by = s.y + (s.h - m.h) / 2;
-      s.tx = s.bx + s.ox; s.ty = s.by + s.oy; s.cx = s.tx + m.w / 2; s.cy = s.ty + m.h / 2;
-      var read = api.isRead(q), txt = m.lines.join('\n'), st;
-      s.rd = read; s.op = rnd(WM_OP[0], WM_OP[1]) * (read ? 0.7 : 1);
-      s.wm.textContent = txt; s.ink.textContent = txt;
-      [s.wm, s.ink].forEach(function (nd) { st = nd.style; st.left = s.bx.toFixed(1) + 'px'; st.top = s.by.toFixed(1) + 'px'; st.fontSize = size + 'px'; st.display = ''; });
-      s.ink.style.opacity = read ? '0.72' : '';
-      s.wm.style.filter = 'blur(' + Math.max(WM_BLUR, size * 0.14).toFixed(1) + 'px)';   // крупный знак размываем сильнее: чтобы не читался
-      s.wo = -1; s.shx = s.shy = 1e9;      // кадр заново выставит прозрачность и сдвиг
-      applySlot(s);
-    }
-    function hide(s) { s.q = -1; s.wm.style.display = 'none'; s.ink.style.display = 'none'; }
-    // сдвиг и яркость знака в DOM: пишем только при заметном изменении
-    function applySlot(s) {
-      var o = s.op * s.b;
-      if (Math.abs(o - s.wo) > 0.003 || (o === 0 && s.wo !== 0)) { s.wo = o; s.wm.style.opacity = o.toFixed(3); }
-      if (Math.abs(s.ox - s.shx) > 0.04 || Math.abs(s.oy - s.shy) > 0.04) {
-        s.shx = s.ox; s.shy = s.oy;
-        var tr = 'translate(' + s.ox.toFixed(2) + 'px,' + s.oy.toFixed(2) + 'px)';
-        s.wm.style.transform = tr; s.ink.style.transform = tr;
+      // остаток по высоте раздаём в зазоры
+      if (rows.length > 1) {
+        slack = bottom - (rows[rows.length - 1].y + rows[rows.length - 1].h);
+        for (k = 0; k < rows.length - 1; k++) { gaps[k] = rnd(0.4, 1.6); tot += gaps[k]; }
+        for (k = 1; k < rows.length; k++) { add += slack * gaps[k - 1] / tot; rows[k].y += Math.round(add); rows[k].base += Math.round(add); rows[k].gcy += Math.round(add); }
       }
+      for (k = 0; k < rows.length; k++) maintain(rows[k]);
+      for (k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) prep(rows[k], rows[k].items[j], true);
+      try { var c = check(); console.info('[zen] На просвет: строк ' + c.rows + ', пересечений ' + c.overlaps + ', кегль ' + c.fsMin + '–' + c.fsMax + ', скорость ' + c.vMin + '–' + c.vMax + ', повторов на экране: ' + c.dupes + ', в зоне иконок: ' + c.inZone + ', за краем: ' + c.outside); } catch (e) {}
     }
-    // вдох знака: яркость растёт и гаснет до нуля, как в «Вселенной»; номер вдоха меняется ровно в момент полной темноты
-    function breath(s, t) { return Math.sqrt(0.5 + 0.5 * Math.sin(t * s.sp + s.ph)); }
-    function cycleOf(s, t) { return Math.floor((t * s.sp + s.ph + 1.5708) / 6.2832); }
-    // вопрос q на место s: размер подбираем в своём ярусе и уменьшаем, пока текст не войдёт в бокс места
-    function fit(q, s) {
-      var T = TIER[s.tier], t = qtext(q), size = Math.round(rnd(T.a, T.b) * 2) / 2, m;
-      for (; size >= T.min; size -= 0.5) {
-        m = wrap(t, size, s.w);
-        if (m.w <= s.w && m.h <= s.h) return { size: size, m: m };
-      }
-      return null;
-    }
-    function shownSet() { var o = {}; slots.forEach(function (s) { if (s.q >= 0) o[s.q] = 1; }); return o; }
-    // подходящий вопрос для места: из выбранной темы, не показанный сейчас
-    function findFor(s, P, shown) {
-      for (var k = 0; k < 40; k++) {
-        var q = P[Math.floor(Math.random() * P.length)];
-        if (shown[q] || q === openQ) continue;
-        var f = fit(q, s); if (f) return { q: q, f: f };
-      }
-      return null;
-    }
-    // вопрос q обязан быть на листе (вход по ссылке, возврат по «назад»): ставим на самое подходящее место
-    function ensure(q) {
-      var k, best = null, bd = -1, f;
-      for (k = 0; k < slots.length; k++) if (slots[k].q === q) return slots[k];
-      for (k = 0; k < slots.length; k++) {
-        f = fit(q, slots[k]);
-        if (f && (!best || slots[k].w * slots[k].h > bd)) { best = { s: slots[k], f: f }; bd = slots[k].w * slots[k].h; }
-      }
-      if (!best) return null;
-      put(best.s, q, best.f.size, best.f.m);
-      return best.s;
-    }
-    function slotOf(q) { for (var k = 0; k < slots.length; k++) if (slots[k].q === q) return slots[k]; return null; }
 
-    // попарная проверка по настоящим прямоугольникам узлов: пересечения, зазор меньше GAP, зона иконок, выход за край
-    function check() {
-      var rs = [], k, j, o = 0, t = 0, z = 0, w = 0, out = 0, a, b, r, m;
-      var sr = scene.getBoundingClientRect();
-      for (k = 0; k < slots.length; k++) {
-        if (slots[k].q < 0) continue;
-        r = slots[k].ink.getBoundingClientRect();
-        rs.push({ x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height, ox: slots[k].ox, oy: slots[k].oy, da: slots[k].da });
+    // ---------------------------------------------------------------- тусклый слой: спрайт вопроса с запечённым размытием
+    // размытие через shadowBlur: тень текста, вынесенного за край спрайта, — работает везде (ctx.filter в Safari не поддерживается)
+    function mkSprite(row, it) {
+      var W = Math.ceil(it.w) + 2 * PADX, H = row.h + 2 * PADB, c = document.createElement('canvas'), x, off, sig = row.blur;
+      c.width = Math.ceil(W * dpr); c.height = Math.ceil(H * dpr);
+      x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      off = c.width + 64;
+      x.font = row.font; x.textBaseline = 'alphabetic'; x.textAlign = 'left';
+      x.shadowBlur = 2 * sig * dpr; x.shadowOffsetX = off; x.shadowOffsetY = 0;
+      x.fillStyle = '#000';
+      x.shadowColor = 'rgba(' + DIM[0] + ',' + DIM[1] + ',' + DIM[2] + ',' + DIM_A + ')';
+      x.fillText(it.text, PADX - off / dpr, PADB + (row.base - row.y));
+      x.shadowColor = 'rgba(' + DIM[0] + ',' + DIM[1] + ',' + DIM[2] + ',' + (DIM_A * DIM_SEP) + ')';
+      x.fillText('·', PADX + it.qw + (it.w - it.qw) / 2 - mc.measureText('·').width / 2 - off / dpr, PADB + (row.base - row.y));
+      it.sp = c; it.spW = W; it.spH = H;
+    }
+    function prep(row, it, force) {
+      if (it.sp) return;
+      if (!force && mkBudget <= 0) return;
+      mkBudget--; mc.font = row.font; mkSprite(row, it);
+    }
+
+    // ---------------------------------------------------------------- свет: точки линии
+    // кольцо точек {x, y, r, a, t}: палец ставит их по пути каждые PSTEP px (r = HW, a = 1), блуждающий свет — реже и мягче.
+    // Освещённость буквы — по ближайшей точке с учётом возраста; буква запоминает (сила, время точки) и гаснет по расписанию точки.
+    var PX = new Float32Array(PCAP), PY = new Float32Array(PCAP), PR = new Float32Array(PCAP), PA = new Float32Array(PCAP), PT = new Float64Array(PCAP);
+    var pS = 0, pE = 0, headSeq = -1, lp = { ok: false, x: 0, y: 0, t: 0 }, ptr = { x: 0, y: 0, has: false, gone: false };
+    function addPoint(x, y, r, a, t) {
+      if (pE - pS >= PCAP) pS++;
+      var i = pE % PCAP; PX[i] = x; PY[i] = y; PR[i] = r; PA[i] = a; PT[i] = t; pE++; return pE - 1;
+    }
+    // отрезок пути пальца от (lp.x, lp.y) до (x, y): точки через PSTEP px, время распределено между прошлым и нынешним событием
+    function strokeTo(x, y, T) {
+      if (!lp.ok) { headSeq = addPoint(x, y, HW, 1, T); lp.ok = true; lp.x = x; lp.y = y; lp.t = T; return; }
+      var dx = x - lp.x, dy = y - lp.y, d = Math.sqrt(dx * dx + dy * dy), n = Math.min(160, Math.floor(d / PSTEP)), t0 = Math.max(lp.t, T - 80), k, f;
+      if (n < 1) return;
+      for (k = 1; k <= n; k++) { f = k / n; headSeq = addPoint(lp.x + dx * (k * PSTEP / d), lp.y + dy * (k * PSTEP / d), HW, 1, t0 + (T - t0) * f); }
+      lp.x += dx * (n * PSTEP / d); lp.y += dy * (n * PSTEP / d); lp.t = T;
+    }
+    function glowItem(it, amp) {
+      var n = it.text.length, T = performance.now(), i;
+      if (!it.gI) { it.gI = new Float32Array(n); it.gT = new Float64Array(n); it.gD = new Float32Array(n); }
+      for (i = 0; i < n; i++) { it.gI[i] = amp; it.gT[i] = T; }
+      it.hot = T + TAIL + 60;
+    }
+    // зажигаем буквы item вокруг точки (px, py) с радиусом r и силой a точки времени tp
+    function touch(row, it, px, py, r, a, tp, fv, T) {
+      var sx = it.x - row.off, left = it.left, cw = it.cw, n = it.text.length, lo = 0, hi = n - 1, mid, R = r + row.reach, x0 = px - R - sx, x1 = px + R - sx, i, gx, dx, dy, de, v, cur;
+      while (lo < hi) { mid = (lo + hi) >> 1; if (left[mid] + cw[mid] < x0) lo = mid + 1; else hi = mid; }
+      if (!it.gI) { it.gI = new Float32Array(n); it.gT = new Float64Array(n); it.gD = new Float32Array(n); }
+      for (i = lo; i < n && left[i] <= x1; i++) {
+        gx = sx + left[i] + cw[i] * 0.5; dx = gx - px; dy = row.gcy - py;
+        de = Math.sqrt(dx * dx + dy * dy) - row.reach; if (de >= r) continue;
+        v = a * (1 - sm(de / r)); cur = it.gI[i] * fade(T - it.gT[i]);
+        if (v * fv > cur + 0.002) { it.gI[i] = v; it.gT[i] = tp; }
       }
-      for (k = 0; k < rs.length; k++) {
-        a = rs[k];
-        if (inZone(a)) z++;
-        if (a.x < 0 || a.y < 0 || a.x + a.w > vw || a.y + a.h > vh) out++;
-        for (j = k + 1; j < rs.length; j++) {
-          b = rs[j];
-          if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) o++;
-          // без дрейфа (минус текущий сдвиг): зазор раскладки и худший случай — оба знака в крайних точках орбит навстречу друг другу
-          var ax = a.x - a.ox, ay = a.y - a.oy, bx = b.x - b.ox, by = b.y - b.oy;
-          if (ax < bx + b.w + GAP - 0.6 && ax + a.w + GAP - 0.6 > bx && ay < by + b.h + GAP - 0.6 && ay + a.h + GAP - 0.6 > by) t++;
-          m = a.da + b.da;
-          if (ax < bx + b.w + m && ax + a.w + m > bx && ay < by + b.h + m && ay + a.h + m > by) w++;
+      it.hot = T + TAIL + 60;
+    }
+    function sample(T) {
+      var k, i, ri, j, row, it, age, fv, a, r, px, py, R, sx;
+      while (pS < pE && T - PT[pS % PCAP] >= TAIL) pS++;
+      for (k = pS; k < pE; k++) {
+        i = k % PCAP; age = T - PT[i]; fv = fade(age); a = PA[i]; if (a * fv < 0.02) continue;
+        px = PX[i]; py = PY[i]; r = PR[i];
+        for (ri = 0; ri < rows.length; ri++) {
+          row = rows[ri]; R = r + row.reach;
+          if (py + R < row.y || py - R > row.y + row.h) continue;
+          for (j = 0; j < row.items.length; j++) {
+            it = row.items[j]; if (it.hidden) continue;
+            sx = it.x - row.off;
+            if (sx + it.qw < px - R || sx > px + R) continue;
+            if (!it.left) metrics(row, it);
+            touch(row, it, px, py, r, a, PT[i], fv, T);
+          }
         }
       }
-      return { n: rs.length, overlaps: o, tight: t, worst: w, inZone: z, outside: out, W: vw, H: vh };
     }
-    window.VoicesZen.lightCheck = check;
 
-    // ---------------------------------------------------------------- свет: лампа, след, остывающие огни
-    // лампа (палец или мышь) и блуждающая лампа в простое; обе следуют за целью с пружиной
-    function mkLamp(amp, rise, fall) { return { on: false, x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0, lx: 0, ly: 0, k: 0, s: 0, amp: amp, rise: rise, fall: fall, r: R, n: 0 }; }
-    var lamp = mkLamp(1, RISE, RISE), wan = mkLamp(WS_FAR, 2600, 700), wph = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-    function lampOn(a, x, y) {
-      a.on = true; a.x = a.tx = a.lx = x; a.y = a.ty = a.ly = y; a.vx = a.vy = 0; a.k = calm ? 1 : 0; a.s = calm ? a.amp : 0;
-    }
-    function addRest(x, y, k) {
-      lights.push({ x: x, y: y, k: calm ? 1 : k, d: 0, amp: 1, dur: FALL, s: 0, r: R, n: 0 });
-      if (lights.length > MAXL) lights.shift();
-    }
-    function releaseLamp() { if (lamp.on) { addRest(lamp.x, lamp.y, lamp.k); } lamp.on = false; lamp.k = 0; lamp.s = 0; }
-    function stepLamp(a, dt) {
-      if (a.on) a.k = calm ? 1 : Math.min(1, a.k + dt * 1000 / a.rise);
-      else if (a.k > 0) a.k = calm ? 0 : Math.max(0, a.k - dt * 1000 / a.fall);
-      a.s = calm ? (a.on ? a.amp : 0) : a.amp * sm(a.k);
-      if (!a.on && a.k <= 0) return;
-      if (calm) { a.x = a.tx; a.y = a.ty; return; }
-      var n = dt > 0.025 ? 2 : 1, h = dt / n, ax, ay;
-      while (n--) {
-        ax = OM * OM * (a.tx - a.x) - 2 * OM * a.vx; ay = OM * OM * (a.ty - a.y) - 2 * OM * a.vy;
-        a.vx += ax * h; a.vy += ay * h; a.x += a.vx * h; a.y += a.vy * h;
-      }
-    }
-    // след: точки ставим по пути самой лампы каждые ~20 px, силу точки берём от силы лампы, дальше она гаснет гладко
-    function trailOf(a, dt) {
-      if (!a.on || calm || a.s < 0.02) { a.lx = a.x; a.ly = a.y; return; }
-      var dx = a.x - a.lx, dy = a.y - a.ly, d = Math.sqrt(dx * dx + dy * dy), step = d / dt > 700 ? 30 : STEP;
-      if (d < step) return;
-      var ux = dx / d, uy = dy / d, c = Math.floor(d / step), k;
-      for (k = 1; k <= c; k++) lights.push({ x: a.lx + ux * step * k, y: a.ly + uy * step * k, k: 1, d: 0, amp: TRAIL_K * (step / STEP) * a.s, dur: TRAIL, s: 0, r: a.r, n: 0 });
-      a.lx += ux * step * c; a.ly += uy * step * c;
-      while (lights.length > MAXL) lights.shift();
-    }
-    // Блуждание: центр C плавно тянется к последней позиции указателя (сила растёт с близостью, есть инерция и трение),
-    // вокруг C свет ходит по фигуре Лиссажу; вблизи указателя размах сжимается до ~50 px, и огонёк кружит у самого пальца/курсора.
-    // Указателя не было или курсор ушёл из окна — притяжение затухает за ~2 с, центр возвращается на середину листа.
-    var ptr = { x: 0, y: 0, has: false, gone: false }, wc = { x: 0, y: 0, vx: 0, vy: 0, w: 0, t: 0 }, wp = { x: 0, y: 0 };
+    // ---------------------------------------------------------------- блуждающий свет
+    // центр C плавно тянется к последней позиции указателя (сила растёт с близостью, есть инерция и трение),
+    // вокруг C свет ходит по фигуре Лиссажу; вблизи указателя размах сжимается до ~50 px и огонёк кружит у самого пальца/курсора.
+    var wph = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], wan = { on: false, x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0, k: 0, s: 0, rr: WR0, lx: 0, ly: 0, lt: 0, has: false };
+    var wc = { x: 0, y: 0, vx: 0, vy: 0, w: 0, t: 0 }, wp = { x: 0, y: 0 };
     function wpath(dt, reset) {
-      var top = safe.t + 60, x0 = vw / 2, y0 = (top + vh) / 2, ax = vw * 0.34, ay = (vh - top) * 0.32, dx = 0, dy = 0, dd = 1e9, f, wt, p = 0, sx, sy;
+      var top = topY + 20, x0 = vw / 2, y0 = (top + vh) / 2, ax = vw * 0.34, ay = (vh - top) * 0.32, dx = 0, dy = 0, dd = 1e9, f, wt, p = 0, sx, sy;
       if (reset) { wc.x = x0; wc.y = y0; wc.vx = wc.vy = 0; wc.w = 0; wc.t = wph[0] * 3; }
       if (ptr.has) { dx = ptr.x - wc.x; dy = ptr.y - wc.y; dd = Math.sqrt(dx * dx + dy * dy); }
       wt = ptr.has && !ptr.gone ? 1 : 0;
@@ -320,177 +280,200 @@
       wp.y = wc.y + sy * Math.sin(wc.t * 0.17 + wph[2]) + sy * 0.35 * Math.sin(wc.t * 0.41 + wph[3]);
       return wp;
     }
-    function poke() { lastAct = clk; wan.on = false; }
-    // «дистанция» блуждающего света: 0 — вплотную, 1 — далеко; четыре синуса с несоизмеримыми периодами
+    // «дистанция» света: 0 — вплотную, 1 — далеко; четыре синуса с несоизмеримыми периодами
     function wdist(t) {
       var a = Math.sin(t * 6.2832 / WPER[0] + wph[4]) + 0.85 * Math.sin(t * 6.2832 / WPER[1] + wph[5]) + 0.7 * Math.sin(t * 6.2832 / WPER[2] + wph[6]) + 0.55 * Math.sin(t * 6.2832 / WPER[3] + wph[7]);
       a = 0.5 + a / 4.2; return a < 0 ? 0 : a > 1 ? 1 : a;
     }
-    // огибающая «растворения»: два медленных синуса; когда оба внизу, свет почти гаснет на несколько секунд
+    // огибающая «растворения»: когда оба медленных синуса внизу, свет почти гаснет на несколько секунд
     function wvanish(t) {
       var v = 0.5 + 0.25 * Math.sin(t * 6.2832 / WVAN[0] + wph[8]) + 0.25 * Math.sin(t * 6.2832 / WVAN[1] + wph[9]);
       v = (v - 0.12) / 0.25; return v <= 0 ? 0 : v >= 1 ? 1 : sm(v);
     }
-    function wanShape(t) {
-      var z = wdist(t), near = 1 - z;
-      wan.r = R * (WR0 + (WR1 - WR0) * sm(z));           // приближается: меньше; удаляется: больше
-      wan.n = near * near * (3 - 2 * near) * 0.9;         // вблизи ядро чётче
-      wan.amp = (WS_FAR + (WS_NEAR - WS_FAR) * sm(near)) * wvanish(t);   // вблизи ярче, вдали тусклее
-    }
-
-    function step(dt) {
-      var k, j, L, s, p;
-      // курсор на месте дольше IDLE: лампа под ним остывает, и от середины листа к нему плывёт блуждающий огонёк
-      if (!calm && lamp.on && !g && clk - lastAct > IDLE) releaseLamp();
-      if (!calm && !wan.on && wan.k <= 0 && !g && !lamp.on && clk - lastAct > IDLE) {
+    function stepWan(dt, T) {
+      var p, j, k, z, near, h, n, ax, ay;
+      if (!calm && !wan.on && wan.k <= 0 && !g && clk - lastAct > IDLE) {
         j = 0;
         do { for (k = 0; k < wph.length; k++) wph[k] = rnd(0, 6.283); } while (wvanish(clk / 1000) < 0.7 && ++j < 30);   // не стартуем в фазе «растворения»
-        p = wpath(0, true); lampOn(wan, p.x, p.y); wan.k = 0;
+        p = wpath(0, true); wan.on = true; wan.x = wan.tx = p.x; wan.y = wan.ty = p.y; wan.vx = wan.vy = 0; wan.k = 0; wan.has = false;
       }
-      if (wan.on) { p = wpath(dt, false); wan.tx = p.x; wan.ty = p.y; }
-      if (wan.on || wan.k > 0) wanShape(clk / 1000);
-      stepLamp(lamp, dt); stepLamp(wan, dt);
-      trailOf(lamp, dt); trailOf(wan, dt);
-      if (!wan.on && wan.k <= 0) wan.s = 0;
-      for (k = lights.length - 1; k >= 0; k--) {
-        L = lights[k];
-        if (L.k < 1) L.k = calm ? 1 : Math.min(1, L.k + dt * 1000 / RISE); else L.d += dt * 1000 / L.dur;
-        if (L.d >= 1) { lights.splice(k, 1); continue; }
-        L.s = calm ? L.amp : L.amp * sm(L.k) * (1 - sm(L.d));
+      if (wan.on) { p = wpath(dt, false); wan.tx = p.x; wan.ty = p.y; wan.k = Math.min(1, wan.k + dt * 1000 / 2600); }
+      else if (wan.k > 0) wan.k = Math.max(0, wan.k - dt * 1000 / 700);
+      if (!wan.on && wan.k <= 0) { wan.s = 0; return; }
+      z = wdist(clk / 1000); near = 1 - z;
+      wan.rr = WR0 + (WR1 - WR0) * sm(z);                                             // приближается: меньше; удаляется: больше
+      wan.s = (WS_FAR + (WS_NEAR - WS_FAR) * sm(near)) * wvanish(clk / 1000) * sm(wan.k);   // вблизи ярче, вдали тусклее
+      n = dt > 0.025 ? 2 : 1; h = dt / n;
+      while (n--) {
+        ax = OM * OM * (wan.tx - wan.x) - 2 * OM * wan.vx; ay = OM * OM * (wan.ty - wan.y) - 2 * OM * wan.vy;
+        wan.vx += ax * h; wan.vy += ay * h; wan.x += wan.vx * h; wan.y += wan.vy * h;
       }
-      act = [];
-      if (lamp.s > 0.002) act.push(lamp);
-      if (wan.s > 0.002) act.push(wan);
-      for (k = 0; k < lights.length; k++) if (lights[k].s > 0.002) act.push(lights[k]);
-      // сила света в центре каждого знака; освещён ли знак хоть где-то (для смены знаков)
-      // дрейф и дыхание знаков (положение нужно до расчёта света: знак и его проявленный слой уходят вместе)
-      for (j = 0; j < slots.length; j++) {
-        s = slots[j]; s.f = 1; s.lit = false;
-        if (calm) { s.ox = s.oy = 0; s.b = 1; }
-        else { s.ox = s.da * Math.sin(clk * s.sx + s.px); s.oy = s.da * Math.sin(clk * s.sy + s.py); s.b = breath(s, clk); }
-        s.tx = s.bx + s.ox; s.ty = s.by + s.oy; s.cx = s.tx + s.tw / 2; s.cy = s.ty + s.th / 2;
-      }
-      for (k = 0; k < act.length; k++) {
-        L = act[k]; L.rel = false;
-        for (j = 0; j < slots.length; j++) {
-          s = slots[j]; if (s.q < 0) continue;
-          var dx = L.x - s.cx, dy = L.y - s.cy, d = Math.sqrt(dx * dx + dy * dy);
-          if (d < L.r) s.f *= 1 - L.s * lp(L, d / L.r);
-          dx = Math.max(s.tx - L.x, 0, L.x - (s.tx + s.tw)); dy = Math.max(s.ty - L.y, 0, L.y - (s.ty + s.th)); d = Math.sqrt(dx * dx + dy * dy);
-          if (d < L.r) { L.rel = true; if (L.s * lp(L, d / L.r) > 0.01) s.lit = true; }
-        }
-      }
-      for (j = 0; j < slots.length; j++) { s = slots[j]; s.str = 1 - s.f; if (s.lit) s.litT = clk; }
-      if (!calm) swaps(); else swapsCalm();
-    }
-
-    // ---------------------------------------------------------------- смена знаков в темноте
-    // знак гаснет до нуля (конец вдоха) и именно в этот миг заменяется новым вопросом; освещённый, открытый и тронутый светом недавно не трогаем
-    function canSwap(s) { return s.q >= 0 && s.q !== openQ && !g && clk - s.litT > 3000; }
-    function swaps() {
-      var P = null, k, s, c, cy;
-      for (k = 0; k < slots.length; k++) {
-        s = slots[k];
-        cy = cycleOf(s, clk);
-        if (cy === s.cyc) continue;
-        s.cyc = cy;
-        if (!canSwap(s)) continue;
-        P = P || pool(); c = P.length ? findFor(s, P, shownSet()) : null;
-        if (c) put(s, c.q, c.f.size, c.f.m);
+      if (wan.s > 0.02 && (!wan.has || Math.abs(wan.x - wan.lx) + Math.abs(wan.y - wan.ly) >= 5 || T - wan.lt > 100)) {
+        addPoint(wan.x, wan.y, wan.rr, wan.s, T); wan.lx = wan.x; wan.ly = wan.y; wan.lt = T; wan.has = true;
       }
     }
-    function swapsCalm() {
-      var P = null, k, s, c;
-      for (k = 0; k < slots.length; k++) {
-        s = slots[k];
-        if (clk < s.next) continue;
-        if (!canSwap(s)) { s.next = clk + rnd(2000, 6000); continue; }
-        P = P || pool(); c = P.length ? findFor(s, P, shownSet()) : null;
-        if (c) put(s, c.q, c.f.size, c.f.m);
-        s.next = clk + rnd(20000, 40000);
-      }
-    }
+    function poke() { lastAct = clk; wan.on = false; }
 
     // ---------------------------------------------------------------- кадр
-    function maskOf() {
-      var parts = [], k, j, L, st;
-      for (k = 0; k < act.length; k++) {
-        L = act[k]; if (!L.rel) continue;
-        st = [];
-        for (j = 0; j < STOPS.length; j++) st.push('rgba(0,0,0,' + (L.s * (L.n > 0.001 ? (1 - L.n) * PROF[j] + L.n * PROF2[j] : PROF[j])).toFixed(3) + ') ' + (STOPS[j] * L.r).toFixed(1) + 'px');
-        parts.push('radial-gradient(circle ' + L.r.toFixed(1) + 'px at ' + L.x.toFixed(1) + 'px ' + L.y.toFixed(1) + 'px,' + st.join(',') + ')');
-      }
-      return parts.length ? parts.join(',') : EMPTY;
+    function step(dt, T) {
+      var k, row;
+      if (!calm && !frozen) for (k = 0; k < rows.length; k++) { row = rows[k]; row.off += row.v * dt; maintain(row); }
+      // точка под неподвижным пальцем (или курсором, пока он не простоял IDLE) держится на полной силе
+      if ((g || (hoverOn && clk - lastAct < IDLE)) && headSeq >= pS && headSeq < pE) PT[headSeq % PCAP] = T;
+      stepWan(dt, T);
+      mkBudget = 3;
+      sample(T);
     }
-    function paint() {
-      if (!act.length && !hadLight) return;
-      hadLight = act.length > 0;
+    function draw(dt, T) {
+      var ku = 1 - Math.exp(-dt * 1000 / ATTACK), k, j, i, row, it, sx, lo, hi, mid, gd, tgt, s, al, anyHot = false, gx, hasHot;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, vw, vh);
-      for (var k = 0; k < act.length; k++) {
-        var L = act[k];
-        if (L.n > 0.001) {
-          ctx.globalAlpha = (1 - L.n) * L.s; ctx.drawImage(sprites[0], L.x - L.r, L.y - L.r, 2 * L.r, 2 * L.r);
-          ctx.globalAlpha = L.n * L.s; ctx.drawImage(sprites[1], L.x - L.r, L.y - L.r, 2 * L.r, 2 * L.r);
-        } else {
-          ctx.globalAlpha = L.s > 1 ? 1 : L.s;
-          ctx.drawImage(sprites[0], L.x - L.r, L.y - L.r, 2 * L.r, 2 * L.r);
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+      for (k = 0; k < rows.length; k++) {
+        row = rows[k];
+        for (j = 0; j < row.items.length; j++) {
+          it = row.items[j]; sx = it.x - row.off;
+          if (sx > vw + PADX + 200 || sx + it.w + PADX < 0) continue;
+          if (!it.sp) { prep(row, it, sx < vw + PADX); if (!it.sp) continue; }
+          if (it.hidden || sx > vw + PADX) continue;
+          ctx.globalAlpha = row.a * (it.rd ? READ_K : 1);
+          ctx.drawImage(it.sp, sx - PADX, row.y - PADB, it.spW, it.spH);
+        }
+        // засвеченные буквы: резкие, светлые, чуть крупнее; прозрачность и размер — от силы света в букве
+        hasHot = false;
+        for (j = 0; j < row.items.length; j++) { it = row.items[j]; if (it.hot && !it.hidden) { hasHot = true; break; } }
+        if (!hasHot) continue;
+        ctx.font = row.font; ctx.fillStyle = LIT;
+        for (j = 0; j < row.items.length; j++) {
+          it = row.items[j];
+          if (!it.hot || it.hidden) continue;
+          if (T > it.hot) { it.gI = it.gT = it.gD = null; it.hot = 0; continue; }
+          anyHot = true;
+          if (!it.left) metrics(row, it);
+          sx = it.x - row.off;
+          lo = 0; hi = it.text.length - 1;
+          while (lo < hi) { mid = (lo + hi) >> 1; if (it.left[mid] + it.cw[mid] < -sx - 24) lo = mid + 1; else hi = mid; }
+          for (i = lo; i < it.text.length && sx + it.left[i] < vw + 24; i++) {
+            tgt = it.gI[i] > 0 ? it.gI[i] * fade(T - it.gT[i]) : 0;
+            gd = it.gD[i];
+            if (tgt > gd) gd += (tgt - gd) * ku; else gd = tgt;
+            it.gD[i] = gd;
+            if (gd < 0.012 || it.text.charAt(i) === ' ') continue;
+            al = sm(gd > 1 ? 1 : gd) * (it.rd ? READ_K : 1); s = 1 + LIT_SC * gd;
+            ctx.globalAlpha = al;
+            gx = sx + it.left[i] + it.cw[i] * 0.5;
+            ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * gx, dpr * row.gcy);
+            ctx.fillText(it.text.charAt(i), -it.cw[i] * 0.5, row.base - row.gcy);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
       }
       ctx.globalAlpha = 1;
-      var m = maskOf(); ink.style.webkitMaskImage = m; ink.style.maskImage = m;
+      return anyHot;
     }
+    function needFrame() { return !calm || g || hoverOn || pE > pS || wan.on || wan.k > 0 || anyHotFlag; }
+    var anyHotFlag = false;
     function frame(now) {
       raf = 0;
       if (!active || paused || document.hidden) return;
-      var dt = Math.min(0.05, (now - last) / 1000); last = now; clk += dt * 1000;
-      step(dt); paint();
-      for (var q = 0; q < slots.length; q++) if (slots[q].q >= 0) applySlot(slots[q]);
-      raf = requestAnimationFrame(frame);
+      var dt = Math.min(0.05, (now - last) / 1000), T = performance.now(); last = now; clk += dt * 1000;
+      step(dt, T); anyHotFlag = draw(dt, T);
+      if (needFrame()) raf = requestAnimationFrame(frame);
     }
     function start() { if (raf || !active || paused || document.hidden) return; last = performance.now(); raf = requestAnimationFrame(frame); }
     function halt() { if (raf) cancelAnimationFrame(raf); raf = 0; }
     function wipe() {
-      lights = []; act = []; lamp.on = false; lamp.k = lamp.s = 0; wan.on = false; wan.k = wan.s = 0;
-      hadLight = true; paint();
+      pS = pE = 0; headSeq = -1; lp.ok = false; wan.on = false; wan.k = wan.s = 0; anyHotFlag = false;
+      for (var k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) { var it = rows[k].items[j]; it.gI = it.gT = it.gD = null; it.hot = 0; }
     }
+
+    // ---------------------------------------------------------------- проверка раскладки
+    // полосы строк не должны пересекаться; вопросы на экране не повторяются; строки не заходят под иконки и за край
+    function check() {
+      var o = 0, k, j, a, b, minGap = 1e9, out = 0, inZ = 0, dup = 0, seen = {}, fs = [], vs = [], it, sx, vis = 0;
+      for (k = 0; k < rows.length; k++) {
+        a = rows[k]; fs.push(a.fs); vs.push(a.v);
+        if (a.y < topY - 0.5) inZ++;
+        if (a.y < 0 || a.y + a.h > vh) out++;
+        for (j = k + 1; j < rows.length; j++) {
+          b = rows[j];
+          if (a.y < b.y + b.h && a.y + a.h > b.y) o++;
+        }
+        if (k + 1 < rows.length) minGap = Math.min(minGap, rows[k + 1].y - (a.y + a.h));
+        for (j = 0; j < a.items.length; j++) {
+          it = a.items[j]; sx = it.x - a.off;
+          if (sx + it.qw > 0 && sx < vw) { vis++; if (seen[it.q]) dup++; seen[it.q] = 1; }
+        }
+      }
+      return { rows: rows.length, overlaps: o, minGap: rows.length > 1 ? Math.round(minGap * 10) / 10 : 0, inZone: inZ, outside: out, dupes: dup, visibleQuestions: vis,
+        fsMin: Math.min.apply(null, fs), fsMax: Math.max.apply(null, fs), vMin: Math.round(Math.min.apply(null, vs) * 10) / 10, vMax: Math.round(Math.max.apply(null, vs) * 10) / 10,
+        top: topY, W: vw, H: vh };
+    }
+    window.VoicesZen.lightCheck = check;
 
     // ---------------------------------------------------------------- жесты
     function pt(e) { var r = scene.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-    // проявленный вопрос под точкой: сила света в центре бокса выше порога
+    // засвеченный вопрос под точкой: строка по y, вопрос по x, яркость букв у пальца выше порога
     function candidate(x, y) {
-      var best = -1, bd = 1e9, k, s, dx, dy, d, pad = 14;
-      for (k = 0; k < slots.length; k++) {
-        s = slots[k];
-        if (s.q < 0 || s.str <= OPEN_AT) continue;
-        if (x < s.tx - pad || x > s.tx + s.tw + pad || y < s.ty - pad || y > s.ty + s.th + pad) continue;
-        dx = x - s.cx; dy = y - s.cy; d = dx * dx + dy * dy;
-        if (d < bd) { bd = d; best = k; }
+      var k, j, i, row, it, sx, best = null, bd = 1e9, d, lo, hi, mid, m;
+      for (k = 0; k < rows.length; k++) {
+        row = rows[k];
+        if (y < row.y - 6 || y > row.y + row.h + 6) continue;
+        d = Math.abs(y - (row.y + row.h / 2));
+        for (j = 0; j < row.items.length; j++) {
+          it = row.items[j]; sx = it.x - row.off;
+          if (it.hidden || !it.gD || x < sx - 8 || x > sx + it.qw + 8) continue;
+          if (!it.left) metrics(row, it);
+          lo = 0; hi = it.text.length - 1;
+          while (lo < hi) { mid = (lo + hi) >> 1; if (sx + it.left[mid] + it.cw[mid] < x) lo = mid + 1; else hi = mid; }
+          m = 0;
+          for (i = Math.max(0, lo - 3); i <= Math.min(it.text.length - 1, lo + 3); i++) if (it.gD[i] > m) m = it.gD[i];
+          if (m > OPEN_AT && d < bd) { bd = d; best = { row: row, it: it }; }
+        }
       }
       return best;
     }
-    function openSlot(k) {
-      var s = slots[k]; if (!s || s.q < 0) return;
-      api.open(s.q, s.ink, { opacity: api.isRead(s.q) ? 0.72 : 1, scale: 1 });
+    // узел-источник для полёта: невидимый текст вопроса там же, где он на canvas (левый край вопроса, базовая линия строки)
+    function placeProxy(row, it) {
+      var st = proxy.style;
+      proxy.textContent = it.text;
+      st.fontSize = row.fs + 'px'; st.left = '0px'; st.top = '0px';
+      return { x: it.x - row.off, y: row.base - BO * row.fs };
+    }
+    function openItem(c) {
+      var row = c.row, it = c.it; if (!it || it.hidden || row.items.indexOf(it) < 0) return;
+      var p = placeProxy(row, it);
+      api.open(it.q, proxy, { x: p.x, y: p.y, scale: 1 + LIT_SC, opacity: it.rd ? READ_K : 1 });
+    }
+    function locate(q) {
+      for (var k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) if (rows[k].items[j].q === q) return { row: rows[k], it: rows[k].items[j] };
+      return null;
     }
     function onDown(e) {
       if (!active || paused || g) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      var dead = api.popDown(), p = pt(e), cand = dead ? -1 : candidate(p.x, p.y);
+      var dead = api.popDown(), p = pt(e), cand = dead ? null : candidate(p.x, p.y), T = performance.now();
       try { scene.setPointerCapture(e.pointerId); } catch (x) {}
       poke(); ptr.x = p.x; ptr.y = p.y; ptr.has = true; ptr.gone = false;
-      g = { id: e.pointerId, type: e.pointerType, x0: p.x, y0: p.y, t: performance.now(), moved: false, dead: dead, cand: cand };
-      if (!lamp.on) lampOn(lamp, p.x, p.y); else { lamp.tx = p.x; lamp.ty = p.y; }
+      g = { id: e.pointerId, type: e.pointerType, x0: p.x, y0: p.y, t: T, moved: false, dead: dead, cand: cand };
+      if (e.pointerType === 'touch') lp.ok = false;
+      strokeTo(p.x, p.y, T);
       start();
     }
     function onMove(e) {
       if (!active || paused) return;
-      var p = pt(e);
-      if (g) {
-        if (e.pointerId !== g.id) return;
-        if (!g.moved && Math.sqrt(Math.pow(p.x - g.x0, 2) + Math.pow(p.y - g.y0, 2)) > 8) g.moved = true;
-      } else if (e.pointerType === 'touch' || e.pointerType === '') return;   // палец без касания событий не шлёт; мышь и перо водят лампу и без нажатия
-      poke(); ptr.x = p.x; ptr.y = p.y; ptr.has = true; ptr.gone = false;
-      if (!lamp.on) lampOn(lamp, p.x, p.y); else { lamp.tx = p.x; lamp.ty = p.y; }
+      if (g) { if (e.pointerId !== g.id) return; }
+      else if (e.pointerType === 'touch' || e.pointerType === '') return;   // палец без касания событий не шлёт; мышь и перо водят свет и без нажатия
+      var list = e.getCoalescedEvents ? e.getCoalescedEvents() : null, T = performance.now(), n, k, p;
+      if (!list || !list.length) list = [e];
+      for (k = 0; k < list.length; k++) {
+        p = pt(list[k]); n = list.length;
+        if (g && !g.moved && Math.sqrt(Math.pow(p.x - g.x0, 2) + Math.pow(p.y - g.y0, 2)) > 8) g.moved = true;
+        ptr.x = p.x; ptr.y = p.y;
+        strokeTo(p.x, p.y, T);
+      }
+      poke(); ptr.has = true; ptr.gone = false;
+      if (!g) hoverOn = true;
       start();
     }
     function onUp(e) {
@@ -499,72 +482,107 @@
       try { scene.releasePointerCapture(e.pointerId); } catch (x) {}
       poke();
       var hover = gg.type === 'mouse' || gg.type === 'pen';
-      if (!hover || e.type === 'pointercancel') releaseLamp();   // мышь ведёт лампу и дальше
+      if (hover && e.type !== 'pointercancel') hoverOn = true; else { hoverOn = false; lp.ok = false; }   // мышь ведёт свет и дальше
       if (e.type === 'pointercancel' || gg.dead) return;
-      if (!gg.moved && performance.now() - gg.t < 300 && gg.cand >= 0) openSlot(gg.cand);
+      if (!gg.moved && performance.now() - gg.t < 300 && gg.cand) openItem(gg.cand);
     }
     scene.addEventListener('pointerdown', onDown);
     scene.addEventListener('pointermove', onMove);
     scene.addEventListener('pointerup', onUp);
     scene.addEventListener('pointercancel', onUp);
-    scene.addEventListener('pointerleave', function (e) { if (!g && (e.pointerType === 'mouse' || e.pointerType === 'pen')) { releaseLamp(); ptr.gone = true; } });
+    scene.addEventListener('pointerleave', function (e) { if (!g && (e.pointerType === 'mouse' || e.pointerType === 'pen')) { hoverOn = false; lp.ok = false; ptr.gone = true; } });
     scene.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
+    // вопрос q обязан быть на экране (вход по ссылке, возврат по «назад»): ставим его в строку ближе к середине, остальную ленту достраиваем вокруг
+    function ensure(q) {
+      var c = locate(q), k, row, best = null, bd = 1e9, it, x0;
+      if (c) { var sx = c.it.x - c.row.off; if (sx + c.it.qw > 0 && sx < vw) return c; }
+      if (!rows.length) return null;
+      for (k = 0; k < rows.length; k++) { var d = Math.abs(rows[k].y + rows[k].h / 2 - vh * 0.45); if (d < bd && rows[k].fs >= 15) { bd = d; best = rows[k]; } }
+      row = best || rows[Math.floor(rows.length / 2)];
+      if (c) { var ix = c.row.items.indexOf(c.it); if (ix >= 0) c.row.items.splice(ix, 1); }
+      it = mkItem(row, q); if (it.qw > MAXQW) return null;
+      x0 = Math.max(14, (vw - it.qw) / 2);
+      it.x = row.off + x0; row.items = [it];
+      maintain(row); fillLeft(row);
+      prep(row, it, true);
+      return { row: row, it: it };
+    }
     function relight() {
       if (relitQ < 0) return;
-      var s = slotOf(relitQ); relitQ = -1;
-      if (s) addRest(s.cx, s.cy, 0);
+      var c = locate(relitQ); relitQ = -1;
+      if (c) glowItem(c.it, 0.9);
     }
+    function unfreeze() { frozen = false; if (holdT) { clearTimeout(holdT); holdT = 0; } }
 
     return {
       enter: function (o) {
-        active = true; paused = false;
+        active = true; paused = false; frozen = false;
         FF = (getComputedStyle(document.documentElement).getPropertyValue('--f-serif') || '').trim() || 'Georgia, serif';
-        clk = 0; lastAct = 0; openQ = -1; relitQ = -1; g = null; ptr.has = false; ptr.gone = false;
+        clk = 0; lastAct = 0; openQ = -1; relitQ = -1; g = null; hoverOn = false; ptr.has = false; ptr.gone = false;
         size(); layout(); wipe();
         if (o.q >= 0) ensure(o.q);
         start();
+        // шрифт PT Serif мог не успеть загрузиться: тогда ширины измерены по запасному — пересобираем один раз
+        try {
+          if (document.fonts && document.fonts.check && !document.fonts.check('400 20px ' + FF)) {
+            document.fonts.load('400 20px ' + FF).then(function () {
+              if (!active || openQ >= 0 || g) return;
+              measureBO(); layout(); wipe(); start();
+            }, function () {});
+          }
+        } catch (e) {}
       },
       leave: function () {
-        active = false; halt(); timers.forEach(clearTimeout); timers = []; g = null; wipe();
+        active = false; halt(); timers.forEach(clearTimeout); timers = []; g = null; hoverOn = false; unfreeze(); wipe();
       },
       pause: function () { paused = true; halt(); },
-      resume: function () { paused = false; lastAct = clk; relight(); start(); },
+      // хост зовёт resume в начале полёта заголовка назад; строки стоят, пока заголовок не сел на место (onClosed), страховка — 1.6 с
+      resume: function () {
+        paused = false; lastAct = clk;
+        if (frozen && !holdT) holdT = setTimeout(function () { holdT = 0; frozen = false; var c = openQ >= 0 ? locate(openQ) : null; if (c) c.it.hidden = false; openQ = -1; relight(); }, 1600);
+        start();
+      },
       resize: function () { if (!active) return; size(); layout(); wipe(); if (openQ >= 0) ensure(openQ); start(); },
-      // тема сменилась: лист раскладывается заново из вопросов темы (свет остаётся)
-      refresh: function () { layout(); if (openQ >= 0) ensure(openQ); },
+      // тема или авторы сменились: ленты собираются заново из подходящих вопросов
+      refresh: function () { layout(); wipe(); if (openQ >= 0) { var c = ensure(openQ); if (c) c.it.hidden = true; } start(); },
       focus: function (q) { ensure(q); },
-      // ответы открылись: лист гаснет, знак-источник скрыт (его заменяет летящая копия)
+      // ответы открылись: строки встают, вопрос-источник скрыт (его заменяет летящая копия), лист гаснет
       onOpened: function (q) {
-        var s = ensure(q);
-        g = null; openQ = q; relitQ = q; wipe();
-        if (s) {
-          s.ink.style.visibility = 'hidden';
-          s.ink.style.opacity = '0.72'; if (!s.rd) { s.rd = true; s.op *= 0.7; }   // прочитанный тусклее
-        }
+        var c = ensure(q);
+        g = null; hoverOn = false; openQ = q; relitQ = q; frozen = true; wipe();
+        if (c) { c.it.hidden = true; c.it.rd = true; }
       },
-      // заголовок вернулся на место: знак снова виден, над ним снова горит свет и потом гаснет
+      // заголовок вернулся на место: вопрос снова виден, над ним зажигается свет и потом гаснет
       onClosed: function (q) {
-        var s = slotOf(q); openQ = -1;
-        if (s) s.ink.style.visibility = '';
+        var c = locate(q); openQ = -1; unfreeze();
+        if (c) c.it.hidden = false;
         if (!paused) relight();
-        lastAct = clk;
+        lastAct = clk; start();
       },
-      returnTarget: function (q) { var s = slotOf(q); return s && s.q >= 0 ? { el: s.ink, opacity: 0.72, scale: 1 } : null; },
+      returnTarget: function (q) {
+        var c = locate(q); if (!c) return null;
+        var p = placeProxy(c.row, c.it);
+        return { el: proxy, x: p.x, y: p.y, scale: 1 + LIT_SC, opacity: READ_K };
+      },
       key: function (e) {
         if (e.key !== ' ' && e.key !== 'Enter') return;
         if (e.target.tagName === 'BUTTON') return;
         e.preventDefault(); if (e.repeat) return;
         poke();
-        var k, best = -1, bs = OPEN_AT, near = -1, nd = 1e9, dx, dy;
-        for (k = 0; k < slots.length; k++) {
-          if (slots[k].q < 0) continue;
-          if (slots[k].str > bs) { bs = slots[k].str; best = k; }
-          dx = slots[k].cx - vw / 2; dy = slots[k].cy - vh / 2;
-          if (dx * dx + dy * dy < nd) { nd = dx * dx + dy * dy; near = k; }
+        var k, j, i, row, it, sx, m, best = null, bm = OPEN_AT, near = null, nd = 1e9, dx, dy;
+        for (k = 0; k < rows.length; k++) {
+          row = rows[k];
+          for (j = 0; j < row.items.length; j++) {
+            it = row.items[j]; sx = it.x - row.off;
+            if (it.hidden || sx + it.qw < 0 || sx > vw) continue;
+            if (it.gD) { m = 0; for (i = 0; i < it.gD.length; i++) if (it.gD[i] > m) m = it.gD[i]; if (m > bm) { bm = m; best = { row: row, it: it }; } }
+            dx = Math.max(sx - vw / 2, 0, vw / 2 - (sx + it.qw)); dy = Math.abs(row.y + row.h / 2 - vh / 2);
+            if (dx * dx + dy * dy < nd) { nd = dx * dx + dy * dy; near = { row: row, it: it }; }
+          }
         }
-        if (best >= 0) openSlot(best);
-        else if (near >= 0) { addRest(slots[near].cx, slots[near].cy, 0); start(); }   // Enter зажигает ближайший к центру, второй Enter открывает
+        if (best) openItem(best);
+        else if (near) { if (!near.it.left) metrics(near.row, near.it); glowItem(near.it, 1); start(); }   // Enter зажигает ближайший к центру, второй Enter открывает
       }
     };
   });
