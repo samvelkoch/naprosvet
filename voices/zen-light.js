@@ -1,6 +1,8 @@
 /* «Голоса_», Zen: режим «На просвет». Тёмный экран, по нему справа налево едут строки-ленты с вопросами:
-   в покое буквы тёмные на тёмном и размыты; палец (мышь) прочерчивает тонкую линию света, и буквы под ней проступают —
-   светлые, резкие, чуть крупнее. Фон не светлеет никогда: светятся только буквы.
+   в покое буквы тёмные на тёмном и размыты; касание (или проведение пальцем) зажигает каждый задетый вопрос целиком:
+   свет расползается от точки касания вправо и влево до краёв вопроса, буквы становятся светлыми, резкими, чуть крупнее.
+   Засвеченный вопрос едет засвеченным и гаснет, только уходя к левому краю. Второе касание засвеченного открывает ответ.
+   Мышь без нажатия и блуждающий свет — лишь мягкая временная подсветка букв. Фон не светлеет никогда: светятся только буквы.
    Всё рисует один canvas. Тусклый слой — по спрайту на вопрос (размытие запечено), светящиеся буквы — по одной. Регистрируется в хосте (zen.js). ES5, без библиотек. */
 (function () {
   'use strict';
@@ -20,14 +22,23 @@
     var ASC = 0.96, DESC = 0.26, SCALE = 1.065;   // полоса строки: над базовой линией ASC·кегль, под ней DESC·кегль, с запасом на увеличение букв
     var GAP0 = 2, GAP1 = 18;        // зазор между полосами строк, px (до распределения остатка)
     var PADB = 10, PADX = 10;       // поля спрайта под размытие, px
-    var HW = 10;                    // «толщина» линии света: на этом расстоянии от оси яркость падает от 1 до 0 (на уровне 0.5 около 5 px от оси и ещё запас на букву)
-    var REACH = 4.5;                // максимальная поправка на размер буквы: линия, прошедшая через букву, зажигает её целиком
-    var TAIL = 2000;                // каждая точка следа гаснет через это время после появления, мс
+    var HW = 10;                    // радиус маленького света (блуждающий; hover мыши — HOVR): на этом расстоянии от центра яркость падает от 1 до 0
+    var HOVR = 9, HOVA = 0.8, HOVAGE = 900;   // hover мыши: радиус, сила, «возраст» точки при рождении (живёт TAIL − HOVAGE ≈ 1.1 с)
+    var REACH = 4.5;                // максимальная поправка на размер буквы для маленького света
+    var TAIL = 2000;                // каждая точка маленького света гаснет через это время после появления, мс
+    var FRONT0 = 600, FRONT1 = 900; // время, за которое свет доходит до дальнего края вопроса: от коротких к длинным (>= 900 px), мс
+    var SOFT_K = 1.1;               // мягкий край фронта: SOFT_K · кегль (около 2–3 букв)
+    var FADE_W = 0.30;              // вопрос начинает гаснуть, когда его правый край ближе этой доли ширины экрана к левому краю; на самом краю он тёмный
+    var SLOW = 2.2;                 // блуждающий свет зажигает вопрос во столько раз медленнее пальца
+    var WIGNITE = 10000;            // блуждающий свет зажигает вопрос не чаще раза в это время, мс
+    var TOLY = 9, TOLX = 10;        // допуск касания: сверх полосы строки по вертикали, сверх краёв вопроса по горизонтали, px (соседи отстоят на 34+ px)
+    var TAPMS = 350, DRAG = 10;     // касание короче TAPMS и со сдвигом не больше DRAG px — тап
+    var STALE = 1500;               // жест без событий дольше этого считается потерянным (iOS иногда не присылает pointerup/cancel)
     var LIT_SC = 0.06;              // увеличение зажжённой буквы (до ×1.06)
     var ATTACK = 70;                // постоянная времени разгорания буквы, мс
-    var PSTEP = 4;                  // шаг точек линии по пути пальца, px
+    var PSTEP = 4;                  // шаг точек маленького света по пути мыши, px
     var PCAP = 1400;                // ёмкость кольца точек
-    var OPEN_AT = 0.4;              // вопрос считается засвеченным при такой яркости буквы под пальцем
+    var PATHSTEP = 6;               // шаг проверки «задет ли вопрос» вдоль пути пальца, px
     var IDLE = 7000;                // через 7 с тишины свет блуждает
     var OM = 18;                    // жёсткость пружины блуждающего света
     var WR0 = 21, WR1 = 30;         // радиус блуждающего света, px (диаметр около 40–60): вблизи — WR0, вдали — WR1
@@ -44,7 +55,7 @@
 
     var vw = 0, vh = 0, dpr = 1, safe = { t: 0, r: 0, b: 0, l: 0 }, topY = 0, FF = 'Georgia, serif', BO = 1, mc = null;
     var active = false, paused = false, raf = 0, last = 0, clk = 0, lastAct = 0, timers = [], frozen = false, holdT = 0;
-    var rows = [], pool0 = [], MC = {}, openQ = -1, relitQ = -1, g = null, hoverOn = false, mkBudget = 0;
+    var rows = [], pool0 = [], MC = {}, openQ = -1, relitQ = -1, g = null, hoverOn = false, mkBudget = 0, lastWI = 0, hRow = null, hIt = null;
 
     function later(fn, ms) { var t = setTimeout(function () { var k = timers.indexOf(t); if (k >= 0) timers.splice(k, 1); fn(); }, ms); timers.push(t); return t; }
     function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -112,7 +123,7 @@
       var text = qtext(q).replace(/\s+/g, ' ').trim();
       mc.font = row.font;
       var qw = mc.measureText(text).width;
-      return { q: q, text: text, x: 0, qw: qw, w: qw + row.gap, sp: null, left: null, cw: null, gI: null, gT: null, gD: null, hot: 0, hidden: false, rd: api.isRead(q) };
+      return { q: q, text: text, x: 0, qw: qw, w: qw + row.gap, sp: null, left: null, cw: null, gI: null, gT: null, gD: null, hot: 0, ls: 0, lox: 0, lfar: 0, ldur: 1, lsoft: 1, hidden: false, rd: api.isRead(q) };
     }
     // случайный подходящий вопрос: из выбранной темы, не показанный сейчас (если вопросов хватает), не шире MAXQW
     function pickItem(row) {
@@ -201,34 +212,75 @@
       mkBudget--; mc.font = row.font; mkSprite(row, it);
     }
 
-    // ---------------------------------------------------------------- свет: точки линии
-    // кольцо точек {x, y, r, a, t}: палец ставит их по пути каждые PSTEP px (r = HW, a = 1), блуждающий свет — реже и мягче.
+    // ---------------------------------------------------------------- маленький свет (hover мыши, блуждающий): точки
+    // кольцо точек {x, y, r, a, t}: мышь ставит их по пути каждые PSTEP px, блуждающий свет — реже и мягче.
     // Освещённость буквы — по ближайшей точке с учётом возраста; буква запоминает (сила, время точки) и гаснет по расписанию точки.
+    // Палец точек не ставит: он зажигает вопросы целиком (ignite).
     var PX = new Float32Array(PCAP), PY = new Float32Array(PCAP), PR = new Float32Array(PCAP), PA = new Float32Array(PCAP), PT = new Float64Array(PCAP);
     var pS = 0, pE = 0, headSeq = -1, lp = { ok: false, x: 0, y: 0, t: 0 }, ptr = { x: 0, y: 0, has: false, gone: false };
     function addPoint(x, y, r, a, t) {
       if (pE - pS >= PCAP) pS++;
       var i = pE % PCAP; PX[i] = x; PY[i] = y; PR[i] = r; PA[i] = a; PT[i] = t; pE++; return pE - 1;
     }
-    // отрезок пути пальца от (lp.x, lp.y) до (x, y): точки через PSTEP px, время распределено между прошлым и нынешним событием
+    // отрезок пути мыши от (lp.x, lp.y) до (x, y): точки через PSTEP px, время распределено между прошлым и нынешним событием
     function strokeTo(x, y, T) {
-      if (!lp.ok) { headSeq = addPoint(x, y, HW, 1, T); lp.ok = true; lp.x = x; lp.y = y; lp.t = T; return; }
-      var dx = x - lp.x, dy = y - lp.y, d = Math.sqrt(dx * dx + dy * dy), n = Math.min(160, Math.floor(d / PSTEP)), t0 = Math.max(lp.t, T - 80), k, f;
+      var Te = T - HOVAGE;
+      if (!lp.ok) { headSeq = addPoint(x, y, HOVR, HOVA, Te); lp.ok = true; lp.x = x; lp.y = y; lp.t = Te; return; }
+      var dx = x - lp.x, dy = y - lp.y, d = Math.sqrt(dx * dx + dy * dy), n = Math.min(160, Math.floor(d / PSTEP)), t0 = Math.max(lp.t, Te - 80), k, f;
       if (n < 1) return;
-      for (k = 1; k <= n; k++) { f = k / n; headSeq = addPoint(lp.x + dx * (k * PSTEP / d), lp.y + dy * (k * PSTEP / d), HW, 1, t0 + (T - t0) * f); }
-      lp.x += dx * (n * PSTEP / d); lp.y += dy * (n * PSTEP / d); lp.t = T;
+      for (k = 1; k <= n; k++) { f = k / n; headSeq = addPoint(lp.x + dx * (k * PSTEP / d), lp.y + dy * (k * PSTEP / d), HOVR, HOVA, t0 + (Te - t0) * f); }
+      lp.x += dx * (n * PSTEP / d); lp.y += dy * (n * PSTEP / d); lp.t = Te;
     }
-    function glowItem(it, amp) {
-      var n = it.text.length, T = performance.now(), i;
-      if (!it.gI) { it.gI = new Float32Array(n); it.gT = new Float64Array(n); it.gD = new Float32Array(n); }
-      for (i = 0; i < n; i++) { it.gI[i] = amp; it.gT[i] = T; }
-      it.hot = T + TAIL + 60;
+    function allocD(it) { if (!it.gD) it.gD = new Float32Array(it.text.length); }
+    function allocT(it) { if (!it.gI) { var n = it.text.length; it.gI = new Float32Array(n); it.gT = new Float64Array(n); } }
+
+    // ---------------------------------------------------------------- свет вопроса целиком
+    // вопрос, которого коснулись, зажигается от точки касания: фронт идёт вправо и влево с мягким краем и до границ именно этого вопроса.
+    // Время зажжения (ls) и точка (lox, px от левого края вопроса) хранятся в вопросе; свет не тухнет, пока вопрос не подойдёт к левому краю (см. draw).
+    // доля света, оставшаяся вопросу по положению: 1, пока правый край правее FADE_W·ширины от левого края; 0 — край ушёл за экран
+    function foOf(row, it) { var u = (it.x - row.off + it.qw) / (FADE_W * vw); return u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u); }
+    function litVis(row, it) { return it.ls > 0 && foOf(row, it) > 0.2; }
+    function ignite(row, it, ox, k, T) {
+      if (it.ls || it.hidden) return;
+      if (!it.left) metrics(row, it);
+      allocD(it);
+      it.lox = ox < 0 ? 0 : ox > it.qw ? it.qw : ox;
+      it.lfar = Math.max(it.lox, it.qw - it.lox); it.lsoft = SOFT_K * row.fs;
+      it.ldur = (FRONT0 + (FRONT1 - FRONT0) * Math.min(1, it.lfar / 900)) * k;
+      it.ls = calm ? T - it.ldur - 1 : T;
     }
-    // зажигаем буквы item вокруг точки (px, py) с радиусом r и силой a точки времени tp
+    function igniteFull(row, it) {
+      if (it.ls) return;
+      if (!it.left) metrics(row, it);
+      allocD(it); it.lox = 0; it.lfar = it.qw; it.lsoft = SOFT_K * row.fs; it.ldur = 1; it.ls = performance.now() - 5;
+    }
+    // вопрос под точкой (x, y): ближайшая по вертикали строка в пределах допуска, вопрос по горизонтали с допуском TOLX; результат в hRow/hIt
+    function hitAt(x, y, toly) {
+      var k, j, row, it, sx, d, bd = 1e9; hRow = null; hIt = null;
+      for (k = 0; k < rows.length; k++) {
+        row = rows[k];
+        if (y < row.y - toly || y > row.y + row.h + toly) continue;
+        d = Math.abs(y - row.gcy); if (d >= bd) continue;
+        for (j = 0; j < row.items.length; j++) {
+          it = row.items[j]; if (it.hidden) continue;
+          sx = it.x - row.off;
+          if (x >= sx - TOLX && x <= sx + it.qw + TOLX) { bd = d; hRow = row; hIt = it; break; }
+        }
+      }
+      return !!hIt;
+    }
+    // отрезок пути пальца: каждый задетый тёмный вопрос зажигается от точки, где его задели
+    function lightPath(x0, y0, x1, y1, T) {
+      var dx = x1 - x0, dy = y1 - y0, d = Math.sqrt(dx * dx + dy * dy), n = Math.min(120, Math.max(1, Math.ceil(d / PATHSTEP))), k, x, y;
+      for (k = 1; k <= n; k++) {
+        x = x0 + dx * k / n; y = y0 + dy * k / n;
+        if (hitAt(x, y, TOLY) && !hIt.ls) ignite(hRow, hIt, x - (hIt.x - hRow.off), 1, T);
+      }
+    }
     function touch(row, it, px, py, r, a, tp, fv, T) {
       var sx = it.x - row.off, left = it.left, cw = it.cw, n = it.text.length, lo = 0, hi = n - 1, mid, R = r + row.reach, x0 = px - R - sx, x1 = px + R - sx, i, gx, dx, dy, de, v, cur;
       while (lo < hi) { mid = (lo + hi) >> 1; if (left[mid] + cw[mid] < x0) lo = mid + 1; else hi = mid; }
-      if (!it.gI) { it.gI = new Float32Array(n); it.gT = new Float64Array(n); it.gD = new Float32Array(n); }
+      allocT(it); allocD(it);
       for (i = lo; i < n && left[i] <= x1; i++) {
         gx = sx + left[i] + cw[i] * 0.5; dx = gx - px; dy = row.gcy - py;
         de = Math.sqrt(dx * dx + dy * dy) - row.reach; if (de >= r) continue;
@@ -295,7 +347,7 @@
       if (!calm && !wan.on && wan.k <= 0 && !g && clk - lastAct > IDLE) {
         j = 0;
         do { for (k = 0; k < wph.length; k++) wph[k] = rnd(0, 6.283); } while (wvanish(clk / 1000) < 0.7 && ++j < 30);   // не стартуем в фазе «растворения»
-        p = wpath(0, true); wan.on = true; wan.x = wan.tx = p.x; wan.y = wan.ty = p.y; wan.vx = wan.vy = 0; wan.k = 0; wan.has = false;
+        p = wpath(0, true); wan.on = true; lastWI = clk - WIGNITE + 4000; wan.x = wan.tx = p.x; wan.y = wan.ty = p.y; wan.vx = wan.vy = 0; wan.k = 0; wan.has = false;
       }
       if (wan.on) { p = wpath(dt, false); wan.tx = p.x; wan.ty = p.y; wan.k = Math.min(1, wan.k + dt * 1000 / 2600); }
       else if (wan.k > 0) wan.k = Math.max(0, wan.k - dt * 1000 / 700);
@@ -308,24 +360,29 @@
         ax = OM * OM * (wan.tx - wan.x) - 2 * OM * wan.vx; ay = OM * OM * (wan.ty - wan.y) - 2 * OM * wan.vy;
         wan.vx += ax * h; wan.vy += ay * h; wan.x += wan.vx * h; wan.y += wan.vy * h;
       }
+      // редко: блуждающий свет задевает вопрос, и тот медленно зажигается целиком
+      if (wan.on && !calm && wan.s > 0.4 && clk - lastWI > WIGNITE && Math.random() < dt * 0.35 && hitAt(wan.x, wan.y, 2) && !hIt.ls && wan.x > vw * 0.08 && litVis0(hRow, hIt)) {
+        ignite(hRow, hIt, wan.x - (hIt.x - hRow.off), SLOW, T); lastWI = clk;
+      }
       if (wan.s > 0.02 && (!wan.has || Math.abs(wan.x - wan.lx) + Math.abs(wan.y - wan.ly) >= 5 || T - wan.lt > 100)) {
         addPoint(wan.x, wan.y, wan.rr, wan.s, T); wan.lx = wan.x; wan.ly = wan.y; wan.lt = T; wan.has = true;
       }
     }
+    function litVis0(row, it) { return foOf(row, it) > 0.6; }   // вопрос, который вот-вот уйдёт, блуждающим светом не зажигаем
     function poke() { lastAct = clk; wan.on = false; }
 
     // ---------------------------------------------------------------- кадр
     function step(dt, T) {
       var k, row;
       if (!calm && !frozen) for (k = 0; k < rows.length; k++) { row = rows[k]; row.off += row.v * dt; maintain(row); }
-      // точка под неподвижным пальцем (или курсором, пока он не простоял IDLE) держится на полной силе
-      if ((g || (hoverOn && clk - lastAct < IDLE)) && headSeq >= pS && headSeq < pE) PT[headSeq % PCAP] = T;
+      // точка под неподвижным курсором мыши (пока он не простоял IDLE) держится на постоянной силе; палец точек не ставит
+      if ((hoverOn || (g && g.type !== 'touch')) && clk - lastAct < IDLE && headSeq >= pS && headSeq < pE) PT[headSeq % PCAP] = T - HOVAGE;
       stepWan(dt, T);
       mkBudget = 3;
       sample(T);
     }
     function draw(dt, T) {
-      var ku = 1 - Math.exp(-dt * 1000 / ATTACK), k, j, i, row, it, sx, lo, hi, mid, gd, tgt, s, al, anyHot = false, gx, hasHot;
+      var ku = calm ? 1 : 1 - Math.exp(-dt * 1000 / ATTACK), k, j, i, row, it, sx, lo, hi, mid, gd, tgt, tl, s, al, anyHot = false, gx, hasHot, n, lit, fo, R, u, v, d, wide, lx;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, vw, vh);
       ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
@@ -341,20 +398,33 @@
         }
         // засвеченные буквы: резкие, светлые, чуть крупнее; прозрачность и размер — от силы света в букве
         hasHot = false;
-        for (j = 0; j < row.items.length; j++) { it = row.items[j]; if (it.hot && !it.hidden) { hasHot = true; break; } }
+        for (j = 0; j < row.items.length; j++) { it = row.items[j]; if ((it.hot || it.ls) && !it.hidden) { hasHot = true; break; } }
         if (!hasHot) continue;
         ctx.font = row.font; ctx.fillStyle = LIT;
         for (j = 0; j < row.items.length; j++) {
           it = row.items[j];
-          if (!it.hot || it.hidden) continue;
-          if (T > it.hot) { it.gI = it.gT = it.gD = null; it.hot = 0; continue; }
-          anyHot = true;
+          if (!(it.hot || it.ls) || it.hidden) continue;
+          if (it.hot && T > it.hot) { it.gI = it.gT = null; it.hot = 0; }
+          if (!it.hot && !it.ls) { it.gD = null; continue; }
           if (!it.left) metrics(row, it);
-          sx = it.x - row.off;
-          lo = 0; hi = it.text.length - 1;
+          sx = it.x - row.off; n = it.text.length;
+          if (sx > vw + 24 || sx + it.qw < -24) { if (it.hot) anyHot = true; continue; }
+          if (!it.gD) allocD(it);
+          lit = it.ls > 0; fo = 1; R = 0;
+          if (lit) {
+            fo = foOf(row, it); u = (T - it.ls) / it.ldur; u = u <= 0 ? 0 : u >= 1 ? 1 : u;
+            R = (it.lfar + it.lsoft) * u; if (u < 1 || (fo > 0 && T - it.ls < it.ldur + 400)) anyHot = true;
+          }
+          if (it.hot) anyHot = true;
+          lo = 0; hi = n - 1;
           while (lo < hi) { mid = (lo + hi) >> 1; if (it.left[mid] + it.cw[mid] < -sx - 24) lo = mid + 1; else hi = mid; }
-          for (i = lo; i < it.text.length && sx + it.left[i] < vw + 24; i++) {
-            tgt = it.gI[i] > 0 ? it.gI[i] * fade(T - it.gT[i]) : 0;
+          for (i = lo; i < n && sx + it.left[i] < vw + 24; i++) {
+            tgt = it.gI && it.gI[i] > 0 ? it.gI[i] * fade(T - it.gT[i]) : 0;
+            if (lit && fo > 0) {
+              lx = it.left[i] + it.cw[i] * 0.5; d = lx - it.lox; if (d < 0) d = -d;
+              v = (R - d) / it.lsoft;
+              if (v > 0) { tl = (v >= 1 ? 1 : sm(v)) * fo; if (tl > tgt) tgt = tl; }
+            }
             gd = it.gD[i];
             if (tgt > gd) gd += (tgt - gd) * ku; else gd = tgt;
             it.gD[i] = gd;
@@ -382,9 +452,14 @@
     }
     function start() { if (raf || !active || paused || document.hidden) return; last = performance.now(); raf = requestAnimationFrame(frame); }
     function halt() { if (raf) cancelAnimationFrame(raf); raf = 0; }
-    function wipe() {
+    // keepLit: засвеченные вопросы остаются (ответ открылся — лента стоит и потом едет дальше); иначе гасим всё
+    function wipe(keepLit) {
       pS = pE = 0; headSeq = -1; lp.ok = false; wan.on = false; wan.k = wan.s = 0; anyHotFlag = false;
-      for (var k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) { var it = rows[k].items[j]; it.gI = it.gT = it.gD = null; it.hot = 0; }
+      for (var k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) {
+        var it = rows[k].items[j]; it.gI = it.gT = null; it.hot = 0;
+        if (!keepLit) it.ls = 0;
+        if (!it.ls) it.gD = null;
+      }
     }
 
     // ---------------------------------------------------------------- проверка раскладки
@@ -412,27 +487,8 @@
     window.VoicesZen.lightCheck = check;
 
     // ---------------------------------------------------------------- жесты
-    function pt(e) { var r = scene.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-    // засвеченный вопрос под точкой: строка по y, вопрос по x, яркость букв у пальца выше порога
-    function candidate(x, y) {
-      var k, j, i, row, it, sx, best = null, bd = 1e9, d, lo, hi, mid, m;
-      for (k = 0; k < rows.length; k++) {
-        row = rows[k];
-        if (y < row.y - 6 || y > row.y + row.h + 6) continue;
-        d = Math.abs(y - (row.y + row.h / 2));
-        for (j = 0; j < row.items.length; j++) {
-          it = row.items[j]; sx = it.x - row.off;
-          if (it.hidden || !it.gD || x < sx - 8 || x > sx + it.qw + 8) continue;
-          if (!it.left) metrics(row, it);
-          lo = 0; hi = it.text.length - 1;
-          while (lo < hi) { mid = (lo + hi) >> 1; if (sx + it.left[mid] + it.cw[mid] < x) lo = mid + 1; else hi = mid; }
-          m = 0;
-          for (i = Math.max(0, lo - 3); i <= Math.min(it.text.length - 1, lo + 3); i++) if (it.gD[i] > m) m = it.gD[i];
-          if (m > OPEN_AT && d < bd) { bd = d; best = { row: row, it: it }; }
-        }
-      }
-      return best;
-    }
+    var sr = null;   // прямоугольник сцены на время жеста (одно чтение на событие, а не на каждую коалесцированную точку)
+    function pt(e) { var r = sr || scene.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
     // узел-источник для полёта: невидимый текст вопроса там же, где он на canvas (левый край вопроса, базовая линия строки)
     function placeProxy(row, it) {
       var st = proxy.style;
@@ -449,47 +505,69 @@
       for (var k = 0; k < rows.length; k++) for (var j = 0; j < rows[k].items.length; j++) if (rows[k].items[j].q === q) return { row: rows[k], it: rows[k].items[j] };
       return null;
     }
+    // конец жеста: up, cancel, потеря захвата, уход со страницы. Тап открывает ответ только на уже засвеченный вопрос
+    function endGesture(cancel, e) {
+      if (!g) return;
+      var gg = g, T = performance.now(); g = null;
+      if (e) { try { scene.releasePointerCapture(e.pointerId); } catch (x) {} }
+      poke();
+      var hover = gg.type === 'mouse' || gg.type === 'pen';
+      if (hover && !cancel) hoverOn = true; else { hoverOn = false; lp.ok = false; }   // мышь ведёт мягкий свет и дальше
+      if (cancel || gg.dead) return;
+      if (!gg.moved && T - gg.t < TAPMS && gg.it && gg.row.items.indexOf(gg.it) >= 0 && litVis(gg.row, gg.it)) openItem({ row: gg.row, it: gg.it });
+    }
     function onDown(e) {
-      if (!active || paused || g) return;
+      if (!active || paused) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      var dead = api.popDown(), p = pt(e), cand = dead ? null : candidate(p.x, p.y), T = performance.now();
+      var T = performance.now();
+      if (g) { if (T - g.last < STALE) return; endGesture(true, null); }   // прежний жест потерян (pointerup не пришёл): начинаем заново
+      var dead = api.popDown(), p;
+      sr = scene.getBoundingClientRect(); p = pt(e);
       try { scene.setPointerCapture(e.pointerId); } catch (x) {}
       poke(); ptr.x = p.x; ptr.y = p.y; ptr.has = true; ptr.gone = false;
-      g = { id: e.pointerId, type: e.pointerType, x0: p.x, y0: p.y, t: T, moved: false, dead: dead, cand: cand };
-      if (e.pointerType === 'touch') lp.ok = false;
-      strokeTo(p.x, p.y, T);
+      g = { id: e.pointerId, type: e.pointerType, x0: p.x, y0: p.y, x: p.x, y: p.y, t: T, last: T, moved: false, dead: dead, row: null, it: null };
+      if (!dead && hitAt(p.x, p.y, TOLY)) {
+        if (litVis(hRow, hIt)) { g.row = hRow; g.it = hIt; }                      // уже засвечен: тап откроет ответ
+        else if (!hIt.ls) ignite(hRow, hIt, p.x - (hIt.x - hRow.off), 1, T);       // тёмный: первое касание только зажигает
+      }
+      if (e.pointerType !== 'touch') strokeTo(p.x, p.y, T);
       start();
     }
     function onMove(e) {
       if (!active || paused) return;
-      if (g) { if (e.pointerId !== g.id) return; }
-      else if (e.pointerType === 'touch' || e.pointerType === '') return;   // палец без касания событий не шлёт; мышь и перо водят свет и без нажатия
-      var list = e.getCoalescedEvents ? e.getCoalescedEvents() : null, T = performance.now(), n, k, p;
+      var T = performance.now();
+      if (g) { if (e.pointerId !== g.id) return; g.last = T; }
+      else if (e.pointerType === 'touch' || e.pointerType === '') return;   // палец без касания событий не шлёт; мышь и перо водят мягкий свет и без нажатия
+      var list = e.getCoalescedEvents ? e.getCoalescedEvents() : null, k, p, mouse = e.pointerType !== 'touch';
       if (!list || !list.length) list = [e];
+      sr = scene.getBoundingClientRect();
       for (k = 0; k < list.length; k++) {
-        p = pt(list[k]); n = list.length;
-        if (g && !g.moved && Math.sqrt(Math.pow(p.x - g.x0, 2) + Math.pow(p.y - g.y0, 2)) > 8) g.moved = true;
+        p = pt(list[k]);
+        if (g) {
+          if (!g.moved && Math.sqrt(Math.pow(p.x - g.x0, 2) + Math.pow(p.y - g.y0, 2)) > DRAG) g.moved = true;
+          if (!g.dead) lightPath(g.x, g.y, p.x, p.y, T);
+          g.x = p.x; g.y = p.y;
+        }
         ptr.x = p.x; ptr.y = p.y;
-        strokeTo(p.x, p.y, T);
+        if (mouse) strokeTo(p.x, p.y, T);
       }
       poke(); ptr.has = true; ptr.gone = false;
       if (!g) hoverOn = true;
       start();
     }
-    function onUp(e) {
-      if (!g || e.pointerId !== g.id) return;
-      var gg = g; g = null;
-      try { scene.releasePointerCapture(e.pointerId); } catch (x) {}
-      poke();
-      var hover = gg.type === 'mouse' || gg.type === 'pen';
-      if (hover && e.type !== 'pointercancel') hoverOn = true; else { hoverOn = false; lp.ok = false; }   // мышь ведёт свет и дальше
-      if (e.type === 'pointercancel' || gg.dead) return;
-      if (!gg.moved && performance.now() - gg.t < 300 && gg.cand) openItem(gg.cand);
-    }
+    function onUp(e) { if (g && e.pointerId === g.id) endGesture(e.type === 'pointercancel', e); }
     scene.addEventListener('pointerdown', onDown);
     scene.addEventListener('pointermove', onMove);
     scene.addEventListener('pointerup', onUp);
     scene.addEventListener('pointercancel', onUp);
+    // iOS: системный жест или потеря захвата иногда обрывают касание без pointerup — не оставляем жест висеть
+    scene.addEventListener('lostpointercapture', function (e) { if (g && e.pointerId === g.id) endGesture(true, null); });
+    window.addEventListener('blur', function () { if (g) endGesture(true, null); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden && g) endGesture(true, null); });
+    // на iOS touch-action:none надёжнее подкрепить отменой touchstart/touchmove (иначе Safari может увести палец в прокрутку/жест и прислать pointercancel)
+    function stopTouch(e) { if (e.cancelable) e.preventDefault(); }
+    scene.addEventListener('touchstart', stopTouch, { passive: false });
+    scene.addEventListener('touchmove', stopTouch, { passive: false });
     scene.addEventListener('pointerleave', function (e) { if (!g && (e.pointerType === 'mouse' || e.pointerType === 'pen')) { hoverOn = false; lp.ok = false; ptr.gone = true; } });
     scene.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
@@ -511,7 +589,7 @@
     function relight() {
       if (relitQ < 0) return;
       var c = locate(relitQ); relitQ = -1;
-      if (c) glowItem(c.it, 0.9);
+      if (c) igniteFull(c.row, c.it);
     }
     function unfreeze() { frozen = false; if (holdT) { clearTimeout(holdT); holdT = 0; } }
 
@@ -545,15 +623,15 @@
       },
       resize: function () { if (!active) return; size(); layout(); wipe(); if (openQ >= 0) ensure(openQ); start(); },
       // тема или авторы сменились: ленты собираются заново из подходящих вопросов
-      refresh: function () { layout(); wipe(); if (openQ >= 0) { var c = ensure(openQ); if (c) c.it.hidden = true; } start(); },
+      refresh: function () { layout(); wipe(); if (openQ >= 0) { var c = ensure(openQ); if (c) { igniteFull(c.row, c.it); c.it.hidden = true; } } start(); },
       focus: function (q) { ensure(q); },
-      // ответы открылись: строки встают, вопрос-источник скрыт (его заменяет летящая копия), лист гаснет
+      // ответы открылись: строки встают, вопрос-источник скрыт (его заменяет летящая копия), лист гаснет; засвеченные вопросы остаются засвеченными
       onOpened: function (q) {
         var c = ensure(q);
-        g = null; hoverOn = false; openQ = q; relitQ = q; frozen = true; wipe();
-        if (c) { c.it.hidden = true; c.it.rd = true; }
+        g = null; hoverOn = false; openQ = q; relitQ = q; frozen = true; wipe(true);
+        if (c) { igniteFull(c.row, c.it); c.it.hidden = true; c.it.rd = true; }
       },
-      // заголовок вернулся на место: вопрос снова виден, над ним зажигается свет и потом гаснет
+      // заголовок вернулся на место: вопрос снова виден и остаётся засвеченным
       onClosed: function (q) {
         var c = locate(q); openQ = -1; unfreeze();
         if (c) c.it.hidden = false;
@@ -570,19 +648,20 @@
         if (e.target.tagName === 'BUTTON') return;
         e.preventDefault(); if (e.repeat) return;
         poke();
-        var k, j, i, row, it, sx, m, best = null, bm = OPEN_AT, near = null, nd = 1e9, dx, dy;
+        var k, j, row, it, sx, best = null, near = null, nd = 1e9, dx, dy;
         for (k = 0; k < rows.length; k++) {
           row = rows[k];
           for (j = 0; j < row.items.length; j++) {
             it = row.items[j]; sx = it.x - row.off;
             if (it.hidden || sx + it.qw < 0 || sx > vw) continue;
-            if (it.gD) { m = 0; for (i = 0; i < it.gD.length; i++) if (it.gD[i] > m) m = it.gD[i]; if (m > bm) { bm = m; best = { row: row, it: it }; } }
+            if (litVis(row, it)) { best = { row: row, it: it }; break; }
             dx = Math.max(sx - vw / 2, 0, vw / 2 - (sx + it.qw)); dy = Math.abs(row.y + row.h / 2 - vh / 2);
             if (dx * dx + dy * dy < nd) { nd = dx * dx + dy * dy; near = { row: row, it: it }; }
           }
+          if (best) break;
         }
         if (best) openItem(best);
-        else if (near) { if (!near.it.left) metrics(near.row, near.it); glowItem(near.it, 1); start(); }   // Enter зажигает ближайший к центру, второй Enter открывает
+        else if (near) { ignite(near.row, near.it, Math.max(0, Math.min(near.it.qw, vw / 2 - (near.it.x - near.row.off))), 1, performance.now()); start(); }   // Enter зажигает ближайший к центру, второй Enter открывает
       }
     };
   });
