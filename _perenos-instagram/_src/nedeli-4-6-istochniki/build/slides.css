@@ -1,0 +1,182 @@
+.abs{position:absolute}
+.foot{position:absolute;display:flex;align-items:center;justify-content:space-between}
+.pf{position:absolute;left:0;top:0}
+.portrait{position:absolute;display:block}
+.portrait.fade{-webkit-mask-image:linear-gradient(#000 0,#000 86%,transparent 100%);mask-image:linear-gradient(#000 0,#000 86%,transparent 100%)}
+
+/* ---------- stories ГОЛОСА_ ---------- */
+.st .foot{left:72px;right:72px;top:1494px}
+.st .foot .logo{font-size:46px}
+.st .foot .plaque{font-size:26px;padding:12px 18px}
+.st-q .main{position:absolute;left:72px;right:72px;top:290px;height:1150px;display:flex;flex-direction:column}
+.st-q .lab{font-size:36px;color:var(--acc)}
+.st-q .askrow{margin-top:44px}
+.st-q .asker{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:54px;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+.st-q .tp{font-family:"IBM Plex Mono",monospace;font-size:34px;color:var(--mut);margin-top:16px;letter-spacing:.02em}
+.st-q .rule{margin-top:28px}
+.st-q .qbox{flex:1;margin-top:56px;overflow:hidden;font-size:86px;line-height:1.16;color:var(--ink)}
+.st-q .hint{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:42px;color:var(--acc);letter-spacing:.03em;margin-top:16px}
+
+.st-a .side{position:absolute;left:650px;width:360px;top:280px;height:570px;display:flex;flex-direction:column}
+.st-a .nm{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:46px;text-transform:uppercase;letter-spacing:.06em;margin-top:26px;line-height:1.1}
+.st-a .yr{font-family:"IBM Plex Mono",monospace;font-size:28px;color:var(--mut);margin-top:18px;letter-spacing:.04em}
+.st-a .tp{font-family:"IBM Plex Mono",monospace;font-size:28px;color:var(--sec);margin-top:8px;letter-spacing:.01em}
+.st-a .qwrap{margin-top:auto}
+.st-a .qlab{font-size:24px;color:var(--acc)}
+.st-a .qt{font-style:italic;font-size:32px;line-height:1.25;color:var(--sec);margin-top:10px}
+.st-a .answer{position:absolute;left:72px;right:72px;top:884px;height:566px;overflow:hidden;color:var(--ink);line-height:1.36}
+.st-a .part{margin:0}
+.st-a .gap{font-size:30px;line-height:1.5;margin:6px 0}
+.st-a .part + .part{margin-top:0}
+
+/* ---------- posts ---------- */
+.po .foot{left:72px;right:72px;top:1204px}
+.po .foot .logo{font-size:40px}
+.po .foot .plaque{font-size:24px;padding:11px 16px}
+
+.po-c .logo.big{position:absolute;left:84px;top:96px;font-size:150px}
+.po-c .sub{position:absolute;left:84px;top:296px;font-size:72px;line-height:1.1}
+.po-c .rows{position:absolute;left:84px;right:84px;top:468px}
+.po-c .row{margin-bottom:44px}
+.po-c .row .rule{height:5px;width:64px;margin-bottom:16px}
+.po-c .row .t{font-family:"IBM Plex Mono",monospace;font-size:36px;line-height:1.25;letter-spacing:.02em;color:var(--sec)}
+.po-c .row .t b{font-weight:600;color:var(--ink);letter-spacing:.06em}
+.po-c .proj{position:absolute;left:84px;right:84px;top:1020px;font-style:italic;font-size:36px;line-height:1.3;color:var(--mut)}
+
+.po-p .portrait{left:40px}
+.po-p .side{position:absolute;left:624px;width:384px;top:80px;height:690px;display:flex;flex-direction:column}
+.po-p .nm{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:36px;text-transform:uppercase;letter-spacing:.05em;line-height:1.15;margin-top:22px}
+.po-p .yr{font-family:"IBM Plex Mono",monospace;font-size:28px;color:var(--mut);margin-top:12px;letter-spacing:.04em}
+.po-p .srclab{font-size:24px;color:var(--acc);margin-top:30px}
+.po-p .srcs{flex:1;overflow:hidden;margin-top:12px;color:var(--sec);line-height:1.28}
+.po-p .srcs .s{padding-left:16px;text-indent:-16px;margin-bottom:6px}
+.po-p .lower{position:absolute;left:72px;right:72px;top:800px;height:390px;overflow:hidden}
+.po-p .wlab{font-size:24px;color:var(--acc)}
+.po-p .where{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:46px;line-height:1.25;margin-top:12px;letter-spacing:.01em}
+.po-p .where .d{color:var(--acc);padding:0 .25em}
+.po-p .manner{font-size:36px;line-height:1.38;color:var(--sec);margin-top:22px;font-style:italic}
+
+.po-d .main{position:absolute;left:72px;right:72px;top:96px;height:1060px;display:flex;flex-direction:column}
+.po-d .lab{font-size:30px;color:var(--acc)}
+.po-d .disc{font-size:46px;line-height:1.36;margin-top:36px;color:var(--ink)}
+.po-d .all{font-size:40px;line-height:1.3;margin-top:56px;color:var(--sec)}
+.po-d .addr{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:34px;color:var(--acc);margin-top:30px;letter-spacing:.01em}
+
+/* ---------- posts НА_ПРОСВЕТ ---------- */
+.np .top{position:absolute;left:72px;top:72px;font-size:36px}
+.np .src{position:absolute;left:72px;right:72px;top:1216px;font-family:"IBM Plex Mono",monospace;font-size:24px;line-height:1.4;color:var(--mut);letter-spacing:.02em}
+.np .src .u{color:var(--sec)}
+.np .body{position:absolute;left:72px;right:72px;top:150px;height:1040px;display:flex;flex-direction:column}
+.np .lab{font-size:34px;color:var(--acc)}
+
+.np-1 .top{left:84px}
+.np-1 .body{left:84px;right:84px;justify-content:center}
+.np-1 .claim{font-size:88px;line-height:1.14;margin-top:44px;color:var(--ink)}
+.np-1 .verdict{align-self:flex-start;margin-top:64px;background:var(--acc);color:#221a14;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:44px;letter-spacing:.06em;padding:22px 34px;border-radius:8px}
+.np-1 .swipe{position:absolute;left:84px;top:1150px;font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:30px;letter-spacing:.1em;color:var(--mut)}
+
+.np-2 .title{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:52px;margin-top:6px}
+.np-2 .blk{margin-top:34px}
+.np-2 .def{font-size:34px;line-height:1.38;color:var(--sec);margin-top:12px}
+.np-2 .card{margin-top:20px;border-left:5px solid var(--acc);padding:6px 0 6px 28px}
+.np-2 .ex{font-size:46px;line-height:1.15;color:var(--ink)}
+.np-2 .rh{font-family:"IBM Plex Mono",monospace;font-weight:400;font-size:34px;letter-spacing:.02em;color:var(--sec);margin-top:12px;white-space:nowrap}
+.np-2 .rh .ta{font-weight:600}
+.np-2 .esrc{font-family:"IBM Plex Mono",monospace;font-size:24px;color:var(--mut);margin-top:10px;line-height:1.3}
+
+.np-3 .body{justify-content:center}
+.np-3 .nums{display:flex;align-items:flex-start;justify-content:space-between;margin-top:70px}
+.np-3 .col{text-align:left}
+.np-3 .big{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:176px;line-height:1;letter-spacing:-.02em}
+.np-3 .big.to{color:var(--acc)}
+.np-3 .arr{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:130px;line-height:1;color:var(--mut);margin-top:22px}
+.np-3 .yrs{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:36px;color:var(--sec);margin-top:22px;letter-spacing:.06em}
+.np-3 .what{font-size:56px;line-height:1.2;margin-top:70px;color:var(--ink)}
+
+.np-4 .ctitle{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:40px;line-height:1.25;margin-top:6px}
+.np-4 .chart{margin-top:44px}
+.np-4 .crow{display:flex;align-items:center;margin-bottom:26px}
+.np-4 .pl{width:204px;flex:none;font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:27px;color:var(--sec);letter-spacing:.01em}
+.np-4 .bar{flex:1;display:flex;height:84px;border-radius:4px;overflow:hidden}
+.np-4 .seg{overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:25px;color:#221a14;min-width:0;white-space:nowrap}
+.np-4 .legend{display:grid;grid-template-columns:1fr;gap:12px;margin-top:22px}
+.np-4 .lg{display:flex;align-items:center;font-size:30px;color:var(--sec)}
+.np-4 .lg i{display:inline-block;width:30px;height:30px;border-radius:3px;margin-right:16px;flex:none}
+.np-4 .note{font-size:28px;line-height:1.35;color:var(--mut);margin-top:22px;font-style:italic}
+
+.np-5 .ev{font-size:50px;line-height:1.3;margin-top:36px;color:var(--ink)}
+.np-5 .cav{font-size:38px;line-height:1.35;font-style:italic;color:var(--sec);margin-top:44px;padding-left:28px;border-left:5px solid var(--acc)}
+.np-5 .where{margin-top:auto;margin-bottom:10px}
+.np-5 .sect{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:30px;color:var(--sec);letter-spacing:.02em;line-height:1.3}
+.np-5 .addr{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:34px;color:var(--acc);margin-top:18px}
+.np-5 .prof{font-size:40px;color:var(--ink);margin-top:18px}
+
+/* ---------- story НА_ПРОСВЕТ ---------- */
+.ns .top{position:absolute;left:72px;top:270px;font-size:44px}
+.ns .body{position:absolute;left:72px;right:72px;top:380px;height:760px}
+.ns .lab{font-size:34px;color:var(--acc)}
+.ns .head{font-size:72px;line-height:1.14;margin-top:34px;color:var(--ink)}
+.ns .bars{margin-top:56px}
+.ns .bi{margin-bottom:32px}
+.ns .bn{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:40px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.ns .bbar{height:78px;border-radius:4px;background:var(--acc);display:flex;align-items:center;justify-content:flex-end;padding-right:22px;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:46px;color:#221a14}
+.ns .bbar.dim{background:#c9654e}
+.ns .corp{position:absolute;left:72px;right:72px;top:1146px;font-family:"IBM Plex Mono",monospace;font-size:28px;line-height:1.35;color:var(--sec);letter-spacing:.02em}
+.ns .src{position:absolute;left:72px;right:72px;top:1232px;font-family:"IBM Plex Mono",monospace;font-size:26px;line-height:1.4;color:var(--mut);letter-spacing:.02em}
+.ns .stk{position:absolute;left:90px;top:1280px;width:900px;height:300px}
+
+/* ---------- reel frames ---------- */
+.rl .top{position:absolute;left:72px;top:100px;font-size:40px}
+.rl .src{position:absolute;left:72px;width:786px;top:1530px;font-family:"IBM Plex Mono",monospace;font-size:24px;line-height:1.4;color:var(--mut);letter-spacing:.02em}
+.rl .card{position:absolute;left:145px;top:190px;width:640px;border-radius:6px;box-shadow:0 22px 50px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.4);background:#f2e9d8;overflow:hidden}
+.rl .card img{display:block;width:640px}
+.rl .info{position:absolute;left:72px;width:786px;top:1030px;text-align:center}
+.rl .nm{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:52px;text-transform:uppercase;letter-spacing:.1em}
+.rl .yr{font-family:"IBM Plex Mono",monospace;font-weight:400;font-size:30px;color:var(--acc);letter-spacing:.12em;margin-top:10px}
+.rl .big{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:150px;line-height:1;margin-top:34px;letter-spacing:-.02em}
+.rl .tx{font-size:38px;line-height:1.3;color:var(--sec);margin-top:22px}
+.rl .tc{position:absolute;left:72px;width:786px;text-align:center}
+.rl .tc .logo{font-size:112px}
+.rl .tc .tag{font-size:58px;line-height:1.2;margin-top:44px}
+.rl .tc .rule{margin:44px auto 0}
+.rl .tc .names{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:40px;letter-spacing:.08em;color:var(--sec);margin-top:0}
+.rl .tc .prof{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:38px;letter-spacing:.1em;color:var(--acc);margin-top:56px;text-transform:uppercase}
+.rl.glow::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 700px 900px at 70% 28%,rgba(240,118,90,.16),transparent 70%)}
+.cardasset{position:absolute;left:0;top:0;border-radius:6px;overflow:hidden;background:#f2e9d8;box-shadow:0 22px 50px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.4)}
+.np-1 .src{left:84px;right:84px}
+.po-c .foot{left:84px;right:84px}
+
+.np .body{overflow:hidden}
+.np-1 .verdict{display:flex;align-items:center}
+.np-1 .verdict .tick{width:46px;height:46px;margin-right:20px;flex:none}
+.np-2 .def{font-size:36px}
+.np-2 .ex{font-size:50px}
+.np-2 .esrc{font-size:26px}
+.np-3 .big{font-size:168px}
+.np-4 .ctitle{font-size:38px}
+.np-4 .chart{margin-top:34px}
+.np-4 .crow{margin-bottom:20px}
+.np-4 .bar{height:68px}
+.np-4 .legend{margin-top:18px;gap:8px}
+.np-4 .lg{font-size:30px}
+.np-4 .note{font-size:28px;margin-top:18px}
+.np-5 .ev{font-size:54px}
+.np-5 .cav{font-size:40px}
+.ns .top{top:262px}
+.ns .body{top:340px;height:740px;overflow:hidden}
+.ns .head{font-size:68px;margin-top:24px}
+.ns .bars{margin-top:40px}
+.ns .bi{margin-bottom:26px}
+.ns .bbar{height:70px}
+.ns .corp{top:1090px}
+.ns .src{top:1150px}
+.po-c .row .t{font-size:40px}
+.po-c .row{margin-bottom:56px}
+.po-c .rows{top:456px}
+.po-p .manner{font-size:40px}
+.po-p .where{font-size:50px}
+.po-d .main{justify-content:center}
+.po-d .disc{font-size:52px}
+.po-d .all{font-size:44px}
+.po-d .addr{font-size:38px}
+.rl .src{text-align:center}

@@ -1,0 +1,321 @@
+<title>Instagram НА_ПРОСВЕТ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: a working calendar sheet — legend of two tracks, the weekly rhythm, then four week tables. Palette and faces are the site's own. */
+:root{
+  --page:#e9e4da; --surface:#fcfaf5; --fold:#d8d0c1; --ink:#211b16; --ink-2:#4b4238; --muted:#675d51;
+  --ring:rgba(33,27,22,.15); --accent:#9a2f22; --mark:#b8391f; --desk:#221a14; --deskText:#f7f0e2;
+  --f-serif:"PT Serif",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono","PT Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --deskText:#f7f0e2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#16110e; --surface:#211b17; --fold:#302720; --ink:#f0e8d8; --ink-2:#c4b9a6; --muted:#9c907e;
+  --ring:rgba(255,240,220,.12); --accent:#f08a6a; --mark:#ff8064; --desk:#0e0a08; --deskText:#f7f0e2; color-scheme:dark}
+
+body{background:var(--page);color:var(--ink);font:17px/1.55 var(--f-serif)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:grid;gap:36px}
+.eyebrow{font:500 12px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(36px,7vw,64px)/1 var(--f-mono);margin:.25em 0 .3em;letter-spacing:-.01em}
+h1 i,.u{font-style:normal;color:var(--mark)}
+h2{font:600 22px/1.15 var(--f-mono);margin:0;text-wrap:balance}
+.lead{max-width:62ch;margin:0;color:var(--ink-2)}
+.totals{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:14px;font:500 13px var(--f-mono);color:var(--ink-2)}
+.totals b{color:var(--ink);font-weight:600}
+
+.tracks{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.track{padding:20px 22px;border:1px solid var(--ring);border-radius:4px;background:var(--surface);display:grid;gap:10px;align-content:start}
+.track.np{background:var(--desk);color:var(--deskText);border-color:transparent}
+.track.np .eyebrow{color:#b9ab96}
+.track p{margin:0;font-size:16px}
+.track ul{margin:0;padding-left:1.1em;font-size:15.5px;display:grid;gap:4px}
+.track .name{font:600 26px/1 var(--f-mono)}
+.track.np .name .u{color:#f0765a}
+
+.rhythm{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--ring);border-radius:4px;overflow:hidden;background:var(--surface)}
+.rhythm div{padding:12px 14px;border-left:1px solid var(--ring);display:grid;gap:4px;align-content:start;min-width:0}
+.rhythm div:first-child{border-left:0}
+.rhythm .d{font:600 13px var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.rhythm .w{font-size:14.5px;color:var(--ink-2);line-height:1.4}
+
+.filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter button{font:500 13px var(--f-mono);padding:7px 12px;border-radius:3px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);cursor:pointer}
+.filter button[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.filter button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+.week{display:grid;gap:12px}
+.week header{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.week header .eyebrow{font-size:12px}
+.rows{border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:88px 128px 70px minmax(0,1.1fr) minmax(0,1.6fr) 150px;gap:14px;padding:12px 0;border-bottom:1px solid var(--ring);align-items:baseline}
+.row > *{min-width:0}
+.date{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+.date span{color:var(--muted);display:block;font-size:12px}
+.chip{display:inline-block;font:600 11.5px var(--f-mono);letter-spacing:.04em;padding:3px 7px;border-radius:2px;white-space:nowrap}
+.chip.np{background:var(--ink);color:var(--page)}
+.chip.vo{border:1px solid var(--mark);color:var(--mark)}
+.fmt{font:600 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.fmt.post{color:var(--ink)}
+.topic{font-weight:700;font-size:16px;line-height:1.35}
+.topic small{display:block;font-weight:400;color:var(--muted);font:12px var(--f-mono);margin-top:3px}
+.hook{font-size:15.5px;line-height:1.45;color:var(--ink-2)}
+.hook q{color:var(--ink)}
+.src{font:12px/1.45 var(--f-mono);color:var(--muted);overflow-wrap:anywhere}
+.src a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+.row.is-hidden{display:none}
+.st{display:inline-block;font:600 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:2px;margin-left:6px;vertical-align:1px}
+.st.done{background:#3d7a4a;color:#fff}.st.skip{border:1px dashed var(--muted);color:var(--muted)}.st.new{background:var(--mark);color:#fff}
+.row.done .topic,.row.done .hook{opacity:.55}.row.skip .topic,.row.skip .hook{opacity:.45;text-decoration:line-through;text-decoration-thickness:1px}
+.done-list{margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+.done-list li{display:grid;grid-template-columns:128px 70px minmax(0,1fr) minmax(0,auto);gap:14px;padding:10px 0;border-bottom:1px solid var(--ring);align-items:baseline}
+.done-list .chip{justify-self:start}
+.done-list .w{font:12px var(--f-mono);color:var(--muted);text-align:right}
+@media (max-width:860px){.done-list li{grid-template-columns:auto auto;gap:4px 10px}.done-list li>b,.done-list .chip{justify-self:start}
+.done-list .w{grid-column:1 / -1;text-align:left}}
+.note{font:12.5px/1.5 var(--f-mono);color:var(--muted);margin:0}
+
+.fmts{display:grid;gap:10px;align-content:start;min-width:0}
+.fmts dl{margin:0;display:grid;grid-template-columns:minmax(0,12.5em) minmax(0,1fr);gap:8px 16px;border-top:2px solid var(--ink);padding-top:12px}
+.fmts dt{font:600 13.5px/1.35 var(--f-mono)}
+.fmts dd{margin:0;font-size:15.5px;line-height:1.45;color:var(--ink-2)}
+.fmts dt.res{color:var(--muted);font-weight:500}
+.tag{font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mark);margin-left:4px;white-space:nowrap}
+@media (max-width:560px){.fmts dl{grid-template-columns:1fr}.fmts dd{margin-bottom:6px}}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rules section{display:grid;gap:8px;align-content:start}
+.rules h3{font:600 14px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin:0}
+.rules ul{margin:0;padding-left:1.1em;font-size:15.5px;display:grid;gap:5px;color:var(--ink-2)}
+.open{border-top:1px solid var(--ring);padding-top:18px}
+
+@media (max-width:860px){
+  .tracks,.rules{grid-template-columns:1fr}
+  .rhythm{grid-template-columns:1fr 1fr 1fr}
+  .rhythm div{border-left:0;border-top:1px solid var(--ring)}
+  .row{grid-template-columns:76px 1fr;gap:6px 12px}
+  .row .meta{grid-column:2;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row .topic,.row .hook,.row .src{grid-column:2}
+  .row .date{grid-row:1 / span 4}
+}
+@media (min-width:861px){ .row .meta{display:contents} }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Контент-план · Instagram · 12 октября — 21 ноября 2026 · обновлено 5 ноября</div>
+    <h1>НА<i>_</i>ПРОСВЕТ в Instagram</h1>
+    <p class="lead">Первый месяц аккаунта. Цель: собрать своих читателей вокруг идей и материалов сайта, без продаж. Книга серии появится потом, когда аудитория уже будет.</p>
+    <div class="totals" id="totals"></div>
+  </header>
+
+  <div class="tracks">
+    <div class="track np">
+      <div class="eyebrow">Трек 1 · реальные данные</div>
+      <div class="name">НА<span class="u">_</span>ПРОСВЕТ</div>
+      <p>Один пост = один автор и одна группа статистики, то есть один раздел сайта.</p>
+      <ul>
+        <li>Цифры только со страниц сайта, без пересчёта и округления.</li>
+        <li>Сравниваем только внутри автора: ранний и поздний, стихи и проза, оригинал и перевод. Меры разных авторов посчитаны по-разному.</li>
+        <li>На последнем слайде указан раздел-источник.</li>
+      </ul>
+    </div>
+    <div class="track vo">
+      <div class="eyebrow">Трек 2 · реконструкция личности</div>
+      <div class="name">ГОЛОСА<span class="u">_</span></div>
+      <p>Три писателя отвечают на анкеты друг друга. Кто отвечает, видно сразу: портрет и имя.</p>
+      <ul>
+        <li>На каждом слайде и сторис плашка «реконструкция личности · не цитата».</li>
+        <li>Ответы даём фрагментами, слова не правим, пропуск обозначаем [ … ].</li>
+        <li>Оси формата: кто спрашивает, кто отвечает, из какого времени.</li>
+      </ul>
+    </div>
+  </div>
+
+  <section class="week" aria-labelledby="fm">
+    <h2 id="fm">Форматы</h2>
+    <div class="tracks">
+      <div class="fmts">
+        <div class="eyebrow">НА_ПРОСВЕТ</div>
+        <dl>
+          <dt>Миф или факт <span class="tag">основа</span></dt><dd>Утверждение, вердикт ✓/✗, цифра, одной строкой как считали.</dd>
+          <dt>Было / стало <span class="tag">основа</span></dt><dd>Ранний автор против позднего, две колонки.</dd>
+          <dt>Мир автора</dt><dd>Опись вещей: еда, звери, транспорт, места, цвета.</dd>
+          <dt>Рекорды</dt><dd>Самое длинное, короткое, частое.</dd>
+          <dt>Фирменная серия</dt><dd>Чехов: письма. Гари: маски и переводы. Бродский: рифма, размер, Венеция.</dd>
+          <dt>Рилс: график в движении</dt><dd>Палитра по периодам, карта словаря, карта Венеции, календарь писем.</dd>
+          <dt>Рилс: круг автора <span class="tag">серия</span></dt><dd>Сеть имён, кто с кем стоит рядом. Бродский вышел рилсом, Чехов постом 17 октября, дальше Гари.</dd>
+          <dt>Сторис: цифра дня</dt><dd>Одна карточка с цифрой и ссылкой на раздел.</dd>
+          <dt class="res">В резерве</dt><dd>Один график; Как это посчитано.</dd>
+        </dl>
+      </div>
+      <div class="fmts">
+        <div class="eyebrow">ГОЛОСА_</div>
+        <dl>
+          <dt>За одним столом <span class="tag">основа</span></dt><dd>Вопрос и три ответа рядом, с портретами.</dd>
+          <dt>Спрашивает Бродский / Чехов / Гари <span class="tag">основа</span></dt><dd>Вопрос из анкеты одного писателя. Отвечают двое других, последним сам спрашивающий.</dd>
+          <dt>Знакомьтесь: голоса <span class="tag">старт</span></dt><dd>Кто говорит: место, год, возраст, манера, источники. Закрепить в профиле.</dd>
+          <dt>Из своего времени</dt><dd>Вопрос, на который голос отвечает из своей эпохи.</dd>
+          <dt>Рилс: портрет отвечает</dt><dd>Живой портрет, под ним печатается ответ. Или три портрета по очереди.</dd>
+          <dt>Сторис: вопрос дня</dt><dd>Сторис с вопросом, сразу за ней три сторис с ответами.</dd>
+          <dt class="res">В резерве</dt><dd>Разошлись (нужно проверить по текстам); Анкета как портрет; Блиц; Как сделаны голоса.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="week" aria-labelledby="rh">
+    <h2 id="rh">Каждая неделя</h2>
+    <div class="rhythm">
+      <div><span class="d">Пн</span><span class="w">Сторис ГОЛОСА_: вопрос дня</span></div>
+      <div><span class="d">Вт</span><span class="w">Пост НА_ПРОСВЕТ</span></div>
+      <div><span class="d">Ср</span><span class="w">Сторис НА_ПРОСВЕТ: цифра дня</span></div>
+      <div><span class="d">Чт</span><span class="w">Рилс + сразу репост в сторис со стикером-ссылкой на раздел</span></div>
+      <div><span class="d">Пт</span><span class="w">Сторис: треки по очереди</span></div>
+      <div><span class="d">Сб</span><span class="w">Пост ГОЛОСА_</span></div>
+    </div>
+    <p class="note">Никаких загадок: ответ всегда идёт сразу за вопросом. Рилсы чередуются: нечётные недели НА_ПРОСВЕТ, чётные ГОЛОСА_. Рилс живёт в профиле и приводит новых людей, но ссылка в нём не кликается; сторис видят в основном подписчики, зато в ней есть стикер-ссылка. Поэтому каждый рилс сразу репостим в сторис со ссылкой на его раздел сайта.</p>
+  </section>
+
+  <section class="week" aria-labelledby="vy">
+    <header><h2 id="vy">Уже вышло</h2><span class="eyebrow">на 15 октября</span></header>
+    <ul class="done-list">
+      <li><span class="chip vo">ГОЛОСА_</span><span class="fmt">рилс ×2</span><b>Как создавались ГОЛОСА_</b><span class="w">вне плана</span></li>
+      <li><span class="chip vo">ГОЛОСА_</span><span class="fmt post">пост</span><b>Знакомьтесь: голоса</b><span class="w">из плана: Сб 17 окт.</span></li>
+      <li><span class="chip np">НА_ПРОСВЕТ</span><span class="fmt post">пост</span><b>С годами Бродский уходит от классических размеров</b><span class="w">Вт 13 окт.</span></li>
+      <li><span class="chip np">НА_ПРОСВЕТ</span><span class="fmt">рилс</span><b>Палитра Бродского</b><span class="w">из плана: Чт 29 окт.</span></li>
+      <li><span class="chip np">НА_ПРОСВЕТ</span><span class="fmt">рилс</span><b>Кого Бродский называет по имени?</b><span class="w">вне плана · начало серии «Круг автора»</span></li>
+      <li><span class="chip np">НА_ПРОСВЕТ</span><span class="fmt">рилс + сторис</span><b>НА_ПРОСВЕТ. Три автора, миллионы слов</b><span class="w">Чт 15 окт.</span></li>
+    </ul>
+    <p class="note">В неделях ниже вышедшее отмечено зелёным, пропущенное зачёркнуто, новое — красной меткой.</p>
+  </section>
+
+  <div class="filter" role="group" aria-label="Показать трек">
+    <span class="eyebrow">Показать:</span>
+    <button type="button" id="f-all" data-f="all" aria-pressed="true">Всё</button>
+    <button type="button" id="f-np" data-f="np" aria-pressed="false">НА_ПРОСВЕТ</button>
+    <button type="button" id="f-vo" data-f="vo" aria-pressed="false">ГОЛОСА_</button>
+  </div>
+
+  <div id="weeks"></div>
+
+  <div class="rules">
+    <section>
+      <h3>Форматы</h3>
+      <ul>
+        <li>Пост: карусель 4:5, 1080×1350.</li>
+        <li>Рилс: 1080×1920, 10–20 секунд, собираю из материалов сайта, без съёмки.</li>
+        <li>Сторис: 1080×1920.</li>
+        <li>Музыку к рилсам добавляете при загрузке из библиотеки Instagram.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Откуда материал</h3>
+      <ul>
+        <li>Цифры НА_ПРОСВЕТ взяты со страниц сайта 10 октября 2026.</li>
+        <li>Вопросы ГОЛОСА_ указаны с номером из анкеты (например, gary/q019), чтобы на этапе картинок взять точный текст.</li>
+        <li>У всех выбранных вопросов есть ответы всех трёх авторов.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Решим на этапе картинок</h3>
+      <ul>
+        <li>Как визуально различать треки в сетке профиля.</li>
+        <li>Формат «Разошлись» в ноябрь: сначала проверю по текстам, где ответы правда расходятся.</li>
+        <li>Шаблоны слайдов для каждого формата.</li>
+        <li>Опционально, решите вы: закреплённый пост «Что такое НА_ПРОСВЕТ и ГОЛОСА_».</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+const SITE='https://samvelkoch.github.io/naprosvet/';
+const L=(p,t)=>`<a href="${SITE}${p}" target="_blank" rel="noopener">${t||'/'+p}</a>`;
+const V=L('voices/');
+const weeks=[
+ {n:1,range:'12–18 октября',note:'Старт. «Знакомьтесь» вышел раньше срока, поэтому суббота свободна от поста; туда переехала пропущенная сторис про письма Чехова. В четверг вдобавок к плану — пост, рилс и сторис про псевдонимы Гари (материалы: instagram/gari-psevdonimy/).',rows:[
+  ['Пн','12','vo','сторис','Вопрос дня','<small>brodsky/q091</small>','<q>Хлеб падает маслом вниз. Это закон природы или характер?</q> Сторис с вопросом, за ней три сторис с ответами. Чехов: <q>маслом вниз — событие, о нём рассказывают за обедом</q>.',V,'skip','не вышло · вопрос в резерве'],
+  ['Вт','13','np','пост','Миф или факт · Бродский','<small>размер</small>','<q>С годами Бродский уходит от классических размеров к дольнику</q>: подтверждается. Дольник и тактовик: 18% строк в 1961–1966 → 61% в 1985–1996. Классические размеры в поздние годы — всё ещё 24%.',L('brodsky/#mify'),'done'],
+  ['Ср','14','np','сторис','Цифра дня · Чехов','','Больше всего писем Чехов написал из Ялты: 1 432. Из Москвы 1 301, из Мелихова 852.',L('chekhov/#gde'),'skip','перенесено на Сб 17'],
+  ['Чт','15','np','рилс','Три писателя на просвет','<small>живые портреты</small>','Три портрета по очереди, у каждого одна цифра. Бродский: 8 → 11 слогов в типичной строке. Чехов: поздний рассказ в 4,4 раза длиннее раннего. Гари: в «Обещании на рассвете» слова «мать», «мама», «матушка» звучат в 19 раз чаще, чем в типичной книге.',L('brodsky/#glavnoe','/brodsky')+' '+L('chekhov/#glavnoe','/chekhov')+' '+L('gary/#glavnoe','/gary'),'done','вышел как «Три автора, миллионы слов» + сторис'],
+  ['Чт','15','np','пост','Четыре подписи Гари','<small>9 слайдов</small>','Роман Кацев по рождению (метрика и подписи — фото Самвела). Ромен Гари, Фоско Синибальди, Шатан Бога, Эмиль Ажар. «Ромен Гари» тоже псевдоним (Роман Кацев). По 200 частым словам французских оригиналов Синибальди от Гари не отличить (1,05 против 1,04), Ажар другой голос (1,28). Ажар — вторая Гонкуровская.',L('gary/#golosa'),'new'],
+  ['Чт','15','np','рилс','Четыре подписи Гари','<small>motion · концепт готов</small>','Одно перо пишет четыре имени, потом шкала: Синибальди встаёт рядом с Гари, Ажар уезжает вправо. Сразу репост в сторис со ссылкой.',L('gary/#golosa'),'new'],
+  ['Чт','15','np','сторис','Четыре подписи Гари','','Карточка с четырьмя именами и стикером-ссылкой на раздел «Голоса».',L('gary/#golosa'),'new'],
+  ['Пт','16','vo','сторис','Вопрос дня','<small>chekhov/q088</small>','<q>Нужно ли здороваться с незнакомыми людьми на лестнице?</q> Бродский: <q>Кивок — это такая запятая между двумя жизнями.</q>',V],
+  ['Сб','17','vo','пост','Знакомьтесь: голоса','<small>закрепить</small>','Бродский: Венеция, ноябрь 1993-го, ему 53. Чехов: Ялта, «Белая дача», зима 1900-го, о мире после 1904-го не знает. Гари: Париж, рю дю Бак, 1980-й, тайну Ажара ещё не раскрыл. Последний слайд: это не цитаты, а реконструкция по письмам, книгам, интервью.',V,'done','вышел раньше'],
+  ['Сб','17','np','сторис','Цифра дня · Чехов','<small>перенесено со Ср 14</small>','Больше всего писем Чехов написал из Ялты: 1 432. Из Москвы 1 301, из Мелихова 852.',L('chekhov/#gde'),'skip','отменено: такая сторис уже выходила'],
+  ['Сб','17','np','пост','Круг Чехова','<small>8 слайдов · серия «Круг автора»</small>','200 человек из 4 494 писем. В центре Суворин (396 писем). Круг меняется по периодам: Лейкин и Левитан → Суворин, Плещеев → Потапенко → Немирович-Данченко, Горький, Маркс. Самая частая пара — Толстой и Горький. Книппер: 438 писем ей, названа в 17.',L('chekhov/#lyudi'),'new','пост вместо рилса Чт 29'],
+  ['Вс','18','vo','пост','Спрашивает посетитель','<small>posetiteli/q110 · 8 слайдов</small>','<q>Машина играет вас или давно умершего близкого. Можно? Нужно? Приемлемо?</q> Чехов: <q>живым надо писать письма, и вовремя</q>. Бродский: <q>как поручить кому-то плакать</q>. Гари: мать писала ему письма наперёд. Последний слайд: отвечали как раз такие машины.',V,'new','воскресенье вне ритма · в запасе пост «Бродский среди поэтов XX века» (instagram/brodsky-poety/)'],
+ ]},
+ {n:2,range:'19–24 октября',note:'Чехов в НА_ПРОСВЕТ.',rows:[
+  ['Пн','19','vo','сторис','Вопрос дня','<small>gary/q008</small>','<q>Дом горит, люди и звери уже спасены. Какой один предмет вы вынесете?</q> Вопрос и три ответа подряд.',V],
+  ['Вт','20','np','пост','Было / стало · Чехов','<small>знаки</small>','Восклицательных знаков в 1880–1886 — 28,8 на 1000 слов, в 1893–1903 — 9. Многоточий 30,6 и 5.',L('chekhov/#znaki')],
+  ['Ср','21','np','сторис','Цифра дня · Гари','','Самая разговорная книга Гари — «Прощай, Гари Купер!»: 46,7% слов в репликах. Самая молчаливая — «Обещание на рассвете»: 5,9%.',L('gary/#dialog')],
+  ['Чт','22','vo','рилс','Трое за столом','<small>brodsky/q095</small>','Три живых портрета. Вопрос <q>Если бы вы были животным, то каким, и в каком городе?</q> Под каждым портретом по очереди печатается его ответ.',V],
+  ['Пт','23','np','сторис','Рекорд · Чехов','','Самый короткий рассказ Чехова — «Вывеска», 1884: 20 слов.',L('chekhov/#rekordy')],
+  ['Сб','24','vo','пост','За одним столом','<small>gary/q019</small>','<q>Отец. Одно слово.</q> Бродский: <q>Флота.</q> Чехов: <q>Лавка.</q> Гари: <q>Чужой.</q> На каждом слайде слово и короткое продолжение ответа.',V],
+ ]},
+ {n:3,range:'26–31 октября',note:'Гари в НА_ПРОСВЕТ. «Палитра Бродского» уже вышла, «Круг Чехова» вышел постом 17 октября, поэтому в четверг — «Круг Гари».',rows:[
+  ['Пн','26','vo','сторис','Вопрос дня','<small>brodsky/q096</small>','<q>Что вы взяли бы на необитаемый остров, кроме книги?</q> Вопрос и три ответа подряд.',V],
+  ['Вт','27','np','пост','Мир автора · Гари','<small>звери</small>','Главный зверь Гари — слон: 563 упоминания, из них 544 (97%) в одной книге, «Корни неба». Удав упомянут 198 раз, 92% у Ажара: это Голубчик из одноимённого романа.',L('gary/#zveri')],
+  ['Ср','28','np','сторис','Цифра дня · Бродский','','Самая частая рифма Бродского — «глаз — нас»: 18 раз.',L('brodsky/#rekordy')],
+  ['Чт','29','np','рилс','Круг Гари','<small>серия «Круг автора» · перенесён с 12 ноября</small>','Сеть из 220 имён по книгам Гари распадается на круги: политика (Гитлер, де Голль, Сталин), короли и классики (Людовик, Гюго, Гёте), искусство (Шекспир, Камю, Моцарт). Чаще всего рядом стоят Гитлер и Сталин, за ними Ромео и Джульетта.',L('gary/#krug'),'new'],
+  ['Пт','30','vo','сторис','Вопрос дня','<small>gary/q041</small>','<q>Сколько у вас настоящих друзей? Назовите число, не имена.</q> Вопрос и три ответа подряд.',V],
+  ['Сб','31','vo','пост','Из своего времени','<small>gary/q070</small>','Гари спрашивает: <q>Однажды машины начнут писать книги за людей. Что тогда станет с писателями? И с читателями?</q> Чехов из 1900-го: <q>Машины? Какие же, вроде пишущей, на которой барышни в конторах стучат?</q>',V],
+ ]},
+ {n:4,range:'2–7 ноября',note:'Чехов в НА_ПРОСВЕТ второй раз: четыре поста на трёх авторов не делятся поровну. Материалы готовы 5 ноября (Публикации/Неделя 4), из недели пока ничего не вышло.',rows:[
+  ['Пн','2','vo','сторис','Вопрос дня','<small>chekhov/q090</small>','<q>Борода, усы или бритое лицо? И что это говорит о человеке?</q> Вопрос и три ответа подряд.',V],
+  ['Вт','3','np','пост','Фирменная серия · Чехов','<small>письма: подписи</small>','В 247 подписях Чехов называет себя не только по имени: иеромонахом, архимандритом, академиком, камергером, <q>Шиллером Шекспировичем Гёте</q>. Больше всего таких подписей получили Книппер (65) и брат Александр (57).',L('chekhov/#kunst')],
+  ['Ср','4','np','сторис','Цифра дня · Бродский','','В стихах Бродского чаще всего ездят на трамвае: 28 раз. Корабль 23, поезд 22.',L('brodsky/#transport')],
+  ['Чт','5','vo','рилс','Портрет отвечает','<small>gary/q080</small>','Живой портрет Чехова. Вопрос Гари <q>Смысл жизни одной фразой. Теперь второй, честнее.</q> Под портретом печатается ответ.',V],
+  ['Пт','6','np','сторис','Мир автора · Гари','','Чаще всех реальных людей у Гари появляются Гитлер (23 книги), Иисус (16), Сталин и Шекспир (по 15), де Голль (14).',L('gary/#panteon')],
+  ['Сб','7','vo','пост','Спрашивает Бродский','<small>brodsky/q044</small>','<q>Какое слово вы изъяли бы из языка навсегда?</q> Сначала отвечают Чехов и Гари, последним сам Бродский.',V],
+ ]},
+ {n:5,range:'9–14 ноября',note:'Бродский в НА_ПРОСВЕТ, рилс — НА_ПРОСВЕТ (нечётная неделя). Пост вторника и пост субботы были готовы ещё в октябре («Среди поэтов», «Машина с голосом»), Гари в нём уже с новым портретом. В пятницу — новое на сайте: режим Zen.',rows:[
+  ['Пн','9','vo','сторис','Вопрос дня','<small>posetiteli/q111</small>','<q>Ты где? А то, где ты, — оно где? … Где кончается твоё «где»?</q> Вопрос посетителя и три ответа подряд.',V],
+  ['Вт','10','np','пост','Бродский среди поэтов XX века','<small>8 слайдов</small>','Тире у Бродского как у всех: 16 на 1000 слов. Выдаёт его строка: 3,4% строк обрываются на предлоге или союзе.',L('brodsky/#poety')],
+  ['Ср','11','np','сторис','Цифра дня · Чехов','','О деньгах — в 1 565 письмах Чехова из 4 494: 53% писем в 1883–1892, 24% в 1899–1904.',L('chekhov/#dengi')],
+  ['Чт','12','np','рилс','Венеция Бродского','<small>карта · 11 мест</small>','Метки на карте по одной: от пансиона «Accademia» до Сан-Микеле. В венецианских стихах слов о городе 15,1 на 1000 против 7,8 в остальных.',L('brodsky/#venecia')],
+  ['Пт','13','vo','сторис','Zen','<small>5 сторис · новое</small>','Новый режим «Голосов»: «Вселенная», «Барабан», «На просвет», «Свой», три ответа печатаются сразу. Статично или живыми записями сайта через Motion.',V],
+  ['Сб','14','vo','пост','Машина с голосом','<small>posetiteli/q110</small>','Можно ли говорить с машиной, которая играет вас или умершего близкого? Ответы целиком.',V],
+ ]},
+ {n:6,range:'16–21 ноября',note:'Гари в НА_ПРОСВЕТ, рилс — ГОЛОСА_ (чётная неделя), снятый с режима Zen.',rows:[
+  ['Пн','16','vo','сторис','Вопрос дня','<small>posetiteli/q132</small>','<q>Кого из тех, кто ушел из вашей жизни навсегда, вы мысленно продолжаете о чем-то спрашивать?</q> Три ответа подряд.',V],
+  ['Вт','17','np','пост','Одна книга, два переводчика','<small>Гари · переводы</small>','Два перевода одной книги расходятся по частым словам на 0,95, две разные книги позднего Гари — на 1,01. Первые фразы трёх книг в двух переводах.',L('gary/#dva')],
+  ['Ср','18','np','сторис','Цифра дня · Бродский','','В стихах Бродского чаще всего пьют вино: 41. Стакан 33, бутылка 23, чай 16, кофе 15.',L('brodsky/#napitki')],
+  ['Чт','19','vo','рилс','Zen · На просвет','<small>запись с сайта</small>','Палец проводит по темноте, вопросы загораются; второе касание — и Чехов, Бродский и Гари печатают ответы одновременно.',V],
+  ['Пт','20','np','сторис','Мир автора · Чехов','','Таксы Бром и Хина, мелиховские Шарик и Арапка, щенки Мюр и Мерилиз. Собаки — в 207 письмах.',L('chekhov/#zveri')],
+  ['Сб','21','vo','пост','Спрашивает Чехов','<small>chekhov/q012</small>','<q>Опишите себя одной фразой так, как описал бы Вас полицейский протокол.</q> Ответы целиком, последним сам Чехов.',V],
+ ]},
+];
+const tr={np:'НА_ПРОСВЕТ',vo:'ГОЛОСА_'};
+const ST={done:'вышло',skip:'пропущено',new:'новое'};
+{const all=weeks.flatMap(w=>w.rows).filter(r=>r[8]!=='skip'),c=f=>all.filter(r=>r[3]===f).length,left=f=>all.filter(r=>r[3]===f&&r[8]!=='done').length;
+ const days=new Set(all.filter(r=>r[3]==='сторис').map(r=>r[1]+r[0])).size;
+ document.getElementById('totals').innerHTML=`<span><b>${c('пост')}</b> постов, ещё впереди ${left('пост')}</span><span><b>${c('рилс')}</b> рилсов, впереди ${left('рилс')}</span><span><b>${days}</b> дней со сторис</span><span><b>2</b> трека</span><span>без игр и загадок</span>`;}
+document.getElementById('weeks').innerHTML=weeks.map(w=>`
+ <section class="week" aria-labelledby="w${w.n}">
+  <header><h2 id="w${w.n}">Неделя ${w.n}</h2><span class="eyebrow">${w.range}</span></header>
+  <div class="rows">${w.rows.map(r=>`
+   <div class="row ${r[8]||''}" data-t="${r[2]}">
+    <div class="date">${r[0]} ${r[1]}<span>${w.n<=3?'октября':'ноября'}</span></div>
+    <div class="meta"><span class="chip ${r[2]}">${tr[r[2]]}</span><span class="fmt ${r[3]}">${r[3]}</span></div>
+    <div class="topic">${r[4]}${r[8]?`<span class="st ${r[8]}">${ST[r[8]]}</span>`:''}${r[5]}${r[9]?`<small>${r[9]}</small>`:''}</div>
+    <div class="hook">${r[6]}</div>
+    <div class="src">${r[7]}</div>
+   </div>`).join('')}</div>
+  <p class="note">${w.note}</p>
+ </section>`).join('');
+document.getElementById('weeks').style.display='grid';
+document.getElementById('weeks').style.gap='36px';
+const btns=[...document.querySelectorAll('.filter button')];
+function apply(f){
+  btns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.f===f)));
+  document.querySelectorAll('.row').forEach(r=>r.classList.toggle('is-hidden',f!=='all'&&r.dataset.t!==f));
+  try{localStorage.setItem('ig-filter',f)}catch(e){}
+}
+btns.forEach(b=>b.addEventListener('click',()=>apply(b.dataset.f)));
+try{const s=localStorage.getItem('ig-filter');if(s)apply(s)}catch(e){}
+</script>
